@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Keuangan Pesantren</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f3f6f9;
+      color: #1f2937;
+      padding-bottom: 30px;
+    }
+
+    .header {
+      background: #0f766e;
+      color: white;
+      padding: 22px 18px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    .periode {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+    }
+
+    .periode-title {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 5px;
+    }
+
+    .periode-value {
+      font-size: 21px;
+      font-weight: bold;
+      color: #0f766e;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 17px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+    }
+
+    .card-title {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 9px;
+    }
+
+    .card-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .green {
+      color: #059669;
+    }
+
+    .red {
+      color: #dc2626;
+    }
+
+    .blue {
+      color: #2563eb;
+    }
+
+    .orange {
+      color: #d97706;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .menu {
+      background: white;
+      border-radius: 17px;
+      padding: 17px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .menu-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #e6fffb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+    }
+
+    .menu-title {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .menu-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 3px;
+    }
+
+    .arrow {
+      font-size: 20px;
+      color: #9ca3af;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 25px;
+      color: #6b7280;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    @media (max-width: 450px) {
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .card-value {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>Keuangan Pesantren</h1>
+    <p>Pondok Pesantren Fathul Huda Al Qorrobiyah</p>
+  </div>
+
+  <div class="container">
+
+    <div class="periode">
+      <div class="periode-title">Periode SPP</div>
+      <div class="periode-value" id="periode">Memuat...</div>
+    </div>
+
+    <div id="loading" class="loading">
+      Memuat data keuangan...
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="card-title">Dana SPP</div>
+        <div class="card-value green" id="sppMasuk">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Kas Pondok</div>
+        <div class="card-value blue" id="kas">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">SPP Diterima</div>
+        <div class="card-value green" id="lunas">
+          0 Santri
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Belum Bayar</div>
+        <div class="card-value red" id="belumBayar">
+          0 Santri
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Pengeluaran SPP</div>
+        <div class="card-value orange" id="pengeluaranSPP">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Sisa SPP</div>
+        <div class="card-value green" id="sisaSPP">
+          Rp0
+        </div>
+      </div>
+
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <div class="section">
+
+      <div class="section-title">
+        Menu Keuangan
+      </div>
+
+      <div class="menu">
+        <div class="menu-left">
+          <div class="icon">💰</div>
+
+          <div>
+            <div class="menu-title">
+              Catat Pengeluaran
+            </div>
+
+            <div class="menu-desc">
+              Catat pengeluaran SPP atau Kas
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="menu">
+        <div class="menu-left">
+          <div class="icon">📋</div>
+
+          <div>
+            <div class="menu-title">
+              Pengeluaran Terbaru
+            </div>
+
+            <div class="menu-desc">
+              Lihat riwayat transaksi
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">›</div>
+      </div>
+
+    </div>
+
+  </div>
+
+<script>
+
+  /*
+   * NANTI KITA ISI DENGAN URL WEB APP APPS SCRIPT
+   *
+   * Jangan diubah dulu.
+   */
+  const API_URL = "https://script.google.com/macros/s/AKfycbzXSerzZbcNn-1nVnH1Hg8TwvdhNGX2KML88IdF9RKLCpoLpzQ39G9K8TPJiqn5GZ10EQ/exec";
+
+
+  function rupiah(angka) {
+
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0
+    }).format(Number(angka) || 0);
+
+  }
+
+
+  async function loadDashboard() {
+
+    try {
+
+      const response = await fetch(
+        API_URL + "?action=getDashboardKeuangan"
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+
+        throw new Error(
+          data.message || "Gagal mengambil data"
+        );
+
+      }
+
+      document.getElementById("periode").textContent =
+        data.periode || "-";
+
+      document.getElementById("sppMasuk").textContent =
+        rupiah(data.sppMasuk);
+
+      document.getElementById("lunas").textContent =
+        (data.lunas || 0) + " Santri";
+
+      document.getElementById("belumBayar").textContent =
+        (data.belumBayar || 0) + " Santri";
+
+
+      document.getElementById("loading").style.display =
+        "none";
+
+      /*
+       * Pengeluaran dan sisa akan kita sambungkan
+       * setelah fitur transaksi keuangan dibuat.
+       */
+
+      loadRingkasan();
+
+    } catch (error) {
+
+      document.getElementById("loading").style.display =
+        "none";
+
+      const errorBox =
+        document.getElementById("error");
+
+      errorBox.style.display = "block";
+
+      errorBox.textContent =
+        "Data belum dapat dimuat. Dashboard akan kita sambungkan setelah URL Apps Script dimasukkan.";
+
+    }
+
+  }
+
+
+  async function loadRingkasan() {
+
+    try {
+
+      const response = await fetch(
+        API_URL + "?action=getRingkasanKeuangan"
+      );
+
+      const data = await response.json();
+
+      if (!data.success) return;
+
+      document.getElementById("pengeluaranSPP").textContent =
+        rupiah(data.pengeluaranSPP);
+
+      document.getElementById("sisaSPP").textContent =
+        rupiah(data.sisaSPP);
+
+    } catch (error) {
+
+      console.log(
+        "Ringkasan belum tersedia:",
+        error
+      );
+
+    }
+
+  }
+
+
+  loadDashboard();
+
+</script>
+
+</body>
+  </html>
