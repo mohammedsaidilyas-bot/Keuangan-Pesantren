@@ -35,18 +35,26 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
+      - name: Build unsigned APK
         run: gradle assembleRelease --no-daemon
 
-      - name: Find APK
+      - name: Sign APK
         run: |
-          echo "APK files found:"
-          find app/build/outputs -type f -name "*.apk" -print
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -n 1)
+          echo "Using build tools: $BUILD_TOOLS"
 
-      - name: Upload APK
+          keytool -genkeypair -v             -keystore keuangan-pesantren-release.jks             -alias keuangan             -keyalg RSA             -keysize 2048             -validity 10000             -storepass android             -keypass android             -dname "CN=Keuangan Pesantren, OU=PPFHA, O=PPFHA, L=Indonesia, ST=Indonesia, C=ID"
+
+          "$BUILD_TOOLS/zipalign" -f 4             app/build/outputs/apk/release/app-release-unsigned.apk             app/build/outputs/apk/release/keuangan-pesantren-aligned.apk
+
+          "$BUILD_TOOLS/apksigner" sign             --ks keuangan-pesantren-release.jks             --ks-key-alias keuangan             --ks-pass pass:android             --key-pass pass:android             --out app/build/outputs/apk/release/Keuangan-Pesantren.apk             app/build/outputs/apk/release/keuangan-pesantren-aligned.apk
+
+          "$BUILD_TOOLS/apksigner" verify             --verbose             app/build/outputs/apk/release/Keuangan-Pesantren.apk
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: Keuangan-Pesantren-APK
-          path: app/build/outputs/**/*.apk
+          path: app/build/outputs/apk/release/Keuangan-Pesantren.apk
           if-no-files-found: error
           retention-days: 7
