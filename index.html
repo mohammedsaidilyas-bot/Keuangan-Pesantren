@@ -955,7 +955,10 @@ async function bukaDaftarSantri(){
 }
 function renderDaftarSantri(){
   const data=(window.dataDaftarSantri||[]).filter(function(s){
-    return String(s.nis||"").trim() !== "" || String(s.nama||"").trim() !== "";
+    const nis=String(s.nis||"").trim();
+    const nama=String(s.nama||"").trim();
+    const kelas=String(s.kelas||"").trim();
+    return (nis !== "" && nis !== "-") || (nama !== "" && nama !== "-") || (kelas !== "" && kelas !== "-");
   }), search=(document.getElementById("santriSearch")?.value||"").toLowerCase().trim(), filter=document.getElementById("santriFilter")?.value||"SEMUA";
   const filtered=data.filter(s=>{const status=String(s.status||"").toUpperCase(), teks=(String(s.nis||"")+" "+String(s.nama||"")+" "+String(s.kelas||"")).toLowerCase(); return (!search||teks.includes(search))&&(filter==="SEMUA"||(filter==="LUNAS"&&status==="LUNAS")||(filter==="BELUM BAYAR"&&status!=="LUNAS"))});
   const lunas=data.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
