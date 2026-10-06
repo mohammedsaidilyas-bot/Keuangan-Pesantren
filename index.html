@@ -225,6 +225,21 @@
       display: none;
     }
 
+    .santri-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .santri-search{flex:1;min-width:220px;border:1px solid #d1d5db;border-radius:12px;padding:12px 14px;font-size:14px}
+    .santri-filter{border:1px solid #d1d5db;border-radius:12px;padding:12px;background:white;font-size:14px}
+    .santri-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .santri-summary-card{border-radius:14px;padding:13px;background:#f8fafc}
+    .santri-summary-number{font-size:22px;font-weight:800;margin-top:3px}
+    .santri-table-wrap{overflow-x:auto;border:1px solid #e5e7eb;border-radius:14px}
+    .santri-table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
+    .santri-table th{background:#f0fdfa;color:#115e59;padding:12px;text-align:left}
+    .santri-table td{padding:11px 12px;border-top:1px solid #f1f5f9}
+    .status-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}
+    .status-lunas{background:#dcfce7;color:#166534}
+    .status-belum{background:#fee2e2;color:#991b1b}
+    .santri-empty{text-align:center;padding:25px;color:#6b7280}
+
     @media (max-width: 450px) {
       .cards {
         grid-template-columns: 1fr 1fr;
@@ -360,6 +375,13 @@
 
       <div class="section-title">
         Menu Keuangan
+      </div>
+
+      <div class="menu" onclick="bukaDaftarSantri()" style="cursor:pointer;">
+        <div class="menu-left"><div class="icon">👨‍🎓</div><div>
+          <div class="menu-title">Daftar Santri & Status SPP</div>
+          <div class="menu-desc">Lihat santri yang sudah dan belum bayar</div>
+        </div></div><div class="arrow">›</div>
       </div>
 
       <div class="menu" onclick="bukaPemasukanKas()" style="cursor:pointer;">
@@ -904,6 +926,40 @@
     console.error(error);
   }
   }
+
+async function bukaDaftarSantri(){
+  const modal=document.createElement("div"); modal.id="modalDaftarSantri";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999">
+  <div style="width:100%;max-width:1050px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><div style="font-size:22px;font-weight:800;color:#172554">👨‍🎓 Daftar Santri & Status SPP</div><div id="santriPeriodeModal" style="color:#64748b;font-size:13px;margin-top:4px">Memuat status SPP...</div></div>
+    <button onclick="document.getElementById('modalDaftarSantri').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button>
+  </div>
+  <div class="santri-summary">
+    <div class="santri-summary-card"><div style="font-size:12px;color:#64748b">Sudah Bayar</div><div id="santriLunasCount" class="santri-summary-number" style="color:#059669">0</div></div>
+    <div class="santri-summary-card"><div style="font-size:12px;color:#64748b">Belum Bayar</div><div id="santriBelumCount" class="santri-summary-number" style="color:#dc2626">0</div></div>
+  </div>
+  <div class="santri-toolbar"><input id="santriSearch" class="santri-search" type="search" placeholder="Cari nama atau NIS..." oninput="renderDaftarSantri()"><select id="santriFilter" class="santri-filter" onchange="renderDaftarSantri()"><option value="SEMUA">Semua Santri</option><option value="LUNAS">LUNAS</option><option value="BELUM BAYAR">BELUM BAYAR</option></select></div>
+  <div id="santriLoading" class="loading">Memuat daftar santri...</div><div id="santriTableArea" style="display:none"></div>
+  </div></div>`;
+  document.body.appendChild(modal);
+  try{
+    const response=await fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"});
+    const data=await response.json();
+    if(!data.success) throw new Error(data.message||"Gagal mengambil status SPP");
+    window.dataDaftarSantri=data.data||[];
+    document.getElementById("santriPeriodeModal").textContent="Periode SPP: "+(data.periode||document.getElementById("periode").textContent||"-");
+    document.getElementById("santriLoading").style.display="none"; document.getElementById("santriTableArea").style.display="block"; renderDaftarSantri();
+  }catch(error){document.getElementById("santriLoading").textContent="Daftar santri belum dapat dimuat.";console.error(error)}
+}
+function renderDaftarSantri(){
+  const data=window.dataDaftarSantri||[], search=(document.getElementById("santriSearch")?.value||"").toLowerCase().trim(), filter=document.getElementById("santriFilter")?.value||"SEMUA";
+  const filtered=data.filter(s=>{const status=String(s.status||"").toUpperCase(), teks=(String(s.nis||"")+" "+String(s.nama||"")+" "+String(s.kelas||"")).toLowerCase(); return (!search||teks.includes(search))&&(filter==="SEMUA"||(filter==="LUNAS"&&status==="LUNAS")||(filter==="BELUM BAYAR"&&status!=="LUNAS"))});
+  const lunas=data.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
+  document.getElementById("santriLunasCount").textContent=lunas+" Santri"; document.getElementById("santriBelumCount").textContent=(data.length-lunas)+" Santri";
+  let rows=""; filtered.forEach((s,i)=>{const ok=String(s.status||"").toUpperCase()==="LUNAS"; rows+=`<tr><td>${i+1}</td><td><strong>${s.nis||"-"}</strong></td><td>${s.nama||"-"}</td><td>${s.kelas||"-"}</td><td><span class="status-badge ${ok?"status-lunas":"status-belum"}">${ok?"LUNAS":"BELUM BAYAR"}</span></td></tr>`});
+  document.getElementById("santriTableArea").innerHTML=filtered.length?`<div class="santri-table-wrap"><table class="santri-table"><thead><tr><th>No</th><th>NIS</th><th>Nama Santri</th><th>Kelas</th><th>Status SPP</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:10px;color:#64748b;font-size:12px">Menampilkan ${filtered.length} dari ${data.length} santri.</div>`:'<div class="santri-empty">Santri yang dicari tidak ditemukan.</div>';
+}
 
 async function bukaPengeluaranTerbaru() {
   try {
