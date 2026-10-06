@@ -493,22 +493,34 @@
     try {
 
       const response = await fetch(
-        API_URL + "?action=getRingkasanKeuangan"
+        API_URL + "?action=getRingkasanKeuangan&_=" + Date.now()
       );
 
       const data = await response.json();
 
-      if (!data.success) return;
+      if (data.success) {
+        document.getElementById("pengeluaranSPP").textContent =
+          rupiah(data.pengeluaranSPP);
 
-      document.getElementById("pengeluaranSPP").textContent =
-        rupiah(data.pengeluaranSPP);
+        document.getElementById("sisaSPP").textContent =
+          rupiah(data.sisaSPP);
+      }
 
-      document.getElementById("sisaSPP").textContent =
-        rupiah(data.sisaSPP);
+    } catch (error) {
 
-      // Ambil saldo Kas Pondok
+      console.log(
+        "Ringkasan belum tersedia:",
+        error
+      );
+
+    }
+
+    // Saldo Kas Pondok diambil terpisah agar tetap tampil
+    // walaupun ringkasan SPP mengalami kendala.
+    try {
+
       const responseKas = await fetch(
-        API_URL + "?action=getKasPondok"
+        API_URL + "?action=getKasPondok&_=" + Date.now()
       );
 
       const dataKas = await responseKas.json();
@@ -516,12 +528,14 @@
       if (dataKas.success) {
         document.getElementById("kas").textContent =
           rupiah(dataKas.saldoKas);
+      } else {
+        console.log("Saldo Kas belum tersedia:", dataKas.message);
       }
 
     } catch (error) {
 
       console.log(
-        "Ringkasan belum tersedia:",
+        "Gagal mengambil saldo Kas Pondok:",
         error
       );
 
