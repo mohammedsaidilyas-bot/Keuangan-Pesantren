@@ -615,6 +615,28 @@ async function bukaPengeluaranTerbaru() {
     alert("Gagal mengambil data pengeluaran");
   }
 }
+
+  async function pindahkanSisaSPPKeKas() {
+  try {
+    const response = await fetch(
+      API_URL + "?action=pindahkanSisaSPPKeKas"
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert(data.message);
+      loadDashboard();
+    } else {
+      alert(data.message || "Gagal memindahkan sisa SPP.");
+    }
+
+  } catch (error) {
+    alert("Terjadi kesalahan saat menghubungi server.");
+    console.error(error);
+  }
+  }
+  
   loadDashboard();
 
 </script>
