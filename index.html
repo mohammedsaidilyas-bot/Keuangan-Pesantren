@@ -339,6 +339,20 @@
         Menu Keuangan
       </div>
 
+      <div class="menu" onclick="bukaPemasukanKas()" style="cursor:pointer;">
+  <div class="menu-left">
+    <div class="icon">💰</div>
+    <div>
+      <div class="menu-title">
+        Pemasukan Kas
+      </div>
+      <div class="menu-desc">
+        Catat pemasukan dana Kas Pondok
+      </div>
+    </div>
+  </div>
+  <div class="arrow">></div>
+      </div>
       <div class="menu" onclick="bukaForm()">
         <div class="menu-left">
           <div class="icon">💰</div>
@@ -512,6 +526,184 @@
     document.getElementById("formMessage").style.display = "none";
   }
 
+  function bukaPemasukanKas() {
+
+  const modal = document.createElement("div");
+
+  modal.id = "modalPemasukanKas";
+
+  modal.innerHTML = `
+    <div style="
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:20px;
+    ">
+
+      <div style="
+        background:white;
+        width:100%;
+        max-width:450px;
+        border-radius:20px;
+        padding:24px;
+        box-shadow:0 20px 60px rgba(0,0,0,0.25);
+      ">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:20px;
+        ">
+
+          <div>
+            <div style="
+              font-size:20px;
+              font-weight:700;
+              color:#1f2937;
+            ">
+              💰 Pemasukan Kas
+            </div>
+
+            <div style="
+              font-size:13px;
+              color:#6b7280;
+              margin-top:4px;
+            ">
+              Catat pemasukan dana Kas Pondok
+            </div>
+          </div>
+
+          <button
+            onclick="document.getElementById('modalPemasukanKas').remove()"
+            style="
+              border:none;
+              background:#f3f4f6;
+              width:36px;
+              height:36px;
+              border-radius:50%;
+              font-size:20px;
+              cursor:pointer;
+            "
+          >
+            ×
+          </button>
+
+        </div>
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Tanggal
+        </label>
+
+        <input
+          type="date"
+          id="tanggalPemasukanKas"
+          value="${new Date().toISOString().slice(0,10)}"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Keterangan
+        </label>
+
+        <input
+          type="text"
+          id="keteranganPemasukanKas"
+          placeholder="Contoh: Sumbangan wali santri"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Jumlah
+        </label>
+
+        <input
+          type="number"
+          id="jumlahPemasukanKas"
+          placeholder="Masukkan jumlah"
+          min="1"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Catatan
+        </label>
+
+        <textarea
+          id="catatanPemasukanKas"
+          placeholder="Catatan tambahan (opsional)"
+          rows="3"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:20px;
+            resize:none;
+          "
+        ></textarea>
+
+        <div
+          id="pesanPemasukanKas"
+          style="
+            display:none;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            font-size:13px;
+          "
+        ></div>
+
+        <button
+          onclick="simpanPemasukanKas()"
+          style="
+            width:100%;
+            border:none;
+            background:#2563eb;
+            color:white;
+            padding:13px;
+            border-radius:10px;
+            font-size:15px;
+            font-weight:600;
+            cursor:pointer;
+          "
+        >
+          Simpan Pemasukan
+        </button>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  }
+
   function tutupForm() {
     document.getElementById("formOverlay").style.display = "none";
   }
@@ -578,6 +770,70 @@
       tombol.disabled = false;
       tombol.textContent = "Simpan Pengeluaran";
     }
+  }
+  async function simpanPemasukanKas() {
+
+  const tanggal = document.getElementById("tanggalPemasukanKas").value;
+  const keterangan = document.getElementById("keteranganPemasukanKas").value.trim();
+  const jumlah = document.getElementById("jumlahPemasukanKas").value;
+  const catatan = document.getElementById("catatanPemasukanKas").value.trim();
+
+  const pesan = document.getElementById("pesanPemasukanKas");
+
+  if (!tanggal || !keterangan || !jumlah || Number(jumlah) <= 0) {
+    pesan.style.display = "block";
+    pesan.style.background = "#fee2e2";
+    pesan.style.color = "#991b1b";
+    pesan.textContent = "Tanggal, keterangan, dan jumlah wajib diisi.";
+    return;
+  }
+
+  try {
+
+    const url =
+      API_URL +
+      "?action=catatPemasukanKas" +
+      "&tanggal=" + encodeURIComponent(tanggal) +
+      "&keterangan=" + encodeURIComponent(keterangan) +
+      "&jumlah=" + encodeURIComponent(jumlah) +
+      "&catatan=" + encodeURIComponent(catatan);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    pesan.style.display = "block";
+
+    if (!data.success) {
+      pesan.style.background = "#fee2e2";
+      pesan.style.color = "#991b1b";
+      pesan.textContent =
+        data.message || "Gagal menyimpan pemasukan.";
+      return;
+    }
+
+    pesan.style.background = "#dcfce7";
+    pesan.style.color = "#166534";
+    pesan.textContent = "Pemasukan Kas berhasil dicatat.";
+
+    document.getElementById("keteranganPemasukanKas").value = "";
+    document.getElementById("jumlahPemasukanKas").value = "";
+    document.getElementById("catatanPemasukanKas").value = "";
+
+    setTimeout(function() {
+      document.getElementById("modalPemasukanKas").remove();
+      loadDashboard();
+    }, 800);
+
+  } catch (error) {
+
+    pesan.style.display = "block";
+    pesan.style.background = "#fee2e2";
+    pesan.style.color = "#991b1b";
+    pesan.textContent =
+      "Terjadi kesalahan saat menyimpan.";
+
+    console.error(error);
+  }
   }
 
 async function bukaPengeluaranTerbaru() {
