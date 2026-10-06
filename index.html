@@ -469,6 +469,7 @@
        */
 
       loadRingkasan();
+      loadKasPondok();
 
     } catch (error) {
 
@@ -487,6 +488,25 @@
 
   }
 
+
+  async function loadKasPondok() {
+    try {
+      const response = await fetch(
+        API_URL + "?action=getKasPondok&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+
+      console.log("Data Kas Pondok:", data);
+
+      if (data && data.success) {
+        document.getElementById("kas").textContent =
+          rupiah(data.saldoKas);
+      }
+    } catch (error) {
+      console.log("Gagal mengambil Kas Pondok:", error);
+    }
+  }
 
   async function loadRingkasan() {
 
@@ -1117,6 +1137,7 @@ async function bukaPengeluaranTerbaru() {
   }
   
   loadDashboard();
+  loadKasPondok();
 
 </script>
 
