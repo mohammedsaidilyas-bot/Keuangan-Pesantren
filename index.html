@@ -357,7 +357,7 @@
         <div class="arrow">›</div>
       </div>
 
-      <div class="menu">
+      <div class="menu" onclick="bukaPengeluaranTerbaru()" style="cursor:pointer;">
         <div class="menu-left">
           <div class="icon">📋</div>
 
@@ -564,7 +564,42 @@
       tombol.textContent = "Simpan Pengeluaran";
     }
   }
+async function bukaPengeluaranTerbaru() {
+  try {
+    const response = await fetch(
+      API_URL + "?action=getPengeluaranTerbaru"
+    );
 
+    const data = await response.json();
+
+    if (!data.success) {
+      alert("Gagal mengambil data pengeluaran");
+      return;
+    }
+
+    const transaksi = data.transaksi || [];
+
+    if (transaksi.length === 0) {
+      alert("Belum ada pengeluaran");
+      return;
+    }
+
+    let hasil = "PENGELUARAN TERBARU\n\n";
+
+    transaksi.forEach(function(t) {
+      hasil +=
+        (t.keterangan || "Pengeluaran") +
+        " - " +
+        rupiah(t.jumlah || 0) +
+        "\n";
+    });
+
+    alert(hasil);
+
+  } catch (error) {
+    alert("Gagal mengambil data pengeluaran");
+  }
+}
   loadDashboard();
 
 </script>
