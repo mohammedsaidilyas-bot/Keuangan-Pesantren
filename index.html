@@ -954,7 +954,9 @@ async function bukaDaftarSantri(){
   }catch(error){document.getElementById("santriLoading").textContent="Daftar santri belum dapat dimuat.";console.error(error)}
 }
 function renderDaftarSantri(){
-  const data=window.dataDaftarSantri||[], search=(document.getElementById("santriSearch")?.value||"").toLowerCase().trim(), filter=document.getElementById("santriFilter")?.value||"SEMUA";
+  const data=(window.dataDaftarSantri||[]).filter(function(s){
+    return String(s.nis||"").trim() !== "" || String(s.nama||"").trim() !== "";
+  }), search=(document.getElementById("santriSearch")?.value||"").toLowerCase().trim(), filter=document.getElementById("santriFilter")?.value||"SEMUA";
   const filtered=data.filter(s=>{const status=String(s.status||"").toUpperCase(), teks=(String(s.nis||"")+" "+String(s.nama||"")+" "+String(s.kelas||"")).toLowerCase(); return (!search||teks.includes(search))&&(filter==="SEMUA"||(filter==="LUNAS"&&status==="LUNAS")||(filter==="BELUM BAYAR"&&status!=="LUNAS"))});
   const lunas=data.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
   document.getElementById("santriLunasCount").textContent=lunas+" Santri"; document.getElementById("santriBelumCount").textContent=(data.length-lunas)+" Santri";
