@@ -579,6 +579,7 @@
       tombol.textContent = "Simpan Pengeluaran";
     }
   }
+
 async function bukaPengeluaranTerbaru() {
   try {
     const response = await fetch(
@@ -599,23 +600,219 @@ async function bukaPengeluaranTerbaru() {
       return;
     }
 
-    let hasil = "PENGELUARAN TERBARU\n\n";
+    let total = 0;
 
-    transaksi.forEach(function(t) {
-      hasil +=
-        (t.keterangan || "Pengeluaran") +
-        " - " +
-        rupiah(t.jumlah || 0) +
-        "\n";
+    let rows = "";
+
+    transaksi.forEach(function(t, index) {
+      const jumlah = Number(t.jumlah || 0);
+      total += jumlah;
+
+      rows += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${t.tanggal || "-"}</td>
+          <td>${t.keterangan || "Pengeluaran"}</td>
+          <td>
+            <span style="
+              background:${String(t.sumber || "").toUpperCase() === "SPP" ? "#d1fae5" : "#dbeafe"};
+              color:${String(t.sumber || "").toUpperCase() === "SPP" ? "#047857" : "#2563eb"};
+              padding:5px 10px;
+              border-radius:8px;
+              font-size:13px;
+              font-weight:600;
+            ">
+              ${t.sumber || "-"}
+            </span>
+          </td>
+          <td style="
+            text-align:right;
+            color:#dc2626;
+            font-weight:700;
+          ">
+            ${rupiah(jumlah)}
+          </td>
+        </tr>
+      `;
     });
 
-    alert(hasil);
+    const modal = document.createElement("div");
+
+    modal.id = "modalPengeluaranTerbaru";
+
+    modal.innerHTML = `
+      <div style="
+        position:fixed;
+        inset:0;
+        background:rgba(15,23,42,.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        z-index:9999;
+      ">
+
+        <div style="
+          width:100%;
+          max-width:900px;
+          max-height:90vh;
+          overflow:auto;
+          background:white;
+          border-radius:24px;
+          box-shadow:0 20px 60px rgba(0,0,0,.25);
+          padding:24px;
+        ">
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+          ">
+
+            <div>
+              <div style="
+                font-size:24px;
+                font-weight:700;
+                color:#172554;
+              ">
+                📋 Pengeluaran Terbaru
+              </div>
+
+              <div style="
+                color:#64748b;
+                margin-top:5px;
+                font-size:14px;
+              ">
+                Riwayat transaksi pengeluaran dana pondok
+              </div>
+            </div>
+
+            <button
+              onclick="document.getElementById('modalPengeluaranTerbaru').remove()"
+              style="
+                border:0;
+                background:#f1f5f9;
+                width:42px;
+                height:42px;
+                border-radius:50%;
+                font-size:22px;
+                cursor:pointer;
+              "
+            >
+              ×
+            </button>
+
+          </div>
+
+          <div style="
+            overflow-x:auto;
+            border:1px solid #e2e8f0;
+            border-radius:15px;
+          ">
+
+            <table style="
+              width:100%;
+              border-collapse:collapse;
+              min-width:650px;
+              font-size:14px;
+            ">
+
+              <thead>
+                <tr style="
+                  background:#fff7ed;
+                  color:#92400e;
+                ">
+                  <th style="padding:12px;text-align:left;">No</th>
+                  <th style="padding:12px;text-align:left;">Tanggal</th>
+                  <th style="padding:12px;text-align:left;">Keterangan</th>
+                  <th style="padding:12px;text-align:left;">Sumber</th>
+                  <th style="padding:12px;text-align:right;">Jumlah</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${rows}
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <div style="
+            margin-top:18px;
+            padding:18px;
+            background:#f8fafc;
+            border-radius:16px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+          ">
+
+            <div>
+              <div style="
+                font-weight:700;
+                color:#172554;
+                font-size:17px;
+              ">
+                Total Pengeluaran
+              </div>
+
+              <div style="
+                color:#64748b;
+                font-size:13px;
+                margin-top:4px;
+              ">
+                ${transaksi.length} transaksi
+              </div>
+            </div>
+
+            <div style="
+              color:#dc2626;
+              font-size:22px;
+              font-weight:800;
+            ">
+              ${rupiah(total)}
+            </div>
+
+          </div>
+
+          <div style="
+            display:flex;
+            justify-content:flex-end;
+            margin-top:18px;
+          ">
+
+            <button
+              onclick="document.getElementById('modalPengeluaranTerbaru').remove()"
+              style="
+                border:0;
+                background:#2563eb;
+                color:white;
+                padding:12px 25px;
+                border-radius:12px;
+                font-size:15px;
+                font-weight:600;
+                cursor:pointer;
+              "
+            >
+              Tutup
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(modal);
 
   } catch (error) {
     alert("Gagal mengambil data pengeluaran");
+    console.error(error);
   }
 }
-
   async function pindahkanSisaSPPKeKas() {
   try {
     const response = await fetch(
