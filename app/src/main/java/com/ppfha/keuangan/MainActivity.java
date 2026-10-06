@@ -20,8 +20,8 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
-        settings.setLoadWithOverviewMode(false);
-        settings.setUseWideViewPort(false);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
 
         webView.setWebViewClient(new WebViewClient());
         webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
