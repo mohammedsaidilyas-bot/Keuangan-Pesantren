@@ -377,6 +377,13 @@
         Menu Keuangan
       </div>
 
+      <div class="menu" onclick="bukaLaporanSPP()" style="cursor:pointer;">
+        <div class="menu-left"><div class="icon">📊</div><div>
+          <div class="menu-title">Laporan SPP per Periode</div>
+          <div class="menu-desc">Rekap pemasukan, pembayaran, dan sisa SPP</div>
+        </div></div><div class="arrow">›</div>
+      </div>
+
       <div class="menu" onclick="bukaDaftarSantri()" style="cursor:pointer;">
         <div class="menu-left"><div class="icon">👨‍🎓</div><div>
           <div class="menu-title">Daftar Santri & Status SPP</div>
@@ -927,6 +934,56 @@
     console.error(error);
   }
   }
+
+async function bukaLaporanSPP(){
+  const modal=document.createElement("div"); modal.id="modalLaporanSPP";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999">
+  <div style="width:100%;max-width:1000px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div><div style="font-size:22px;font-weight:800;color:#172554">📊 Laporan SPP per Periode</div><div id="laporanSPPPeriode" style="color:#64748b;font-size:13px;margin-top:4px">Memuat...</div></div>
+      <button onclick="document.getElementById('modalLaporanSPP').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button>
+    </div>
+    <div id="laporanSPPLoading" class="loading">Memuat laporan SPP...</div>
+    <div id="laporanSPPIsi" style="display:none"></div>
+  </div></div>`;
+  document.body.appendChild(modal);
+  try{
+    const [dashRes, ringRes, statusRes]=await Promise.all([
+      fetch(API_URL+"?action=getDashboardKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getRingkasanKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"})
+    ]);
+    const dash=await dashRes.json(), ring=await ringRes.json(), stat=await statusRes.json();
+    if(!dash.success) throw new Error(dash.message||"Gagal mengambil dashboard");
+    const santri=(stat.data||[]).filter(s=>String(s.nis||"").trim()!=="-"&&String(s.nama||"").trim()!=="-");
+    const total=santri.length;
+    const lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
+    const belum=total-lunas;
+    const tagihan=total*150000;
+    const diterima=Number(dash.sppMasuk||0);
+    const pengeluaran=Number(ring.pengeluaranSPP||0);
+    const sisa=Number(ring.sisaSPP ?? (diterima-pengeluaran));
+    const persen=total?Math.round(lunas/total*100):0;
+    document.getElementById("laporanSPPPeriode").textContent="Periode SPP: "+(dash.periode||stat.periode||"-");
+    document.getElementById("laporanSPPLoading").style.display="none";
+    const isi=document.getElementById("laporanSPPIsi"); isi.style.display="block";
+    isi.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div class="card"><div class="card-title">Total Tagihan</div><div class="card-value blue">${rupiah(tagihan)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${total} santri × Rp150.000</div></div>
+        <div class="card"><div class="card-title">SPP Diterima</div><div class="card-value green">${rupiah(diterima)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${lunas} santri lunas</div></div>
+        <div class="card"><div class="card-title">Belum Terbayar</div><div class="card-value red">${rupiah(Math.max(0,tagihan-diterima))}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${belum} santri</div></div>
+        <div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value orange">${rupiah(pengeluaran)}</div></div>
+        <div class="card"><div class="card-title">Sisa SPP</div><div class="card-value green">${rupiah(sisa)}</div></div>
+        <div class="card"><div class="card-title">Persentase Lunas</div><div class="card-value blue">${persen}%</div><div style="font-size:12px;color:#64748b;margin-top:5px">${lunas} dari ${total} santri</div></div>
+      </div>
+      <div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:14px">
+        <div style="font-weight:800;color:#172554;margin-bottom:8px">Ringkasan Periode</div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb"><span>Total santri</span><strong>${total}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb"><span>LUNAS</span><strong style="color:#059669">${lunas}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0"><span>BELUM BAYAR</span><strong style="color:#dc2626">${belum}</strong></div>
+      </div>`;
+  }catch(e){document.getElementById("laporanSPPLoading").textContent="Laporan SPP belum dapat dimuat.";console.error(e)}
+}
 
 async function bukaDaftarSantri(){
   const modal=document.createElement("div"); modal.id="modalDaftarSantri";
