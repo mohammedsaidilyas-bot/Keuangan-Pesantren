@@ -158,6 +158,58 @@
       color: #9ca3af;
     }
 
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      padding: 0;
+    }
+    .form-card {
+      width: 100%;
+      max-width: 520px;
+      background: white;
+      border-radius: 22px 22px 0 0;
+      padding: 20px;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.18);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .form-title { font-size: 20px; font-weight: bold; }
+    .form-subtitle { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .close-btn {
+      border: none; background: #f3f4f6; width: 38px; height: 38px;
+      border-radius: 50%; font-size: 24px; color: #6b7280;
+    }
+    .form-card label {
+      display: block; font-size: 13px; font-weight: bold; margin: 12px 0 6px;
+    }
+    .form-card input, .form-card select, .form-card textarea {
+      width: 100%; border: 1px solid #d1d5db; border-radius: 11px;
+      padding: 12px; font-size: 14px; background: white;
+    }
+    .form-card textarea { resize: vertical; }
+    .save-btn {
+      width: 100%; border: none; border-radius: 12px; padding: 14px;
+      margin-top: 15px; background: #0f766e; color: white;
+      font-size: 15px; font-weight: bold;
+    }
+    .save-btn:disabled { opacity: 0.6; }
+    .form-message {
+      display: none; margin-top: 12px; padding: 10px;
+      border-radius: 10px; font-size: 13px;
+    }
+
     .loading {
       text-align: center;
       padding: 25px;
@@ -251,13 +303,43 @@
 
     <div id="error" class="error"></div>
 
+
+    <div id="formOverlay" class="overlay" style="display:none;">
+      <div class="form-card">
+        <div class="form-header">
+          <div>
+            <div class="form-title">Catat Pengeluaran</div>
+            <div class="form-subtitle">Masukkan transaksi pengeluaran pondok</div>
+          </div>
+          <button class="close-btn" onclick="tutupForm()">×</button>
+        </div>
+        <label>Tanggal</label>
+        <input type="date" id="inputTanggal">
+        <label>Sumber Dana</label>
+        <select id="inputSumber">
+          <option value="SPP">SPP</option>
+          <option value="Kas">Kas</option>
+        </select>
+        <label>Keterangan</label>
+        <input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur">
+        <label>Jumlah</label>
+        <input type="number" id="inputJumlah" placeholder="Masukkan jumlah" min="1">
+        <label>Periode SPP</label>
+        <input type="text" id="inputPeriode" readonly>
+        <label>Catatan</label>
+        <textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
+        <div id="formMessage" class="form-message"></div>
+        <button class="save-btn" onclick="simpanPengeluaran()">Simpan Pengeluaran</button>
+      </div>
+    </div>
+
     <div class="section">
 
       <div class="section-title">
         Menu Keuangan
       </div>
 
-      <div class="menu">
+      <div class="menu" onclick="bukaForm()">
         <div class="menu-left">
           <div class="icon">💰</div>
 
@@ -406,6 +488,82 @@
 
   }
 
+
+
+  function bukaForm() {
+    document.getElementById("formOverlay").style.display = "flex";
+    document.getElementById("inputTanggal").value = new Date().toISOString().slice(0, 10);
+    document.getElementById("inputPeriode").value = document.getElementById("periode").textContent || "";
+    document.getElementById("formMessage").style.display = "none";
+  }
+
+  function tutupForm() {
+    document.getElementById("formOverlay").style.display = "none";
+  }
+
+  async function simpanPengeluaran() {
+    const tombol = document.querySelector(".save-btn");
+    const message = document.getElementById("formMessage");
+    const tanggal = document.getElementById("inputTanggal").value;
+    const sumber = document.getElementById("inputSumber").value;
+    const keterangan = document.getElementById("inputKeterangan").value.trim();
+    const jumlah = document.getElementById("inputJumlah").value;
+    const periode = document.getElementById("inputPeriode").value.trim();
+    const catatan = document.getElementById("inputCatatan").value.trim();
+
+    if (!tanggal || !keterangan || !jumlah || Number(jumlah) <= 0) {
+      message.style.display = "block";
+      message.style.background = "#fee2e2";
+      message.style.color = "#991b1b";
+      message.textContent = "Tanggal, keterangan, dan jumlah wajib diisi.";
+      return;
+    }
+
+    tombol.disabled = true;
+    tombol.textContent = "Menyimpan...";
+
+    try {
+      const url = API_URL +
+        "?action=catatPengeluaran" +
+        "&tanggal=" + encodeURIComponent(tanggal) +
+        "&keterangan=" + encodeURIComponent(keterangan) +
+        "&jumlah=" + encodeURIComponent(jumlah) +
+        "&sumber=" + encodeURIComponent(sumber) +
+        "&periode=" + encodeURIComponent(periode) +
+        "&catatan=" + encodeURIComponent(catatan);
+
+      const response = await fetch(url);
+      const data = await response.json();
+      message.style.display = "block";
+
+      if (!data.success) {
+        message.style.background = "#fee2e2";
+        message.style.color = "#991b1b";
+        message.textContent = data.message || "Gagal menyimpan pengeluaran.";
+        return;
+      }
+
+      message.style.background = "#dcfce7";
+      message.style.color = "#166534";
+      message.textContent = "Pengeluaran berhasil dicatat.";
+      document.getElementById("inputKeterangan").value = "";
+      document.getElementById("inputJumlah").value = "";
+      document.getElementById("inputCatatan").value = "";
+
+      setTimeout(function() {
+        tutupForm();
+        loadDashboard();
+      }, 700);
+    } catch (error) {
+      message.style.display = "block";
+      message.style.background = "#fee2e2";
+      message.style.color = "#991b1b";
+      message.textContent = "Terjadi kesalahan saat menyimpan.";
+    } finally {
+      tombol.disabled = false;
+      tombol.textContent = "Simpan Pengeluaran";
+    }
+  }
 
   loadDashboard();
 
