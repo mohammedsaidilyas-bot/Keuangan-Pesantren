@@ -506,6 +506,18 @@
       document.getElementById("sisaSPP").textContent =
         rupiah(data.sisaSPP);
 
+      // Ambil saldo Kas Pondok
+      const responseKas = await fetch(
+        API_URL + "?action=getKasPondok"
+      );
+
+      const dataKas = await responseKas.json();
+
+      if (dataKas.success) {
+        document.getElementById("kas").textContent =
+          rupiah(dataKas.saldoKas);
+      }
+
     } catch (error) {
 
       console.log(
