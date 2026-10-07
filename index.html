@@ -359,37 +359,45 @@
       .expense-bar-value{font-size:7px!important}
     }
 
-    /* MENU HP: menggantikan sidebar, langsung di bawah kartu statistik */
-    .mobile-menu{display:none}
+    /* Navigasi HP: tetap di bawah layar, seperti aplikasi native */
+    .mobile-bottom-nav{display:none}
     @media(max-width:699px){
-      .mobile-menu{
-        display:grid!important;
-        grid-template-columns:repeat(4,minmax(0,1fr));
-        gap:5px;
-        margin:6px 0 7px;
-        padding:6px;
-        background:#fff;
-        border-radius:11px;
-        box-shadow:0 3px 10px rgba(15,23,42,.06);
+      .sidebar{display:none!important}
+      .mobile-bottom-nav{
+        position:fixed;
+        left:0;
+        right:0;
+        bottom:0;
+        height:64px;
+        z-index:9998;
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        background:rgba(255,255,255,.98);
+        border-top:1px solid #e2e8f0;
+        box-shadow:0 -4px 18px rgba(15,23,42,.10);
+        padding:5px 4px calc(5px + env(safe-area-inset-bottom));
+        box-sizing:border-box;
       }
-      .mobile-menu button{
+      .mobile-nav-item{
         border:0;
-        background:#f8fafc;
-        color:#334155;
-        border-radius:8px;
-        min-height:42px;
-        padding:4px 2px;
+        background:transparent;
+        color:#64748b;
         display:flex;
         flex-direction:column;
         align-items:center;
         justify-content:center;
-        gap:2px;
+        gap:3px;
+        border-radius:10px;
         font:inherit;
         cursor:pointer;
       }
-      .mobile-menu button:active{background:#e6fffb;color:#0f766e}
-      .mobile-menu span{font-size:15px;line-height:1}
-      .mobile-menu small{font-size:7px;font-weight:700;white-space:nowrap;line-height:1.1}
+      .mobile-nav-item span{font-size:21px;line-height:20px;font-weight:700}
+      .mobile-nav-item small{font-size:9px;font-weight:700;line-height:12px}
+      .mobile-nav-item.active,
+      .mobile-nav-item:active{color:#0f766e;background:#ecfdf5}
+      body{padding-bottom:70px!important}
+      .main-area{width:100%!important}
+      .container{padding-bottom:8px!important}
     }
 
   </style>
@@ -484,16 +492,13 @@
 
     </div>
 
-    <div class="mobile-menu">
-      <button onclick="loadDashboard()"><span>🏠</span><small>Dashboard</small></button>
-      <button onclick="bukaPemasukanKas()"><span>💰</span><small>Pemasukan</small></button>
-      <button onclick="bukaForm()"><span>🛒</span><small>Pengeluaran</small></button>
-      <button onclick="bukaDaftarSantri()"><span>👥</span><small>Pembayaran</small></button>
-      <button onclick="bukaDaftarSantri()"><span>📄</span><small>Data Santri</small></button>
-      <button onclick="bukaLaporanPengeluaran()"><span>📋</span><small>Laporan</small></button>
-      <button onclick="pindahkanSisaSPPKeKas()"><span>◔</span><small>Rekap Periode</small></button>
-      <button onclick="alert('Pengaturan akan diaktifkan saat hak akses selesai.')"><span>⚙️</span><small>Pengaturan</small></button>
-    </div>
+    <nav class="mobile-bottom-nav" aria-label="Navigasi utama HP">
+      <button class="mobile-nav-item active" onclick="loadDashboard()"><span>⌂</span><small>Beranda</small></button>
+      <button class="mobile-nav-item" onclick="bukaDaftarSantri()"><span>♟</span><small>Santri</small></button>
+      <button class="mobile-nav-item" onclick="bukaMenuTransaksiHP()"><span>☷</span><small>Transaksi</small></button>
+      <button class="mobile-nav-item" onclick="bukaLaporanPengeluaran()"><span>▤</span><small>Laporan</small></button>
+      <button class="mobile-nav-item" onclick="bukaPengaturanHP()"><span>⚙</span><small>Pengaturan</small></button>
+    </nav>
 
     <div id="error" class="error"></div>
 
@@ -1668,5 +1673,22 @@ function renderLaporanPengeluaran(){
 
 </script>
 
+<script>
+function bukaMenuTransaksiHP(){
+  const modal=document.createElement("div");
+  modal.id="modalMenuTransaksiHP";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px rgba(0,0,0,.18)">
+      <div style="font-size:18px;font-weight:800;color:#172554;margin-bottom:12px">Transaksi</div>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaPemasukanKas()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#ecfdf5;color:#047857;font-weight:800;margin-bottom:8px">💰 Pemasukan Kas</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaForm()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#fff7ed;color:#c2410c;font-weight:800;margin-bottom:8px">🛒 Catat Pengeluaran</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaLaporanPengeluaran()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#f8fafc;color:#334155;font-weight:800">📋 Pengeluaran Terbaru</button>
+    </div></div>`;
+  document.body.appendChild(modal);
+}
+function bukaPengaturanHP(){
+  alert('Pengaturan akan diaktifkan saat hak akses selesai.');
+}
+</script>
 </body>
   </html>
