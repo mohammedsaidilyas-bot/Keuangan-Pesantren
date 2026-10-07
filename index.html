@@ -921,13 +921,49 @@
 
 
   function bukaForm() {
-    document.getElementById("formOverlay").style.display = "flex";
+    const lama = document.getElementById("formOverlay");
+    if (lama) lama.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "formOverlay";
+    modal.className = "overlay";
+    modal.style.display = "flex";
+    modal.innerHTML = `
+      <div class="form-card">
+        <div class="form-header">
+          <div>
+            <div class="form-title">🛒 Catat Pengeluaran</div>
+            <div class="form-subtitle">Catat pengeluaran dana SPP atau Kas Pondok</div>
+          </div>
+          <button class="close-btn" onclick="tutupForm()">×</button>
+        </div>
+        <label for="inputTanggal">Tanggal</label>
+        <input type="date" id="inputTanggal">
+        <label for="inputSumber">Sumber Dana</label>
+        <select id="inputSumber">
+          <option value="SPP">SPP</option>
+          <option value="KAS">Kas</option>
+        </select>
+        <label for="inputKeterangan">Keterangan</label>
+        <input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur">
+        <label for="inputJumlah">Jumlah (Rp)</label>
+        <input type="number" id="inputJumlah" min="1" inputmode="numeric" placeholder="Contoh: 50000">
+        <label for="inputPeriode">Periode SPP</label>
+        <input type="text" id="inputPeriode" placeholder="Contoh: Oktober">
+        <label for="inputCatatan">Catatan</label>
+        <textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
+        <div id="formMessage" class="form-message"></div>
+        <button class="save-btn" onclick="simpanPengeluaran()">Simpan Pengeluaran</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const periodeEl = document.getElementById("periode");
     document.getElementById("inputTanggal").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("inputPeriode").value = document.getElementById("periode").textContent || "";
-    document.getElementById("formMessage").style.display = "none";
+    document.getElementById("inputPeriode").value = periodeEl ? periodeEl.textContent.trim() : "";
   }
 
-async function bukaRekapKas(){
+  async function bukaRekapKas(){
   const modal=document.createElement("div");
   modal.id="modalRekapKas";
   modal.innerHTML=`
