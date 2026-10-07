@@ -372,6 +372,23 @@
     </div>
 
     <div id="error" class="error"></div>
+    <div class="quick-overview">
+      <div class="overview-card">
+        <div class="overview-head"><div><div class="overview-title">Ringkasan Pembayaran</div><div class="overview-muted">Progress periode SPP saat ini</div></div><div style="font-size:20px">📊</div></div>
+        <div class="mini-bar"><div class="mini-bar-head"><span>Sudah dibayar</span><strong id="overviewPaid">0%</strong></div><div class="mini-track"><div id="overviewPaidFill" class="mini-fill" style="width:0%"></div></div></div>
+        <div class="balance-note" id="overviewNote">Menyiapkan ringkasan pembayaran...</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-head"><div><div class="overview-title">Akses Cepat</div><div class="overview-muted">Fitur yang sering digunakan</div></div><div style="font-size:20px">⚡</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="bukaDaftarSantri()" style="border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">👨‍🎓 Santri</button>
+          <button onclick="bukaForm()" style="border:1px solid #fed7aa;background:#fff7ed;color:#c2410c;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">📝 Pengeluaran</button>
+          <button onclick="bukaLaporanPengeluaran()" style="border:1px solid #dbeafe;background:#eff6ff;color:#1d4ed8;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">📑 Laporan</button>
+          <button onclick="window.bukaRekapKas()" style="border:1px solid #e0e7ff;background:#f5f3ff;color:#6d28d9;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">💰 Rekap Kas</button>
+        </div>
+      </div>
+    </div>
+
 
     <div class="dashboard-progress">
       <div class="progress-head"><span>Progres Pembayaran SPP</span><span id="progressPersen">0%</span></div>
@@ -581,6 +598,9 @@
       if(progressEl) progressEl.style.width = Math.min(100, persen) + "%";
       if(progressPct) progressPct.textContent = persenBulat + "%";
       if(progressNote) progressNote.textContent = (data.lunas || 0) + " dari " + totalSantri + " santri sudah membayar";
+      const ovPaid=document.getElementById("overviewPaid"), ovFill=document.getElementById("overviewPaidFill"), ovNote=document.getElementById("overviewNote");
+      if(ovPaid) ovPaid.textContent=persenBulat+"%"; if(ovFill) ovFill.style.width=Math.min(100,persen)+"%";
+      if(ovNote) ovNote.textContent=(data.lunas||0)+" santri sudah membayar dan "+(data.belumBayar||0)+" santri belum bayar pada periode "+(data.periode||"saat ini")+".";
 
       // Status periode SPP untuk membantu bendahara menentukan kapan
       // sisa SPP sudah boleh dipindahkan ke Kas.
