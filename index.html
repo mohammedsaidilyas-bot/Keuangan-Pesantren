@@ -744,22 +744,30 @@
       const periodeDesc = document.getElementById("statusPeriodeDesc");
 
       periodeBox.style.display = "block";
-      if (belumPeriode === 0) {
+      if (transferSPP > 0) {
+        periodeBox.style.background = "#ecfdf5";
+        periodeBox.style.borderColor = "#a7f3d0";
+        periodeTitle.style.color = "#047857";
+        periodeDesc.style.color = "#065f46";
+        periodeTitle.textContent = "✓ Sisa SPP sudah dipindahkan ke Kas";
+        periodeDesc.textContent =
+          rupiah(transferSPP) + " dari periode " + (data.periode || "") + " sudah tercatat masuk ke Kas Pondok.";
+      } else if (belumPeriode === 0) {
         periodeBox.style.background = "#ecfdf5";
         periodeBox.style.borderColor = "#a7f3d0";
         periodeTitle.style.color = "#047857";
         periodeDesc.style.color = "#065f46";
         periodeTitle.textContent = "✓ Periode SPP sudah selesai";
         periodeDesc.textContent =
-          "Semua santri sudah lunas. Sisa dana SPP periode ini sudah boleh dipindahkan ke Kas Pondok.";
+          "Semua santri sudah lunas. Sisa dana SPP periode ini siap dipindahkan ke Kas Pondok.";
       } else {
         periodeBox.style.background = "#fffbeb";
         periodeBox.style.borderColor = "#fde68a";
         periodeTitle.style.color = "#92400e";
         periodeDesc.style.color = "#78350f";
-        periodeTitle.textContent = "⏳ Periode SPP belum selesai";
+        periodeTitle.textContent = "⏳ Periode SPP masih berjalan";
         periodeDesc.textContent =
-          "Masih ada " + belumPeriode + " santri yang belum bayar. Sisa SPP belum boleh dipindahkan ke Kas.";
+          "Masih ada " + belumPeriode + " santri yang belum bayar. Sisa dana yang sudah diterima tetap tercatat sebagai SPP periode ini.";
       }
 
       document.getElementById("loading").style.display =
@@ -802,8 +810,30 @@
       console.log("Data Kas Pondok:", data);
 
       if (data && data.success) {
-        document.getElementById("kas").textContent =
-          rupiah(data.saldoKas);
+        let saldoKas = Number(data.saldoKas || 0);
+
+        // Backend lama belum memasukkan transaksi Transfer SPP -> Kas.
+        // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
+        try {
+          const txResponse = await fetch(
+            API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+            { cache: "no-store" }
+          );
+          const txData = await txResponse.json();
+          const transaksi = (txData && txData.success && Array.isArray(txData.transaksi))
+            ? txData.transaksi : [];
+
+          const transferSPP = transaksi
+            .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
+            .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
+            .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+
+          saldoKas += transferSPP;
+        } catch (e) {
+          console.log("Gagal membaca transfer SPP ke Kas:", e);
+        }
+
+        document.getElementById("kas").textContent = rupiah(saldoKas);
       }
     } catch (error) {
       console.log("Gagal mengambil Kas Pondok:", error);
@@ -864,7 +894,14 @@
         .reduce((n,t) => n + Number(t.jumlah || 0), 0);
 
       const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
-      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP);
+
+      const transferSPP = transaksi
+        .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
+        .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
+        .filter(t => normalisasiPeriode(String(t.periode ?? t.Priode ?? t.priode)) === periodeAktif)
+        .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+
+      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
 
       const elPengeluaran=document.getElementById("pengeluaranSPP");
       const elSisa=document.getElementById("sisaSPP");
