@@ -658,7 +658,10 @@ async function bukaRekapKas(){
     const pemasukan=Number(data.pemasukanKas||0);
     const pengeluaran=Number(data.pengeluaranKas||0);
     const sisaSPP=Number(data.sisaSPPKeKas||0);
-    const saldoAwal=Number(data.saldoAwalKas||0);
+    // Jika API hanya mengirim saldoKas, berarti saldo saat ini berasal dari saldo awal.
+    const saldoAwal=(data.saldoAwalKas !== undefined && data.saldoAwalKas !== null)
+      ? Number(data.saldoAwalKas||0)
+      : saldo;
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
     const isi=document.getElementById("rekapKasIsi");
