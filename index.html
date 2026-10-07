@@ -419,7 +419,7 @@
 
   <div class="header">
     <div style="display:flex;align-items:center;gap:14px;">
-      <img src="logo_pondok_exact.svg" alt="Logo Pondok" style="width:58px;height:58px;object-fit:contain;flex:none;">
+      <img src="https://raw.githubusercontent.com/mohammedsaidilyas-bot/Keuangan-Pesantren/main/logo_pondok_new.png?v=2" alt="Logo Pondok" style="width:58px;height:58px;object-fit:contain;flex:none;">
       <div>
         <h1>Keuangan Pesantren</h1>
         <p>Pondok Pesantren Fathul Huda Al Qorrobiyah</p>
@@ -693,6 +693,7 @@
 
       }
 
+      window.dashboardKeuangan = data;
       document.getElementById("periode").textContent =
         data.periode || "-";
       if(document.getElementById("periodeHeader")){
@@ -811,29 +812,60 @@
 
   async function loadRingkasan() {
 
+    // Ringkasan pengeluaran SPP dihitung langsung dari transaksi nyata,
+    // sehingga kartu dashboard tidak bergantung pada ringkasan backend lama.
     try {
-
       const response = await fetch(
-        API_URL + "?action=getRingkasanKeuangan&_=" + Date.now()
+        API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+        { cache: "no-store" }
       );
-
       const data = await response.json();
+      const transaksi = (data && data.success && Array.isArray(data.transaksi))
+        ? data.transaksi : [];
 
-      if (data.success) {
-        document.getElementById("pengeluaranSPP").textContent =
-          rupiah(data.pengeluaranSPP);
+      const periode = String(document.getElementById("periode")?.textContent || "").trim().toLowerCase();
+      const bulanMap = {
+        januari:0, februari:1, maret:2, april:3, mei:4, juni:5,
+        juli:6, agustus:7, september:8, oktober:9, november:10, desember:11
+      };
+      const bulanAktif = bulanMap[periode];
+      const tahunAktif = new Date().getFullYear();
 
-        document.getElementById("sisaSPP").textContent =
-          rupiah(data.sisaSPP);
+      function bulanTransaksi(tanggal) {
+        const s = String(tanggal || "").trim();
+        let m;
+        if ((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/))) return {bulan:Number(m[2])-1,tahun:Number(m[3])};
+        if ((m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return {bulan:Number(m[2])-1,tahun:Number(m[1])};
+        return null;
       }
 
+      const pengeluaranSPP = transaksi
+        .filter(t => String(t.sumber || "").toUpperCase() === "SPP")
+        .filter(t => {
+          const d=bulanTransaksi(t.tanggal);
+          return bulanAktif === undefined || !d || (d.bulan === bulanAktif && d.tahun === tahunAktif);
+        })
+        .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+
+      const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
+      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP);
+
+      const elPengeluaran=document.getElementById("pengeluaranSPP");
+      const elSisa=document.getElementById("sisaSPP");
+      if(elPengeluaran) elPengeluaran.textContent=rupiah(pengeluaranSPP);
+      if(elSisa) elSisa.textContent=rupiah(sisaSPP);
+
+      const expenseBarValue=document.getElementById("expenseBarValue");
+      if(expenseBarValue) expenseBarValue.textContent=rupiah(pengeluaranSPP);
+      const incomeBarValue=document.getElementById("incomeBarValue");
+      if(incomeBarValue) incomeBarValue.textContent=rupiah(sppMasuk);
+      const expenseBar=document.getElementById("expenseBar");
+      const incomeBar=document.getElementById("incomeBar");
+      const maxBar=Math.max(sppMasuk,pengeluaranSPP,1);
+      if(expenseBar) expenseBar.style.height=Math.max(8,Math.round(pengeluaranSPP/maxBar*36))+"px";
+      if(incomeBar) incomeBar.style.height=Math.max(8,Math.round(sppMasuk/maxBar*36))+"px";
     } catch (error) {
-
-      console.log(
-        "Ringkasan belum tersedia:",
-        error
-      );
-
+      console.log("Pengeluaran SPP belum dapat dihitung:", error);
     }
 
     // Saldo Kas Pondok diambil terpisah agar tetap tampil
