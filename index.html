@@ -257,6 +257,7 @@
     }
   
 
+    @media (min-width:1100px){.cards{grid-template-columns:repeat(4,1fr)}.cards .card:nth-child(5),.cards .card:nth-child(6){grid-column:span 2}}
     @media (min-width:700px){.legacy-menu-section{display:none!important}.dashboard-final-grid{margin-top:16px}.main-area>.container{padding-top:18px}}
     @media (min-width:700px){.main-area>.container{max-width:none;width:100%;padding-left:24px;padding-right:24px}.app-shell{align-items:flex-start}.sidebar{min-height:calc(100vh - 102px)}}
     @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
@@ -373,6 +374,13 @@
     </div>
 
     <div id="error" class="error"></div>
+
+    <div class="dashboard-progress">
+      <div class="progress-head"><span>Progres Pembayaran SPP</span><span id="progressPersen">0%</span></div>
+      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div id="progressNote" class="progress-note">Memuat progres pembayaran...</div>
+    </div>
+
     <div class="dashboard-final-grid">
       <div class="panel">
         <div class="panel-head"><div><div class="panel-title">Pemasukan SPP Periode Ini</div><div class="panel-sub">Total pembayaran yang sudah diterima pada periode aktif</div></div><span style="font-size:22px">📥</span></div>
