@@ -257,6 +257,7 @@
     }
   
 
+    @media (min-width:700px){.legacy-menu-section{display:none!important}.dashboard-final-grid{margin-top:16px}.main-area>.container{padding-top:18px}}
     @media (min-width:700px){.main-area>.container{max-width:none;width:100%;padding-left:24px;padding-right:24px}.app-shell{align-items:flex-start}.sidebar{min-height:calc(100vh - 102px)}}
     @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
     @media (min-width: 700px) {
@@ -310,8 +311,6 @@
     <div style="display:flex;justify-content:flex-end;margin:-4px 0 12px;">
       <button onclick="muatUlangData()" style="border:0;background:white;color:#0f766e;border:1px solid #ccfbf1;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;">↻ Muat Ulang Data</button>
     </div>
-
-    <div class="dashboard-welcome"><div><h2>Dashboard Keuangan</h2><p>Ringkasan kondisi keuangan dan pembayaran SPP periode berjalan.</p></div><div class="welcome-badge">Data Asli Pondok</div></div>
 
     <div class="periode">
       <div class="periode-title">Periode SPP</div>
@@ -374,10 +373,6 @@
     </div>
 
     <div id="error" class="error"></div>
-    <div class="data-refresh-note"><div><span class="online-dot"></span><strong>Data tersambung</strong> • Dashboard menggunakan data keuangan pondok</div><button onclick="muatUlangData()" style="border:0;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:700">↻ Perbarui</button></div>
-    <div class="dashboard-section-title"><div><h3>Aktivitas Keuangan Terbaru</h3><p>Ringkasan transaksi terakhir yang tercatat</p></div><button class="action-chip" onclick="bukaLaporanPengeluaran()">Lihat semua</button></div>
-    <div class="overview-card" id="dashboardRecentBox"><div class="empty-state">Memuat transaksi terbaru...</div></div>
-
     <div class="dashboard-final-grid">
       <div class="panel">
         <div class="panel-head"><div><div class="panel-title">Pemasukan SPP Periode Ini</div><div class="panel-sub">Total pembayaran yang sudah diterima pada periode aktif</div></div><span style="font-size:22px">📥</span></div>
@@ -398,61 +393,7 @@
       </div>
     </div>
 
-    <div class="quick-overview">
-      <div class="overview-card">
-        <div class="overview-head"><div><div class="overview-title">Ringkasan Pembayaran</div><div class="overview-muted">Progress periode SPP saat ini</div></div><div style="font-size:20px">📊</div></div>
-        <div class="mini-bar"><div class="mini-bar-head"><span>Sudah dibayar</span><strong id="overviewPaid">0%</strong></div><div class="mini-track"><div id="overviewPaidFill" class="mini-fill" style="width:0%"></div></div></div>
-        <div class="balance-note" id="overviewNote">Menyiapkan ringkasan pembayaran...</div>
-      </div>
-      <div class="overview-card">
-        <div class="overview-head"><div><div class="overview-title">Akses Cepat</div><div class="overview-muted">Fitur yang sering digunakan</div></div><div style="font-size:20px">⚡</div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button onclick="bukaDaftarSantri()" style="border:1px solid #ccfbf1;background:#f0fdfa;color:#0f766e;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">👨‍🎓 Santri</button>
-          <button onclick="bukaForm()" style="border:1px solid #fed7aa;background:#fff7ed;color:#c2410c;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">📝 Pengeluaran</button>
-          <button onclick="bukaLaporanPengeluaran()" style="border:1px solid #dbeafe;background:#eff6ff;color:#1d4ed8;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">📑 Laporan</button>
-          <button onclick="window.bukaRekapKas()" style="border:1px solid #e0e7ff;background:#f5f3ff;color:#6d28d9;border-radius:12px;padding:11px 8px;font-weight:700;font-size:12px">💰 Rekap Kas</button>
-        </div>
-      </div>
-    </div>
-
-
-    <div class="dashboard-progress">
-      <div class="progress-head"><span>Progres Pembayaran SPP</span><span id="progressPersen">0%</span></div>
-      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
-      <div id="progressNote" class="progress-note">Memuat progres pembayaran...</div>
-    </div>
-
-
-    <div id="formOverlay" class="overlay" style="display:none;">
-      <div class="form-card">
-        <div class="form-header">
-          <div>
-            <div class="form-title">Catat Pengeluaran</div>
-            <div class="form-subtitle">Masukkan transaksi pengeluaran pondok</div>
-          </div>
-          <button class="close-btn" onclick="tutupForm()">×</button>
-        </div>
-        <label>Tanggal</label>
-        <input type="date" id="inputTanggal">
-        <label>Sumber Dana</label>
-        <select id="inputSumber">
-          <option value="SPP">SPP</option>
-          <option value="Kas">Kas</option>
-        </select>
-        <label>Keterangan</label>
-        <input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur">
-        <label>Jumlah</label>
-        <input type="number" id="inputJumlah" placeholder="Masukkan jumlah" min="1">
-        <label>Periode SPP</label>
-        <input type="text" id="inputPeriode" readonly>
-        <label>Catatan</label>
-        <textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
-        <div id="formMessage" class="form-message"></div>
-        <button class="save-btn" onclick="simpanPengeluaran()">Simpan Pengeluaran</button>
-      </div>
-    </div>
-
-    <div class="section">
+    <div class="section legacy-menu-section">
 
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
         <div>
