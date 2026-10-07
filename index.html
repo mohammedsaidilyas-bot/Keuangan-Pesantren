@@ -955,7 +955,12 @@ async function bukaLaporanSPP(){
     ]);
     const dash=await dashRes.json(), ring=await ringRes.json(), stat=await statusRes.json();
     if(!dash.success) throw new Error(dash.message||"Gagal mengambil dashboard");
-    const santri=(stat.data||[]).filter(s=>String(s.nis||"").trim()!=="-"&&String(s.nama||"").trim()!=="-");
+    const santri=(stat.data||[]).filter(function(s){
+      const nis=String(s.nis||"").trim();
+      const nama=String(s.nama||"").trim();
+      const kelas=String(s.kelas||"").trim();
+      return (nis!=="" && nis!=="-") || (nama!=="" && nama!=="-") || (kelas!=="" && kelas!=="-");
+    });
     const total=santri.length;
     const lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
     const belum=total-lunas;
