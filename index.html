@@ -981,20 +981,38 @@ function bukaFormPengeluaran() {
       </div>
     </div>`;
   document.body.appendChild(modal);
+
   try{
-    const response=await fetch(API_URL+"?action=getKasPondok&_="+Date.now(),{cache:"no-store"});
-    const data=await response.json();
+    const [kasResponse, transferResponse] = await Promise.all([
+      fetch(API_URL+"?action=getKasPondok&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getTransferSPP&_="+Date.now(),{cache:"no-store"})
+    ]);
+
+    const data=await kasResponse.json();
+    const transferData=await transferResponse.json();
+
     if(!data.success) throw new Error(data.message||"Gagal mengambil saldo Kas");
-    const saldo=Number(data.saldoKas||0);
+
+    const saldoBackend=Number(data.saldoKas||0);
     const pemasukan=Number(data.pemasukanKas||0);
     const pengeluaran=Number(data.pengeluaranKas||0);
-    const sisaSPP=Number(data.sisaSPPKeKas||0);
-    // Jika API hanya mengirim saldoKas, berarti saldo saat ini berasal dari saldo awal.
+
+    const transferList=(transferData && transferData.success && Array.isArray(transferData.transaksi))
+      ? transferData.transaksi : [];
+
+    const sisaSPP=transferList.reduce((total,t)=>{
+      return total + Number(t.jumlah||0);
+    },0);
+
     const saldoAwal=(data.saldoAwalKas !== undefined && data.saldoAwalKas !== null)
       ? Number(data.saldoAwalKas||0)
-      : saldo;
+      : Math.max(0,saldoBackend-sisaSPP);
+
+    const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
+
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
+
     const isi=document.getElementById("rekapKasIsi");
     isi.style.display="block";
     isi.innerHTML=`
@@ -1003,7 +1021,7 @@ function bukaFormPengeluaran() {
         <div class="card"><div class="card-title">Pemasukan Kas</div><div class="card-value green">${rupiah(pemasukan)}</div></div>
         <div class="card"><div class="card-title">Sisa SPP → Kas</div><div class="card-value green">${rupiah(sisaSPP)}</div></div>
         <div class="card"><div class="card-title">Pengeluaran Kas</div><div class="card-value red">${rupiah(pengeluaran)}</div></div>
-        <div class="card" style="grid-column:1/-1;background:#eff6ff"><div class="card-title">Saldo Kas Pondok</div><div class="card-value blue" style="font-size:28px">${rupiah(saldo)}</div></div>
+        <div class="card" style="grid-column:1/-1;background:#eff6ff"><div class="card-title">Saldo Kas Pondok</div><div class="card-value blue" style="font-size:28px">${rupiah(saldoTampil)}</div></div>
       </div>
       <div style="background:#f8fafc;border-radius:16px;padding:16px">
         <div style="font-weight:800;color:#172554;margin-bottom:8px">Rumus Saldo</div>
