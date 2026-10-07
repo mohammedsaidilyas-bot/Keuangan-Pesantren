@@ -359,6 +359,39 @@
       .expense-bar-value{font-size:7px!important}
     }
 
+    /* MENU HP: menggantikan sidebar, langsung di bawah kartu statistik */
+    .mobile-menu{display:none}
+    @media(max-width:699px){
+      .mobile-menu{
+        display:grid!important;
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        gap:5px;
+        margin:6px 0 7px;
+        padding:6px;
+        background:#fff;
+        border-radius:11px;
+        box-shadow:0 3px 10px rgba(15,23,42,.06);
+      }
+      .mobile-menu button{
+        border:0;
+        background:#f8fafc;
+        color:#334155;
+        border-radius:8px;
+        min-height:42px;
+        padding:4px 2px;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:2px;
+        font:inherit;
+        cursor:pointer;
+      }
+      .mobile-menu button:active{background:#e6fffb;color:#0f766e}
+      .mobile-menu span{font-size:15px;line-height:1}
+      .mobile-menu small{font-size:7px;font-weight:700;white-space:nowrap;line-height:1.1}
+    }
+
   </style>
 </head>
 
@@ -449,6 +482,17 @@
         </div>
       </div>
 
+    </div>
+
+    <div class="mobile-menu">
+      <button onclick="loadDashboard()"><span>🏠</span><small>Dashboard</small></button>
+      <button onclick="bukaPemasukanKas()"><span>💰</span><small>Pemasukan</small></button>
+      <button onclick="bukaForm()"><span>🛒</span><small>Pengeluaran</small></button>
+      <button onclick="bukaDaftarSantri()"><span>👥</span><small>Pembayaran</small></button>
+      <button onclick="bukaDaftarSantri()"><span>📄</span><small>Data Santri</small></button>
+      <button onclick="bukaLaporanPengeluaran()"><span>📋</span><small>Laporan</small></button>
+      <button onclick="pindahkanSisaSPPKeKas()"><span>◔</span><small>Rekap Periode</small></button>
+      <button onclick="alert('Pengaturan akan diaktifkan saat hak akses selesai.')"><span>⚙️</span><small>Pengaturan</small></button>
     </div>
 
     <div id="error" class="error"></div>
