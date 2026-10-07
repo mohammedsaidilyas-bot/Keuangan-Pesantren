@@ -839,11 +839,27 @@
         return null;
       }
 
+      function normalisasiPeriode(v) {
+        return String(v || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      // Pengeluaran SPP dibebankan berdasarkan kolom PERIODE,
+      // bukan berdasarkan tanggal transaksi. Jadi pengeluaran bulan
+      // berikutnya tetap bisa mengurangi saldo periode sebelumnya.
+      const periodeAktif = normalisasiPeriode(document.getElementById("periode")?.textContent || "");
+
       const pengeluaranSPP = transaksi
         .filter(t => String(t.sumber || "").toUpperCase() === "SPP")
         .filter(t => {
-          const d=bulanTransaksi(t.tanggal);
-          return bulanAktif === undefined || !d || (d.bulan === bulanAktif && d.tahun === tahunAktif);
+          const periodeTransaksi = normalisasiPeriode(t.periode ?? t.Priode ?? t.priode);
+          if (periodeTransaksi) return periodeTransaksi === periodeAktif;
+
+          // Kompatibilitas untuk transaksi lama yang belum memiliki periode.
+          const d = bulanTransaksi(t.tanggal);
+          return !d || bulanAktif === undefined || (d.bulan === bulanAktif && d.tahun === tahunAktif);
         })
         .reduce((n,t) => n + Number(t.jumlah || 0), 0);
 
