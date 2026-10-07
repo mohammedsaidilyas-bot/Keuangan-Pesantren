@@ -52,126 +52,96 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void buatPDFDanBagikan(String html, String fileName, String message) {
-        final WebView printView = new WebView(this);
+
+    private void renderHtmlToPdf(String html, String fileName, boolean share, String message) {
+        final WebView v = new WebView(this);
         final File dir = new File(getCacheDir(), "laporan");
         if (!dir.exists()) dir.mkdirs();
 
-        final String safeName = fileName == null || fileName.trim().isEmpty()
-                ? "Laporan-Keuangan.pdf" : fileName.replaceAll("[^a-zA-Z0-9._-]", "-");
-        final File pdfFile = new File(dir, safeName);
+        final String n = (fileName == null || fileName.trim().isEmpty())
+                ? "Laporan-Keuangan.pdf"
+                : fileName.replaceAll("[^a-zA-Z0-9._-]", "-");
+        final File pdf = new File(dir, n);
 
-        WebSettings ps = printView.getSettings();
-        ps.setJavaScriptEnabled(true);
-        ps.setDomStorageEnabled(true);
-        ps.setLoadWithOverviewMode(false);
-        ps.setUseWideViewPort(false);
-        printView.setBackgroundColor(Color.WHITE);
+        WebSettings s = v.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setLoadWithOverviewMode(false);
+        s.setUseWideViewPort(false);
+        v.setBackgroundColor(Color.WHITE);
 
-        // WebView dipasang sementara supaya layout dan CSS benar-benar dirender.
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(1, 1);
-        lp.leftMargin = -10;
-        lp.topMargin = -10;
-        addContentView(printView, lp);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(794, 1123);
+        lp.leftMargin = -1000;
+        lp.topMargin = -1000;
+        addContentView(v, lp);
 
-        printView.setWebViewClient(new WebViewClient() {
+        v.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                printView.postDelayed(() -> {
+                v.postDelayed(() -> {
                     try {
-                        android.print.PrintAttributes attrs =
-                                new android.print.PrintAttributes.Builder()
-                                        .setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4)
-                                        .setResolution(new android.print.PrintAttributes.Resolution(
-                                                "laporan", "Laporan", 300, 300))
-                                        .setMinMargins(android.print.PrintAttributes.Margins.NO_MARGINS)
-                                        .build();
+                        final int pageWidthCss = 794;
+                        final int pageHeightCss = 1123;
 
-                        final android.print.PrintDocumentAdapter adapter =
-                                printView.createPrintDocumentAdapter("Laporan-Keuangan");
+                        v.measure(
+                                View.MeasureSpec.makeMeasureSpec(pageWidthCss, View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                        v.layout(0, 0, pageWidthCss, v.getMeasuredHeight());
 
-                        adapter.onLayout(null, attrs,
-                                null,
-                                new android.print.PrintDocumentAdapter.LayoutResultCallback() {
-                                    @Override public void onLayoutFinished(
-                                            android.print.PrintDocumentInfo info, boolean changed) {
-                                        try {
-                                            android.os.ParcelFileDescriptor pfd =
-                                                    android.os.ParcelFileDescriptor.open(
-                                                            pdfFile,
-                                                            android.os.ParcelFileDescriptor.MODE_CREATE |
-                                                            android.os.ParcelFileDescriptor.MODE_TRUNCATE |
-                                                            android.os.ParcelFileDescriptor.MODE_READ_WRITE);
+                        int contentHeight = Math.max(v.getContentHeight(), v.getMeasuredHeight());
+                        if (contentHeight <= 0) contentHeight = pageHeightCss;
 
-                                            adapter.onWrite(
-                                                    new android.print.PageRange[]{
-                                                            android.print.PageRange.ALL_PAGES
-                                                    },
-                                                    pfd,
-                                                    null,
-                                                    new android.print.PrintDocumentAdapter.WriteResultCallback() {
-                                                        @Override public void onWriteFinished(
-                                                                android.print.PageRange[] pages) {
-                                                            try { pfd.close(); } catch (Exception ignored) {}
-                                                            printView.destroy();
-                                                            bagikanPDF(pdfFile, message);
-                                                        }
+                        int pageCount = (contentHeight + pageHeightCss - 1) / pageHeightCss;
+                        PdfDocument doc = new PdfDocument();
 
-                                                        @Override public void onWriteFailed(CharSequence error) {
-                                                            try { pfd.close(); } catch (Exception ignored) {}
-                                                            printView.destroy();
-                                                            Toast.makeText(MainActivity.this,
-                                                                    "Gagal menulis PDF: " + String.valueOf(error),
-                                                                    Toast.LENGTH_LONG).show();
-                                                        }
-                                                    });
-                                        } catch (Exception e) {
-                                            printView.destroy();
-                                            Toast.makeText(MainActivity.this,
-                                                    "Gagal membuat PDF: " + e.getMessage(),
-                                                    Toast.LENGTH_LONG).show();
-                                        }
-                                    }
+                        float scale = 595f / pageWidthCss;
+                        for (int pageNo = 0; pageNo < pageCount; pageNo++) {
+                            PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(
+                                    595, 842, pageNo + 1).create();
+                            PdfDocument.Page page = doc.startPage(info);
+                            Canvas canvas = page.getCanvas();
+                            canvas.drawColor(Color.WHITE);
+                            canvas.save();
+                            canvas.scale(scale, scale);
+                            canvas.translate(0, -pageNo * pageHeightCss);
+                            v.draw(canvas);
+                            canvas.restore();
+                            doc.finishPage(page);
+                        }
 
-                                    @Override public void onLayoutFailed(CharSequence error) {
-                                        printView.destroy();
-                                        Toast.makeText(MainActivity.this,
-                                                "Gagal menata laporan PDF: " + String.valueOf(error),
-                                                Toast.LENGTH_LONG).show();
-                                    }
-                                },
-                                null);
+                        try (FileOutputStream out = new FileOutputStream(pdf)) {
+                            doc.writeTo(out);
+                        }
+                        doc.close();
+                        v.destroy();
+
+                        if (share) {
+                            bagikanPDF(pdf, message);
+                        } else {
+                            saveToDownload(pdf, n);
+                        }
                     } catch (Exception e) {
-                        printView.destroy();
+                        v.destroy();
                         Toast.makeText(MainActivity.this,
-                                "Gagal menyiapkan PDF: " + e.getMessage(),
+                                "Gagal membuat PDF: " + e.getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
-                }, 1000);
+                }, 1200);
             }
         });
 
-        printView.loadDataWithBaseURL(
+        v.loadDataWithBaseURL(
                 "https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/",
                 html, "text/html", "UTF-8", null);
     }
 
-    private void buatPDFDanSimpan(String html,String fileName){
-        final WebView v=new WebView(this); final File d=new File(getCacheDir(),"laporan"); d.mkdirs();
-        final String n=(fileName==null||fileName.trim().isEmpty())?"Laporan-Keuangan.pdf":fileName.replaceAll("[^a-zA-Z0-9._-]","-");
-        final File pdf=new File(d,n); v.getSettings().setJavaScriptEnabled(true); v.getSettings().setDomStorageEnabled(true);
-        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(1,1); lp.leftMargin=-10;lp.topMargin=-10;addContentView(v,lp);
-        v.setWebViewClient(new WebViewClient(){@Override public void onPageFinished(WebView x,String u){v.postDelayed(()->{
-            try{
-                android.print.PrintAttributes a=new android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).setResolution(new android.print.PrintAttributes.Resolution("laporan","Laporan",300,300)).setMinMargins(android.print.PrintAttributes.Margins.NO_MARGINS).build();
-                final android.print.PrintDocumentAdapter p=v.createPrintDocumentAdapter("Laporan-Keuangan");
-                p.onLayout(null,a,null,new android.print.PrintDocumentAdapter.LayoutResultCallback(){@Override public void onLayoutFinished(android.print.PrintDocumentInfo i,boolean ch){try{
-                    final android.os.ParcelFileDescriptor f=android.os.ParcelFileDescriptor.open(pdf,android.os.ParcelFileDescriptor.MODE_CREATE|android.os.ParcelFileDescriptor.MODE_TRUNCATE|android.os.ParcelFileDescriptor.MODE_READ_WRITE);
-                    p.onWrite(new android.print.PageRange[]{android.print.PageRange.ALL_PAGES},f,null,new android.print.PrintDocumentAdapter.WriteResultCallback(){@Override public void onWriteFinished(android.print.PageRange[] z){try{f.close();}catch(Exception e){}v.destroy();saveToDownload(pdf,n);}@Override public void onWriteFailed(CharSequence e){try{f.close();}catch(Exception q){}v.destroy();Toast.makeText(MainActivity.this,"Gagal membuat PDF: "+e,Toast.LENGTH_LONG).show();}});
-                }catch(Exception e){v.destroy();Toast.makeText(MainActivity.this,"Gagal membuat PDF: "+e.getMessage(),Toast.LENGTH_LONG).show();}}@Override public void onLayoutFailed(CharSequence e){v.destroy();Toast.makeText(MainActivity.this,"Gagal menata PDF: "+e,Toast.LENGTH_LONG).show();}},null);
-            }catch(Exception e){v.destroy();Toast.makeText(MainActivity.this,"Gagal menyiapkan PDF: "+e.getMessage(),Toast.LENGTH_LONG).show();}
-        },1000);}});
-        v.loadDataWithBaseURL("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/",html,"text/html","UTF-8",null);
+    private void buatPDFDanBagikan(String html, String fileName, String message) {
+        renderHtmlToPdf(html, fileName, true, message);
     }
+
+    private void buatPDFDanSimpan(String html, String fileName) {
+        renderHtmlToPdf(html, fileName, false, null);
+    }
+
     private void saveToDownload(File f,String n){try{
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.Q){ContentValues v=new ContentValues();v.put(MediaStore.Downloads.DISPLAY_NAME,n);v.put(MediaStore.Downloads.MIME_TYPE,"application/pdf");v.put(MediaStore.Downloads.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS+"/Bendahara");v.put(MediaStore.Downloads.IS_PENDING,1);
             Uri u=getContentResolver().insert(MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),v);if(u==null)throw new IOException("Download tidak tersedia");
