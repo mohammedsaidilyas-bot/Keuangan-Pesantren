@@ -612,6 +612,11 @@
       if(ovPaid) ovPaid.textContent=persenBulat+"%"; if(ovFill) ovFill.style.width=Math.min(100,persen)+"%";
       if(ovNote) ovNote.textContent=(data.lunas||0)+" santri sudah membayar dan "+(data.belumBayar||0)+" santri belum bayar pada periode "+(data.periode||"saat ini")+".";
       const incomePeriod=document.getElementById("incomePeriod"); if(incomePeriod) incomePeriod.textContent=data.periode||"-";
+      // Pemasukan SPP harus mengikuti pembayaran SPP periode aktif (bukan transaksi pengeluaran).
+      const dashboardIncomeValue=document.getElementById("dashboardIncomeValue");
+      if(dashboardIncomeValue) dashboardIncomeValue.textContent=rupiah(data.sppMasuk||0);
+      const dashboardIncomeCount=document.getElementById("dashboardIncomeCount");
+      if(dashboardIncomeCount) dashboardIncomeCount.textContent=(data.lunas||0)+" Santri";
       const incomeFill=document.getElementById("incomeFill"); if(incomeFill) incomeFill.style.width=Math.min(100,persen)+"%";
       const incomeBarValue=document.getElementById("incomeBarValue"); if(incomeBarValue) incomeBarValue.textContent=rupiah(data.sppMasuk);
       const expenseBarValue=document.getElementById("expenseBarValue"); if(expenseBarValue) expenseBarValue.textContent=rupiah(data.pengeluaranSPP||0);
