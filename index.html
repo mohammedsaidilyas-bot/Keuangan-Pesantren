@@ -927,7 +927,7 @@
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Sumber Dana</label><select id="inputSumber" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px"><option value="SPP">SPP</option><option value="KAS">Kas</option></select>' +
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Keterangan</label><input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Jumlah (Rp)</label><input type="number" id="inputJumlah" min="1" inputmode="numeric" placeholder="Contoh: 50000" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
-      '<label style="display:block;font-weight:700;margin:10px 0 6px">Periode SPP</label><input type="text" id="inputPeriode" placeholder="Contoh: Oktober" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Periode SPP (uang ini dibebankan ke periode ini)</label><select id="inputPeriode" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px"><option value="Januari">Januari</option><option value="Februari">Februari</option><option value="Maret">Maret</option><option value="April">April</option><option value="Mei">Mei</option><option value="Juni">Juni</option><option value="Juli">Juli</option><option value="Agustus">Agustus</option><option value="September">September</option><option value="Oktober">Oktober</option><option value="November">November</option><option value="Desember">Desember</option></select>' +
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Catatan</label><textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;resize:vertical"></textarea>' +
       '<div id="formMessage" style="display:none;padding:10px;border-radius:10px;margin-top:12px;font-size:13px"></div>' +
       '<button onclick="simpanPengeluaran()" style="width:100%;margin-top:14px;border:0;border-radius:12px;padding:14px;background:#0f766e;color:#fff;font-size:15px;font-weight:800">Simpan Pengeluaran</button>' +
@@ -935,50 +935,15 @@
     document.body.appendChild(modal);
     document.getElementById("inputTanggal").value = new Date().toISOString().slice(0,10);
     const p = document.getElementById("periode");
-    document.getElementById("inputPeriode").value = p ? p.textContent.trim() : "Oktober";
+    const periodeAktif = p ? p.textContent.trim() : "Oktober";
+    const opsi = Array.from(document.getElementById("inputPeriode").options);
+    const cocok = opsi.find(o => o.value.toLowerCase() === periodeAktif.toLowerCase());
+    document.getElementById("inputPeriode").value = cocok ? cocok.value : "Oktober";
   }
 
   function bukaForm() {
-    const lama = document.getElementById("formOverlay");
-    if (lama) lama.remove();
-
-    const modal = document.createElement("div");
-    modal.id = "formOverlay";
-    modal.className = "overlay";
-    modal.style.display = "flex";
-    modal.innerHTML = `
-      <div class="form-card">
-        <div class="form-header">
-          <div>
-            <div class="form-title">🛒 Catat Pengeluaran</div>
-            <div class="form-subtitle">Catat pengeluaran dana SPP atau Kas Pondok</div>
-          </div>
-          <button class="close-btn" onclick="tutupForm()">×</button>
-        </div>
-        <label for="inputTanggal">Tanggal</label>
-        <input type="date" id="inputTanggal">
-        <label for="inputSumber">Sumber Dana</label>
-        <select id="inputSumber">
-          <option value="SPP">SPP</option>
-          <option value="KAS">Kas</option>
-        </select>
-        <label for="inputKeterangan">Keterangan</label>
-        <input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur">
-        <label for="inputJumlah">Jumlah (Rp)</label>
-        <input type="number" id="inputJumlah" min="1" inputmode="numeric" placeholder="Contoh: 50000">
-        <label for="inputPeriode">Periode SPP</label>
-        <input type="text" id="inputPeriode" placeholder="Contoh: Oktober">
-        <label for="inputCatatan">Catatan</label>
-        <textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)"></textarea>
-        <div id="formMessage" class="form-message"></div>
-        <button class="save-btn" onclick="simpanPengeluaran()">Simpan Pengeluaran</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-
-    const periodeEl = document.getElementById("periode");
-    document.getElementById("inputTanggal").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("inputPeriode").value = periodeEl ? periodeEl.textContent.trim() : "";
+    // Kompatibilitas menu transaksi HP: gunakan form pengeluaran yang sama.
+    bukaFormPengeluaran();
   }
 
   async function bukaRekapKas(){
