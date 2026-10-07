@@ -1840,12 +1840,16 @@ function tanggalLaporan(v){if(!v)return "-";const d=new Date(v);return isNaN(d.g
 function kirimLaporanWhatsApp(){
   const d=window.__laporanKeuanganData;
   if(!d){alert("Data laporan belum siap.");return;}
+  const pesan="Assalamu'alaikum.\n\nBerikut laporan keuangan Pondok Pesantren Fathul Huda Al Qorrobiyah periode "+d.periode+".";
+  const pdfHtml=cetakLaporanKeuangan(true);
+  if(window.BendaharaAndroid && window.BendaharaAndroid.shareLaporanPDF){
+    window.BendaharaAndroid.shareLaporanPDF(pdfHtml,"Laporan-Keuangan-"+String(d.periode||"").replace(/[^a-zA-Z0-9_-]/g,"-")+".pdf",pesan);
+    return;
+  }
   const nomor="6282219644442";
-  const pesan="Assalamu'alaikum.\n\nBerikut laporan keuangan Pondok Pesantren Fathul Huda Al Qorrobiyah periode "+d.periode+".\n\nSPP diterima: "+rupiah(d.diterima)+"\nPengeluaran SPP: "+rupiah(d.totalSPP)+"\nSisa SPP: "+rupiah(d.sisaAkhir)+"\nSaldo Kas Pondok: "+rupiah(d.saldoAkhir)+"\n\nLaporan lengkap akan dikirim sebagai PDF.";
-  const url="https://wa.me/"+nomor+"?text="+encodeURIComponent(pesan);
-  window.open(url,"_blank");
+  window.open("https://wa.me/"+nomor+"?text="+encodeURIComponent(pesan+"\n\nLaporan lengkap tersedia dalam PDF."),"_blank");
 }
-function cetakLaporanKeuangan(){
+function cetakLaporanKeuangan(returnOnly){
   const d=window.__laporanKeuanganData; if(!d)return;
   const rows=function(arr,kas){return arr.length?arr.map(function(t,i){return "<tr><td>"+(i+1)+"</td><td>"+tanggalLaporan(t.tanggal)+"</td><td>"+(t.keterangan||"-")+"</td><td>"+rupiah(t.jumlah)+"</td><td>"+(kas?"Kas":(t.periode||d.periode||"-"))+"</td><td>"+(t.catatan||"-")+"</td></tr>"}).join(""):"<tr><td colspan=\"6\">Tidak ada transaksi.</td></tr>"};
   const santriRows=d.santri.map(function(s,i){return "<tr><td>"+(i+1)+"</td><td>"+(s.nis||"-")+"</td><td>"+(s.nama||"-")+"</td><td>"+(s.kelas||"-")+"</td><td>"+(String(s.status||"").toUpperCase()==="LUNAS"?"LUNAS":"BELUM BAYAR")+"</td></tr>"}).join("");
@@ -1860,6 +1864,7 @@ function cetakLaporanKeuangan(){
   '<div class="sec">F. REKAP KAS PONDOK</div><table><tr><th>Komponen</th><th>Jumlah</th></tr><tr><td>Saldo awal Kas</td><td>'+rupiah(d.saldoAwal)+'</td></tr><tr><td>Pemasukan Kas</td><td>'+rupiah(d.pemasukanKas)+'</td></tr><tr><td>Transfer SPP → Kas</td><td>'+rupiah(d.totalTransfer)+'</td></tr><tr><td>Pengeluaran Kas</td><td>'+rupiah(d.pengeluaranKas)+'</td></tr><tr><td><b>Saldo akhir Kas</b></td><td><b>'+rupiah(d.saldoAkhir)+'</b></td></tr></table>'+
   '<div class="sec">G. RINCIAN PENGELUARAN KAS</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Sumber</th><th>Catatan</th></tr>'+rows(d.expKas,true)+'</table>'+
   '<div class="sec">H. CATATAN PERTANGGUNGJAWABAN</div><p class="note">Laporan ini dibuat berdasarkan data yang tersimpan pada sistem saat laporan dibuat. Dana SPP yang diterima adalah pembayaran yang benar-benar telah tercatat. Tunggakan merupakan kewajiban santri dan bukan uang kas. Sisa SPP dihitung dari penerimaan SPP dikurangi pengeluaran SPP dan transfer SPP ke Kas. Transfer SPP ke Kas merupakan perpindahan dana dan tidak dihitung sebagai pemasukan SPP baru.</p><div class="sign"><div>Bendahara<div class="line">____________________</div></div><div>Mengetahui, Pimpinan<div class="line">____________________</div></div></div></body></html>';
+  if(returnOnly) return html;
   const w=window.open("","_blank"); if(!w){alert("Jendela cetak diblokir. Izinkan pop-up untuk aplikasi Bendahara.");return;} w.document.open();w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
 }
 function bukaMenuTransaksiHP(){
