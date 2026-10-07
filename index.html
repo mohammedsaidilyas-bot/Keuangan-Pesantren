@@ -887,9 +887,22 @@
 
       const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
 
-      const transferSPP = transaksi
-        .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
-        .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
+      // Transfer SPP -> Kas dibaca dari endpoint khusus karena
+      // getPengeluaranTerbaru memang hanya mengembalikan pengeluaran.
+      let transferTransaksi = [];
+      try {
+        const transferResponse = await fetch(
+          API_URL + "?action=getTransferSPP&_=" + Date.now(),
+          { cache: "no-store" }
+        );
+        const transferData = await transferResponse.json();
+        transferTransaksi = (transferData && transferData.success && Array.isArray(transferData.transaksi))
+          ? transferData.transaksi : [];
+      } catch (e) {
+        console.log("Gagal membaca transfer SPP:", e);
+      }
+
+      const transferSPP = transferTransaksi
         .filter(t => normalisasiPeriode(String(t.periode ?? t.Priode ?? t.priode)) === periodeAktif)
         .reduce((n,t) => n + Number(t.jumlah || 0), 0);
 
@@ -913,37 +926,10 @@
       console.log("Pengeluaran SPP belum dapat dihitung:", error);
     }
 
-    // Saldo Kas Pondok diambil terpisah agar tetap tampil
-    // walaupun ringkasan SPP mengalami kendala.
-    try {
+    // Saldo Kas Pondok ditangani oleh loadKasPondok()
+    // agar transfer SPP -> Kas tidak tertimpa saldo backend lama.
 
-      const responseKas = await fetch(
-        API_URL + "?action=getKasPondok&_=" + Date.now()
-      );
-
-      const dataKas = await responseKas.json();
-
-      if (dataKas.success) {
-        document.getElementById("kas").textContent =
-          rupiah(dataKas.saldoKas);
-      } else {
-        console.log("Saldo Kas belum tersedia:", dataKas.message);
-      }
-
-    } catch (error) {
-
-      console.log(
-        "Gagal mengambil saldo Kas Pondok:",
-        error
-      );
-
-    }
-
-  }
-
-
-
-  function bukaFormPengeluaran() {
+  }\n\n\nfunction bukaFormPengeluaran() {
     const old = document.getElementById("modalCatatPengeluaran");
     if (old) old.remove();
 
