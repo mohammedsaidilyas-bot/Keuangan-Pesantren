@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.io.File;
 import java.io.IOException;
 
+// Laporan: pratinjau HTML ditampilkan sebelum proses simpan PDF.
 public class MainActivity extends Activity {
     private WebView webView;
 
