@@ -293,6 +293,11 @@
       Memuat data keuangan...
     </div>
 
+    <div id="statusPeriodeBox" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#fffbeb;border:1px solid #fde68a;">
+      <div id="statusPeriodeTitle" style="font-weight:800;color:#92400e;font-size:15px;"></div>
+      <div id="statusPeriodeDesc" style="margin-top:5px;color:#78350f;font-size:13px;line-height:1.5;"></div>
+    </div>
+
     <div class="cards">
 
       <div class="card">
@@ -519,6 +524,31 @@
       document.getElementById("belumBayar").textContent =
         (data.belumBayar || 0) + " Santri";
 
+      // Status periode SPP untuk membantu bendahara menentukan kapan
+      // sisa SPP sudah boleh dipindahkan ke Kas.
+      const belumPeriode = Number(data.belumBayar || 0);
+      const periodeBox = document.getElementById("statusPeriodeBox");
+      const periodeTitle = document.getElementById("statusPeriodeTitle");
+      const periodeDesc = document.getElementById("statusPeriodeDesc");
+
+      periodeBox.style.display = "block";
+      if (belumPeriode === 0) {
+        periodeBox.style.background = "#ecfdf5";
+        periodeBox.style.borderColor = "#a7f3d0";
+        periodeTitle.style.color = "#047857";
+        periodeDesc.style.color = "#065f46";
+        periodeTitle.textContent = "✓ Periode SPP sudah selesai";
+        periodeDesc.textContent =
+          "Semua santri sudah lunas. Sisa dana SPP periode ini sudah boleh dipindahkan ke Kas Pondok.";
+      } else {
+        periodeBox.style.background = "#fffbeb";
+        periodeBox.style.borderColor = "#fde68a";
+        periodeTitle.style.color = "#92400e";
+        periodeDesc.style.color = "#78350f";
+        periodeTitle.textContent = "⏳ Periode SPP belum selesai";
+        periodeDesc.textContent =
+          "Masih ada " + belumPeriode + " santri yang belum bayar. Sisa SPP belum boleh dipindahkan ke Kas.";
+      }
 
       document.getElementById("loading").style.display =
         "none";
@@ -1324,24 +1354,57 @@ async function bukaPengeluaranTerbaru() {
   }
 }
   async function pindahkanSisaSPPKeKas() {
-  try {
-    const response = await fetch(
-      API_URL + "?action=pindahkanSisaSPPKeKas"
-    );
+    try {
+      // Cek kondisi terbaru sebelum meminta pemindahan.
+      const cek = await fetch(
+        API_URL + "?action=getDashboardKeuangan&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+      const status = await cek.json();
 
-    const data = await response.json();
+      if (!status.success) {
+        alert(status.message || "Gagal memeriksa status periode SPP.");
+        return;
+      }
 
-    if (data.success) {
-      alert(data.message);
-      loadDashboard();
-    } else {
-      alert(data.message || "Gagal memindahkan sisa SPP.");
+      const belum = Number(status.belumBayar || 0);
+      const periode = status.periode || "periode SPP saat ini";
+
+      if (belum > 0) {
+        alert(
+          "Periode SPP " + periode + " belum selesai.\\n\\n" +
+          "Masih ada " + belum + " santri yang belum bayar.\\n\\n" +
+          "Sisa SPP belum boleh dipindahkan ke Kas."
+        );
+        return;
+      }
+
+      const yakin = confirm(
+        "Semua santri pada periode " + periode +
+        " sudah lunas.\\n\\n" +
+        "Pindahkan sisa SPP periode ini ke Kas Pondok sekarang?"
+      );
+
+      if (!yakin) return;
+
+      const response = await fetch(
+        API_URL + "?action=pindahkanSisaSPPKeKas&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message || "Sisa SPP berhasil dipindahkan ke Kas Pondok.");
+        loadDashboard();
+      } else {
+        alert(data.message || "Gagal memindahkan sisa SPP.");
+      }
+
+    } catch (error) {
+      alert("Terjadi kesalahan saat menghubungi server.");
+      console.error(error);
     }
-
-  } catch (error) {
-    alert("Terjadi kesalahan saat menghubungi server.");
-    console.error(error);
-  }
   }
   
   loadDashboard();
