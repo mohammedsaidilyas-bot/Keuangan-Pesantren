@@ -597,6 +597,14 @@
       const ovPaid=document.getElementById("overviewPaid"), ovFill=document.getElementById("overviewPaidFill"), ovNote=document.getElementById("overviewNote");
       if(ovPaid) ovPaid.textContent=persenBulat+"%"; if(ovFill) ovFill.style.width=Math.min(100,persen)+"%";
       if(ovNote) ovNote.textContent=(data.lunas||0)+" santri sudah membayar dan "+(data.belumBayar||0)+" santri belum bayar pada periode "+(data.periode||"saat ini")+".";
+      const incomePeriod=document.getElementById("incomePeriod"); if(incomePeriod) incomePeriod.textContent=data.periode||"-";
+      const incomeFill=document.getElementById("incomeFill"); if(incomeFill) incomeFill.style.width=Math.min(100,persen)+"%";
+      const incomeBarValue=document.getElementById("incomeBarValue"); if(incomeBarValue) incomeBarValue.textContent=rupiah(data.sppMasuk);
+      const expenseBarValue=document.getElementById("expenseBarValue"); if(expenseBarValue) expenseBarValue.textContent=rupiah(data.pengeluaranSPP||0);
+      const incomeBar=document.getElementById("incomeBar"), expenseBar=document.getElementById("expenseBar");
+      const maxBar=Math.max(Number(data.sppMasuk||0),Number(data.pengeluaranSPP||0),1);
+      if(incomeBar) incomeBar.style.height=Math.max(8,Math.round(Number(data.sppMasuk||0)/maxBar*36))+"px";
+      if(expenseBar) expenseBar.style.height=Math.max(8,Math.round(Number(data.pengeluaranSPP||0)/maxBar*36))+"px";
 
       // Status periode SPP untuk membantu bendahara menentukan kapan
       // sisa SPP sudah boleh dipindahkan ke Kas.
@@ -1514,22 +1522,19 @@ function renderLaporanPengeluaran(){
   }
   
   async function loadDashboardRecent(){
-    const box=document.getElementById("dashboardRecentBox");
     const list=document.getElementById("dashboardExpenseList");
     const bars=document.getElementById("dashboardExpenseBars");
     try{
       const response=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"});
       const data=await response.json();
       const tx=data.transaksi||[];
-      const recent=tx.slice(0,5);
-      const renderRow=t=>'<div class="expense-item"><div class="expense-date">'+(t.tanggal||"-")+'</div><div><div class="expense-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="expense-source">'+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="expense-amount">-'+rupiah(t.jumlah)+'</div></div>';
-      if(box) box.innerHTML=recent.length?recent.map(t=>'<div class="tx-row"><div class="tx-main"><div class="tx-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="tx-date">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="tx-amount" style="color:#dc2626">-'+rupiah(t.jumlah)+'</div></div>').join(""):'<div class="empty-state">Belum ada transaksi pengeluaran.</div>';
-      if(list) list.innerHTML=recent.length?recent.map(renderRow).join(""):'<div class="empty-state">Belum ada transaksi pengeluaran.</div>';
+      const recent=tx.slice(0,4);
+      const renderRow=t=>'<div class="expense-item"><div class="expense-main"><div class="expense-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="expense-meta">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+'</div></div><div class="expense-amount">-'+rupiah(t.jumlah)+'</div></div>';
+      if(list) list.innerHTML=recent.length?recent.map(renderRow).join(""):'<div class="empty-state">Belum ada transaksi.</div>';
       const groups={}; tx.forEach(t=>{const k=t.keterangan||"Lain-lain";groups[k]=(groups[k]||0)+Number(t.jumlah||0);});
-      const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,5); const max=entries.length?entries[0][1]:0;
-      if(bars) bars.innerHTML=entries.length?entries.map(([name,val])=>'<div class="expense-bar-row"><div title="'+name+'">'+name+'</div><div class="expense-track"><div class="expense-fill" style="width:'+(max?Math.max(3,val/max*100):0)+'%"></div></div><div class="expense-total">'+rupiah(val)+'</div></div>').join(""):'<div class="empty-state">Belum ada data pengeluaran.</div>';
+      const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,4); const max=entries.length?entries[0][1]:0;
+      if(bars) bars.innerHTML=entries.length?entries.map(([name,val])=>'<div class="expense-bar-row"><div class="bar-label" title="'+name+'">'+name+'</div><div class="expense-bar-track"><div class="expense-bar-fill" style="width:'+(max?Math.max(5,val/max*100):0)+'%"></div></div><div class="expense-bar-value">'+rupiah(val)+'</div></div>').join(""):'<div class="empty-state">Belum ada data.</div>';
     }catch(e){
-      if(box) box.innerHTML='<div class="empty-state">Transaksi terbaru belum dapat dimuat.</div>';
       if(list) list.innerHTML='<div class="empty-state">Pengeluaran belum dapat dimuat.</div>';
       if(bars) bars.innerHTML='<div class="empty-state">Rekap belum dapat dimuat.</div>';
       console.error(e);
