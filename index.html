@@ -372,6 +372,9 @@
     </div>
 
     <div id="error" class="error"></div>
+    <div class="dashboard-section-title"><div><h3>Aktivitas Keuangan Terbaru</h3><p>Ringkasan transaksi terakhir yang tercatat</p></div><button class="action-chip" onclick="bukaLaporanPengeluaran()">Lihat semua</button></div>
+    <div class="overview-card" id="dashboardRecentBox"><div class="empty-state">Memuat transaksi terbaru...</div></div>
+
     <div class="quick-overview">
       <div class="overview-card">
         <div class="overview-head"><div><div class="overview-title">Ringkasan Pembayaran</div><div class="overview-muted">Progress periode SPP saat ini</div></div><div style="font-size:20px">📊</div></div>
@@ -579,6 +582,7 @@
 
       document.getElementById("periode").textContent =
         data.periode || "-";
+      loadDashboardRecent();
 
       document.getElementById("sppMasuk").textContent =
         rupiah(data.sppMasuk);
@@ -1517,11 +1521,24 @@ function renderLaporanPengeluaran(){
     }
   }
   
+  async function loadDashboardRecent(){
+    const box=document.getElementById("dashboardRecentBox"); if(!box) return;
+    try{
+      const response=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"});
+      const data=await response.json(); const tx=(data.transaksi||[]).slice(0,5);
+      if(!tx.length){box.innerHTML='<div class="empty-state">Belum ada transaksi pengeluaran.</div>';return;}
+      box.innerHTML=tx.map(t=>{
+        const sumber=String(t.sumber||"").toUpperCase();
+        return '<div class="tx-row"><div class="tx-main"><div class="tx-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="tx-date">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="tx-amount" style="color:#dc2626">-'+rupiah(t.jumlah)+'</div></div>';
+      }).join("");
+    }catch(e){box.innerHTML='<div class="empty-state">Transaksi terbaru belum dapat dimuat.</div>';console.error(e);}
+  }
+
   async function muatUlangData(){
     const btn=document.querySelector('button[onclick="muatUlangData()"]');
     if(btn){btn.disabled=true;btn.textContent="⟳ Memuat...";}
     try{
-      await Promise.all([loadDashboard(),loadKasPondok()]);
+      await Promise.all([loadDashboard(),loadKasPondok(),loadDashboardRecent()]);
     }finally{
       if(btn){btn.disabled=false;btn.textContent="↻ Muat Ulang Data";}
     }
