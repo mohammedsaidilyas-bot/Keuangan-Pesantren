@@ -585,6 +585,9 @@
 
       document.getElementById("periode").textContent =
         data.periode || "-";
+      if(document.getElementById("periodeHeader")){
+        document.getElementById("periodeHeader").textContent = data.periode || "-";
+      }
       loadDashboardRecent();
 
       document.getElementById("sppMasuk").textContent =
