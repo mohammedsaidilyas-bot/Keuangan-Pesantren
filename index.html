@@ -439,7 +439,8 @@
       <div class="side-item" onclick="bukaFormPengeluaran()"><span class="side-icon">🛒</span><span>Pengeluaran</span></div>
       <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">👥</span><span>Pembayaran SPP</span></div>
       <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">📄</span><span>Data Santri</span></div>
-      <div class="side-item" onclick="bukaLaporanPengeluaran()"><span class="side-icon">📋</span><span>Laporan</span></div>
+      <div class="side-item" onclick="bukaLaporanKeuanganPDF()"><span class="side-icon">📄</span><span>Laporan Keuangan</span></div>
+      <div class="side-item" onclick="bukaLaporanPengeluaran()"><span class="side-icon">📋</span><span>Laporan Pengeluaran</span></div>
       <div class="side-item" onclick="pindahkanSisaSPPKeKas()"><span class="side-icon">◔</span><span>Rekap Periode</span></div>
       <div class="side-item"><span class="side-icon">⚙️</span><span>Pengaturan</span></div>
       <div class="side-spacer"></div>
@@ -1800,6 +1801,59 @@ function renderLaporanPengeluaran(){
 </script>
 
 <script>
+async function bukaLaporanKeuanganPDF(){
+  const modal=document.createElement("div"); modal.id="modalLaporanKeuanganPDF";
+  modal.innerHTML='<div style="position:fixed;inset:0;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999"><div style="width:100%;max-width:1100px;max-height:94vh;overflow:auto;background:white;border-radius:24px;padding:22px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><div style="font-size:22px;font-weight:800;color:#172554">📄 Laporan Keuangan Pesantren</div><div id="laporanKeuanganSub" style="color:#64748b;font-size:13px;margin-top:4px">Laporan pertanggungjawaban rinci</div></div><button onclick="document.getElementById(\'modalLaporanKeuanganPDF\').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button></div><div id="laporanKeuanganLoading" class="loading">Mengambil data terbaru...</div><div id="laporanKeuanganIsi" style="display:none"></div></div></div>';
+  document.body.appendChild(modal);
+  try{
+    const hasil=await Promise.all([
+      fetch(API_URL+"?action=getDashboardKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getKasPondok&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getTransferSPP&_="+Date.now(),{cache:"no-store"})
+    ]);
+    const dash=await hasil[0].json(), stat=await hasil[1].json(), exp=await hasil[2].json(), kas=await hasil[3].json(), tr=await hasil[4].json();
+    if(!dash.success) throw new Error(dash.message||"Gagal mengambil dashboard");
+    const periode=String(dash.periode||stat.periode||"-"), pnorm=normalisasiPeriodeLaporan(periode);
+    const santri=(stat.data||[]).filter(s=>["nis","nama","kelas"].some(k=>String(s[k]||"").trim()&&String(s[k]||"").trim()!=="-"));
+    const total=santri.length, lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length, belum=Math.max(0,total-lunas);
+    const tagihan=total*150000, diterima=Number(dash.sppMasuk||0), tunggakan=Math.max(0,tagihan-diterima);
+    const semuaExp=(exp&&exp.success&&Array.isArray(exp.transaksi))?exp.transaksi:[];
+    const expSPP=semuaExp.filter(t=>String(t.sumber||"").toUpperCase()==="SPP"&&(function(){const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;})());
+    const expKas=semuaExp.filter(t=>String(t.sumber||"").toUpperCase()==="KAS");
+    const totalSPP=expSPP.reduce((n,t)=>n+Number(t.jumlah||0),0);
+    const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
+    const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
+    const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
+    const sisaSebelum=Math.max(0,diterima-totalSPP), sisaAkhir=Math.max(0,sisaSebelum-totalTransfer);
+    const saldoAwal=Number(kas.saldoKas||0), pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0), saldoAkhir=saldoAwal+pemasukanKas+totalTransfer-pengeluaranKas;
+    const tgl=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
+    window.__laporanKeuanganData={periode,santri,expSPP,expKas,trPeriode,total,lunas,belum,tagihan,diterima,tunggakan,totalSPP,totalTransfer,sisaSebelum,sisaAkhir,saldoAwal,pemasukanKas,pengeluaranKas,saldoAkhir,tgl};
+    const isi=document.getElementById("laporanKeuanganIsi");
+    document.getElementById("laporanKeuanganLoading").style.display="none"; document.getElementById("laporanKeuanganSub").textContent="Periode "+periode+" • dibuat "+tgl; isi.style.display="block";
+    isi.innerHTML='<div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:14px"><b style="color:#172554">Ringkasan lengkap siap dibuat</b><div style="color:#64748b;font-size:13px;margin-top:5px">Laporan mencakup SPP, status seluruh santri, pengeluaran SPP, transfer SPP ke Kas, rekap Kas, dan rincian pengeluaran Kas.</div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"><div class="card"><div class="card-title">SPP Diterima</div><div class="card-value green">'+rupiah(diterima)+'</div></div><div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value red">'+rupiah(totalSPP)+'</div></div><div class="card"><div class="card-title">Sisa SPP</div><div class="card-value blue">'+rupiah(sisaAkhir)+'</div></div><div class="card"><div class="card-title">Saldo Kas</div><div class="card-value blue">'+rupiah(saldoAkhir)+'</div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button onclick="cetakLaporanKeuangan()" style="flex:1;min-width:220px;border:0;background:#0f766e;color:white;padding:14px;border-radius:12px;font-weight:800;font-size:15px">📄 Cetak / Simpan sebagai PDF</button><button onclick="document.getElementById(\'modalLaporanKeuanganPDF\').remove()" style="border:0;background:#f1f5f9;color:#334155;padding:14px 20px;border-radius:12px;font-weight:800">Tutup</button></div><div style="margin-top:12px;font-size:12px;color:#64748b">Di Android, pilih <b>Print/Cetak → Save as PDF</b> untuk menyimpan file PDF.</div>';
+  }catch(e){document.getElementById("laporanKeuanganLoading").textContent="Laporan belum dapat dimuat: "+(e.message||"kesalahan sistem");console.error(e)}
+}
+function normalisasiPeriodeLaporan(v){return String(v||"").toLowerCase().replace(/\s+/g," ").trim();}
+function tanggalLaporan(v){if(!v)return "-";const d=new Date(v);return isNaN(d.getTime())?String(v):d.toLocaleDateString("id-ID");}
+function cetakLaporanKeuangan(){
+  const d=window.__laporanKeuanganData; if(!d)return;
+  const rows=function(arr,kas){return arr.length?arr.map(function(t,i){return "<tr><td>"+(i+1)+"</td><td>"+tanggalLaporan(t.tanggal)+"</td><td>"+(t.keterangan||"-")+"</td><td>"+rupiah(t.jumlah)+"</td><td>"+(kas?"Kas":(t.periode||d.periode||"-"))+"</td><td>"+(t.catatan||"-")+"</td></tr>"}).join(""):"<tr><td colspan=\"6\">Tidak ada transaksi.</td></tr>"};
+  const santriRows=d.santri.map(function(s,i){return "<tr><td>"+(i+1)+"</td><td>"+(s.nis||"-")+"</td><td>"+(s.nama||"-")+"</td><td>"+(s.kelas||"-")+"</td><td>"+(String(s.status||"").toUpperCase()==="LUNAS"?"LUNAS":"BELUM BAYAR")+"</td></tr>"}).join("");
+  const transferRows=d.trPeriode.length?d.trPeriode.map(function(t,i){return "<tr><td>"+(i+1)+"</td><td>"+tanggalLaporan(t.tanggal)+"</td><td>"+(t.keterangan||"-")+"</td><td>"+rupiah(t.jumlah)+"</td><td>"+(t.periode||d.periode||"-")+"</td><td>"+(t.catatan||"-")+"</td></tr>"}).join(""):"<tr><td colspan=\"6\">Belum ada transfer SPP ke Kas.</td></tr>";
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Keuangan Pesantren</title><style>@page{size:A4;margin:12mm}body{font-family:Arial,sans-serif;color:#1f2937;font-size:10px}h1{text-align:center;color:#0f766e;font-size:20px;margin:0 0 4px}h2{text-align:center;color:#172554;font-size:13px;margin:0 0 4px}p.sub{text-align:center;color:#64748b;margin:0 0 16px}.sec{font-size:12px;font-weight:800;color:#0f766e;background:#ecfdf5;padding:7px;margin-top:14px;border-left:4px solid #0f766e}table{width:100%;border-collapse:collapse;margin-top:7px;margin-bottom:10px}th{background:#0f766e;color:#fff;text-align:left}th,td{border:1px solid #dbe3ea;padding:5px;vertical-align:top}tr:nth-child(even){background:#f8fafc}.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.box{border:1px solid #dbe3ea;border-radius:6px;padding:7px}.box b{display:block;color:#64748b;font-size:9px}.box strong{font-size:13px;color:#172554}.sign{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:45px}.line{margin:35px 35px 0;border-top:1px solid #334155;padding-top:4px}.note{line-height:1.5}</style></head><body>'+
+  '<h1>LAPORAN KEUANGAN PESANTREN</h1><h2>Pondok Pesantren Fathul Huda Al Qorrobiyah</h2><p class="sub">Periode SPP: '+d.periode+' • Tanggal laporan: '+d.tgl+'</p>'+
+  '<div class="sec">A. RINGKASAN KEUANGAN</div><div class="grid"><div class="box"><b>SPP Diterima</b><strong>'+rupiah(d.diterima)+'</strong></div><div class="box"><b>Pengeluaran SPP</b><strong>'+rupiah(d.totalSPP)+'</strong></div><div class="box"><b>Sisa SPP Sebelum Transfer</b><strong>'+rupiah(d.sisaSebelum)+'</strong></div><div class="box"><b>Transfer SPP → Kas</b><strong>'+rupiah(d.totalTransfer)+'</strong></div><div class="box"><b>Sisa SPP Setelah Transfer</b><strong>'+rupiah(d.sisaAkhir)+'</strong></div><div class="box"><b>Saldo Kas Akhir</b><strong>'+rupiah(d.saldoAkhir)+'</strong></div></div>'+
+  '<div class="sec">B. STATUS PEMBAYARAN SPP</div><table><tr><th>Uraian</th><th>Jumlah</th></tr><tr><td>Total santri</td><td>'+d.total+'</td></tr><tr><td>Sudah LUNAS</td><td>'+d.lunas+'</td></tr><tr><td>Belum bayar</td><td>'+d.belum+'</td></tr><tr><td>Total tagihan SPP</td><td>'+rupiah(d.tagihan)+'</td></tr><tr><td>SPP benar-benar diterima</td><td>'+rupiah(d.diterima)+'</td></tr><tr><td>Tunggakan</td><td>'+rupiah(d.tunggakan)+'</td></tr></table>'+
+  '<div class="sec">C. RINCIAN SANTRI</div><table><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status</th></tr>'+santriRows+'</table>'+
+  '<div class="sec">D. RINCIAN PENGELUARAN SPP</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Periode</th><th>Catatan</th></tr>'+rows(d.expSPP,false)+'</table>'+
+  '<div class="sec">E. TRANSFER SPP → KAS</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Periode</th><th>Catatan</th></tr>'+transferRows+'</table>'+
+  '<div class="sec">F. REKAP KAS PONDOK</div><table><tr><th>Komponen</th><th>Jumlah</th></tr><tr><td>Saldo awal Kas</td><td>'+rupiah(d.saldoAwal)+'</td></tr><tr><td>Pemasukan Kas</td><td>'+rupiah(d.pemasukanKas)+'</td></tr><tr><td>Transfer SPP → Kas</td><td>'+rupiah(d.totalTransfer)+'</td></tr><tr><td>Pengeluaran Kas</td><td>'+rupiah(d.pengeluaranKas)+'</td></tr><tr><td><b>Saldo akhir Kas</b></td><td><b>'+rupiah(d.saldoAkhir)+'</b></td></tr></table>'+
+  '<div class="sec">G. RINCIAN PENGELUARAN KAS</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Sumber</th><th>Catatan</th></tr>'+rows(d.expKas,true)+'</table>'+
+  '<div class="sec">H. CATATAN PERTANGGUNGJAWABAN</div><p class="note">Laporan ini dibuat berdasarkan data yang tersimpan pada sistem saat laporan dibuat. Dana SPP yang diterima adalah pembayaran yang benar-benar telah tercatat. Tunggakan merupakan kewajiban santri dan bukan uang kas. Sisa SPP dihitung dari penerimaan SPP dikurangi pengeluaran SPP dan transfer SPP ke Kas. Transfer SPP ke Kas merupakan perpindahan dana dan tidak dihitung sebagai pemasukan SPP baru.</p><div class="sign"><div>Bendahara<div class="line">____________________</div></div><div>Mengetahui, Pimpinan<div class="line">____________________</div></div></div></body></html>';
+  const w=window.open("","_blank"); if(!w){alert("Jendela cetak diblokir. Izinkan pop-up untuk aplikasi Bendahara.");return;} w.document.open();w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
+}
 function bukaMenuTransaksiHP(){
   const modal=document.createElement("div");
   modal.id="modalMenuTransaksiHP";
@@ -1808,6 +1862,7 @@ function bukaMenuTransaksiHP(){
       <div style="font-size:18px;font-weight:800;color:#172554;margin-bottom:12px">Transaksi</div>
       <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaPemasukanKas()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#ecfdf5;color:#047857;font-weight:800;margin-bottom:8px">💰 Pemasukan Kas</button>
       <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaForm()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#fff7ed;color:#c2410c;font-weight:800;margin-bottom:8px">🛒 Catat Pengeluaran</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaLaporanKeuanganPDF()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#ecfeff;color:#0f766e;font-weight:800;margin-bottom:8px">📄 Laporan Keuangan PDF</button>
       <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaLaporanPengeluaran()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#f8fafc;color:#334155;font-weight:800">📋 Pengeluaran Terbaru</button>
     </div></div>`;
   document.body.appendChild(modal);
