@@ -391,7 +391,7 @@
         </div></div><div class="arrow">›</div>
       </div>
 
-      <div class="menu" onclick="bukaRekapKas()" style="cursor:pointer;">
+      <div class="menu" onclick="window.bukaRekapKas()" style="cursor:pointer;">
         <div class="menu-left"><div class="icon">💰</div><div>
           <div class="menu-title">Rekap Kas Pondok</div>
           <div class="menu-desc">Lihat pemasukan, pengeluaran, dan saldo Kas</div>
@@ -680,6 +680,8 @@ async function bukaRekapKas(){
     console.error(error);
   }
 }
+
+  window.bukaRekapKas = bukaRekapKas;
 
   function bukaPemasukanKas() {
 
