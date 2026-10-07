@@ -744,15 +744,7 @@
       const periodeDesc = document.getElementById("statusPeriodeDesc");
 
       periodeBox.style.display = "block";
-      if (transferSPP > 0) {
-        periodeBox.style.background = "#ecfdf5";
-        periodeBox.style.borderColor = "#a7f3d0";
-        periodeTitle.style.color = "#047857";
-        periodeDesc.style.color = "#065f46";
-        periodeTitle.textContent = "✓ Sisa SPP sudah dipindahkan ke Kas";
-        periodeDesc.textContent =
-          rupiah(transferSPP) + " dari periode " + (data.periode || "") + " sudah tercatat masuk ke Kas Pondok.";
-      } else if (belumPeriode === 0) {
+      if (belumPeriode === 0) {
         periodeBox.style.background = "#ecfdf5";
         periodeBox.style.borderColor = "#a7f3d0";
         periodeTitle.style.color = "#047857";
