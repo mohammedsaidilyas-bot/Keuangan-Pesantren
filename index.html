@@ -808,7 +808,7 @@
         // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
         try {
           const txResponse = await fetch(
-            API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+            API_URL + "?action=getTransferSPP&_=" + Date.now(),
             { cache: "no-store" }
           );
           const txData = await txResponse.json();
@@ -838,7 +838,7 @@
     // sehingga kartu dashboard tidak bergantung pada ringkasan backend lama.
     try {
       const response = await fetch(
-        API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+        API_URL + "?action=getTransferSPP&_=" + Date.now(),
         { cache: "no-store" }
       );
       const data = await response.json();
