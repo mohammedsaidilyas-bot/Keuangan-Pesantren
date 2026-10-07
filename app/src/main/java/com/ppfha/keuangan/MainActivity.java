@@ -56,7 +56,6 @@ public class MainActivity extends Activity {
         printView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 try {
-                    // A4 pada 72dpi. Konten diberi margin 30px.
                     final int pageWidth = 595;
                     final int pageHeight = 842;
                     final int margin = 30;
@@ -126,12 +125,17 @@ public class MainActivity extends Activity {
         intent.setType("application/pdf");
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.putExtra(Intent.EXTRA_TEXT, message);
+
+        // Nomor WhatsApp pimpinan: 6282219644442
+        // jid membuat WhatsApp mencoba membuka percakapan tujuan langsung.
+        intent.putExtra("jid", "6282219644442@s.whatsapp.net");
+
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.setClipData(ClipData.newUri(getContentResolver(), "Laporan PDF", uri));
         intent.setPackage("com.whatsapp");
         try {
             grantUriPermission("com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            Toast.makeText(this, "PDF siap dikirim ke WhatsApp.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "PDF siap dikirim ke WhatsApp pimpinan.", Toast.LENGTH_SHORT).show();
             startActivity(intent);
         } catch (Exception e) {
             intent.setPackage(null);
