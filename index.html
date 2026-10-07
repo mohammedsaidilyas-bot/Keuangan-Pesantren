@@ -46,7 +46,7 @@
 
     /* Tampilan dashboard modern ala tablet */
     .app-shell{display:flex;min-height:calc(100vh - 102px)}
-    .sidebar{width:230px;flex:none;background:#fff;border-right:1px solid #e5e7eb;padding:18px 12px;display:flex;flex-direction:column;gap:6px;}
+    .sidebar{width:230px;flex:none;background:#fff;border-right:1px solid #e5e7eb;padding:18px 12px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:calc(100vh - 102px);align-self:flex-start;overflow-y:auto;}
     .side-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:13px;color:#334155;font-weight:600;font-size:14px;cursor:pointer;transition:.15s;}
     .side-item:hover{background:#f0fdfa;color:#0f766e}.side-item.active{background:#e6fffb;color:#0f766e}.side-icon{width:28px;text-align:center;font-size:19px}.side-spacer{flex:1}.side-logout{color:#dc2626;background:#fff1f2}.side-logout:hover{background:#ffe4e6;color:#b91c1c}
     .main-area{flex:1;min-width:0}.dashboard-progress{background:#fff;border-radius:18px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.07);margin-top:16px}.progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:800}.progress-track{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:12px}.progress-fill{height:100%;background:#0f766e;border-radius:999px;transition:width .3s}.progress-note{font-size:12px;color:#64748b;margin-top:8px}
@@ -256,6 +256,8 @@
       }
     }
   
+
+    @media (min-width:700px){.main-area>.container{max-width:none;width:100%;padding-left:24px;padding-right:24px}.app-shell{align-items:flex-start}.sidebar{min-height:calc(100vh - 102px)}}
     @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
     @media (min-width: 700px) {
       .header { padding: 28px 32px; }
