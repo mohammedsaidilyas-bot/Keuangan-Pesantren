@@ -75,8 +75,8 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setLoadWithOverviewMode(false);
-        s.setUseWideViewPort(false);
+        s.setLoadWithOverviewMode(true);
+        s.setUseWideViewPort(true);
         s.setTextZoom(100);
         v.setBackgroundColor(Color.WHITE);
 
@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
                 v.postDelayed(() -> {
                     try {
                         PrintAttributes attributes = new PrintAttributes.Builder()
-                                .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                                .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
                                 .setResolution(new PrintAttributes.Resolution(
                                         "bendahara_pdf", "Bendahara PDF", 300, 300))
                                 .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
