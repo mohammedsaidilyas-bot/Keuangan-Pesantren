@@ -311,7 +311,7 @@
       <button onclick="muatUlangData()" style="border:0;background:white;color:#0f766e;border:1px solid #ccfbf1;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;">↻ Muat Ulang Data</button>
     </div>
 
-    <div class="dashboard-welcome"><div><h2>Dashboard Keuangan</h2><p>Kelola keuangan Pondok Pesantren Fathul Huda Al Qorrobiyah dengan lebih mudah dan tertata.</p></div><div class="welcome-badge">Keuangan Pesantren</div></div>
+    <div class="dashboard-welcome"><div><h2>Dashboard Keuangan</h2><p>Ringkasan kondisi keuangan dan pembayaran SPP periode berjalan.</p></div><div class="welcome-badge">Data Asli Pondok</div></div>
 
     <div class="periode">
       <div class="periode-title">Periode SPP</div>
@@ -377,6 +377,26 @@
     <div class="data-refresh-note"><div><span class="online-dot"></span><strong>Data tersambung</strong> • Dashboard menggunakan data keuangan pondok</div><button onclick="muatUlangData()" style="border:0;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:7px 10px;font-size:11px;font-weight:700">↻ Perbarui</button></div>
     <div class="dashboard-section-title"><div><h3>Aktivitas Keuangan Terbaru</h3><p>Ringkasan transaksi terakhir yang tercatat</p></div><button class="action-chip" onclick="bukaLaporanPengeluaran()">Lihat semua</button></div>
     <div class="overview-card" id="dashboardRecentBox"><div class="empty-state">Memuat transaksi terbaru...</div></div>
+
+    <div class="dashboard-final-grid">
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Pemasukan SPP Periode Ini</div><div class="panel-sub">Total pembayaran yang sudah diterima pada periode aktif</div></div><span style="font-size:22px">📥</span></div>
+        <div class="income-highlight"><div><div class="label">Dana SPP diterima</div><div class="value" id="dashboardIncomeValue">Rp0</div></div><div style="text-align:right"><div class="label">Santri membayar</div><div class="value" id="dashboardIncomeCount" style="font-size:20px">0</div></div></div>
+        <div style="margin-top:12px;font-size:12px;color:#64748b;line-height:1.55">Pemasukan SPP dihitung dari status pembayaran santri pada periode aktif. Tidak ada angka contoh yang dimasukkan.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Pengeluaran Terakhir</div><div class="panel-sub">Transaksi nyata dari sistem keuangan</div></div><button class="action-chip" onclick="bukaLaporanPengeluaran()">Lihat semua</button></div>
+        <div id="dashboardExpenseList" class="expense-list"><div class="empty-state">Memuat...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Rekap Pengeluaran</div><div class="panel-sub">Perbandingan berdasarkan transaksi yang tercatat</div></div><span style="font-size:22px">📊</span></div>
+        <div id="dashboardExpenseBars" class="expense-bars"><div class="empty-state">Memuat...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><div class="panel-title">Kondisi Periode SPP</div><div class="panel-sub">Ringkasan sebelum periode diselesaikan</div></div><span style="font-size:22px">🗓️</span></div>
+        <div id="dashboardPeriodSummary" style="font-size:13px;color:#475569;line-height:1.7">Memuat status periode...</div>
+      </div>
+    </div>
 
     <div class="quick-overview">
       <div class="overview-card">
@@ -1526,16 +1546,26 @@ function renderLaporanPengeluaran(){
   }
   
   async function loadDashboardRecent(){
-    const box=document.getElementById("dashboardRecentBox"); if(!box) return;
+    const box=document.getElementById("dashboardRecentBox");
+    const list=document.getElementById("dashboardExpenseList");
+    const bars=document.getElementById("dashboardExpenseBars");
     try{
       const response=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"});
-      const data=await response.json(); const tx=(data.transaksi||[]).slice(0,5);
-      if(!tx.length){box.innerHTML='<div class="empty-state">Belum ada transaksi pengeluaran.</div>';return;}
-      box.innerHTML=tx.map(t=>{
-        const sumber=String(t.sumber||"").toUpperCase();
-        return '<div class="tx-row"><div class="tx-main"><div class="tx-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="tx-date">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="tx-amount" style="color:#dc2626">-'+rupiah(t.jumlah)+'</div></div>';
-      }).join("");
-    }catch(e){box.innerHTML='<div class="empty-state">Transaksi terbaru belum dapat dimuat.</div>';console.error(e);}
+      const data=await response.json();
+      const tx=data.transaksi||[];
+      const recent=tx.slice(0,5);
+      const renderRow=t=>'<div class="expense-item"><div class="expense-date">'+(t.tanggal||"-")+'</div><div><div class="expense-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="expense-source">'+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="expense-amount">-'+rupiah(t.jumlah)+'</div></div>';
+      if(box) box.innerHTML=recent.length?recent.map(t=>'<div class="tx-row"><div class="tx-main"><div class="tx-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="tx-date">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+(t.catatan?' • '+t.catatan:'')+'</div></div><div class="tx-amount" style="color:#dc2626">-'+rupiah(t.jumlah)+'</div></div>').join(""):'<div class="empty-state">Belum ada transaksi pengeluaran.</div>';
+      if(list) list.innerHTML=recent.length?recent.map(renderRow).join(""):'<div class="empty-state">Belum ada transaksi pengeluaran.</div>';
+      const groups={}; tx.forEach(t=>{const k=t.keterangan||"Lain-lain";groups[k]=(groups[k]||0)+Number(t.jumlah||0);});
+      const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,5); const max=entries.length?entries[0][1]:0;
+      if(bars) bars.innerHTML=entries.length?entries.map(([name,val])=>'<div class="expense-bar-row"><div title="'+name+'">'+name+'</div><div class="expense-track"><div class="expense-fill" style="width:'+(max?Math.max(3,val/max*100):0)+'%"></div></div><div class="expense-total">'+rupiah(val)+'</div></div>').join(""):'<div class="empty-state">Belum ada data pengeluaran.</div>';
+    }catch(e){
+      if(box) box.innerHTML='<div class="empty-state">Transaksi terbaru belum dapat dimuat.</div>';
+      if(list) list.innerHTML='<div class="empty-state">Pengeluaran belum dapat dimuat.</div>';
+      if(bars) bars.innerHTML='<div class="empty-state">Rekap belum dapat dimuat.</div>';
+      console.error(e);
+    }
   }
 
   async function muatUlangData(){
