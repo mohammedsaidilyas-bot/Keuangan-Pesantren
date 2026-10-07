@@ -44,6 +44,12 @@
       padding: 18px;
     }
 
+    /* Tampilan dashboard modern ala tablet */
+    .app-shell{display:flex;min-height:calc(100vh - 102px)}
+    .sidebar{width:230px;flex:none;background:#fff;border-right:1px solid #e5e7eb;padding:18px 12px;display:flex;flex-direction:column;gap:6px;}
+    .side-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:13px;color:#334155;font-weight:600;font-size:14px;cursor:pointer;transition:.15s;}
+    .side-item:hover{background:#f0fdfa;color:#0f766e}.side-item.active{background:#e6fffb;color:#0f766e}.side-icon{width:28px;text-align:center;font-size:19px}.side-spacer{flex:1}.side-logout{color:#dc2626;background:#fff1f2}.side-logout:hover{background:#ffe4e6;color:#b91c1c}
+    .main-area{flex:1;min-width:0}.dashboard-progress{background:#fff;border-radius:18px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.07);margin-top:16px}.progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:800}.progress-track{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:12px}.progress-fill{height:100%;background:#0f766e;border-radius:999px;transition:width .3s}.progress-note{font-size:12px;color:#64748b;margin-top:8px}
     .periode {
       background: white;
       border-radius: 16px;
@@ -250,6 +256,7 @@
       }
     }
   
+    @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
     @media (min-width: 700px) {
       .header { padding: 28px 32px; }
       .header h1 { font-size: 28px; }
@@ -282,6 +289,20 @@
     </div>
   </div>
 
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="side-item active"><span class="side-icon">🏠</span><span>Dashboard</span></div>
+      <div class="side-item" onclick="bukaPemasukanKas()"><span class="side-icon">💰</span><span>Pemasukan Kas</span></div>
+      <div class="side-item" onclick="bukaForm()"><span class="side-icon">🛒</span><span>Pengeluaran</span></div>
+      <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">👥</span><span>Pembayaran SPP</span></div>
+      <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">📄</span><span>Data Santri</span></div>
+      <div class="side-item" onclick="bukaLaporanPengeluaran()"><span class="side-icon">📋</span><span>Laporan</span></div>
+      <div class="side-item" onclick="pindahkanSisaSPPKeKas()"><span class="side-icon">◔</span><span>Rekap Periode</span></div>
+      <div class="side-item"><span class="side-icon">⚙️</span><span>Pengaturan</span></div>
+      <div class="side-spacer"></div>
+      <div class="side-item side-logout" onclick="alert('Fitur keluar akan diaktifkan saat sistem login selesai.')"><span class="side-icon">↪</span><span>Keluar</span></div>
+    </aside>
+    <main class="main-area">
   <div class="container">
 
     <div style="display:flex;justify-content:flex-end;margin:-4px 0 12px;">
@@ -349,6 +370,12 @@
     </div>
 
     <div id="error" class="error"></div>
+
+    <div class="dashboard-progress">
+      <div class="progress-head"><span>Progres Pembayaran SPP</span><span id="progressPersen">0%</span></div>
+      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div id="progressNote" class="progress-note">Memuat progres pembayaran...</div>
+    </div>
 
 
     <div id="formOverlay" class="overlay" style="display:none;">
@@ -482,6 +509,8 @@
     </div>
 
   </div>
+    </main>
+  </div>
 
 <script>
 
@@ -533,6 +562,16 @@
 
       document.getElementById("belumBayar").textContent =
         (data.belumBayar || 0) + " Santri";
+
+      const totalSantri = Number(data.lunas || 0) + Number(data.belumBayar || 0);
+      const persen = totalSantri ? (Number(data.lunas || 0) / totalSantri * 100) : 0;
+      const persenBulat = Math.round(persen * 10) / 10;
+      const progressEl = document.getElementById("progressFill");
+      const progressPct = document.getElementById("progressPersen");
+      const progressNote = document.getElementById("progressNote");
+      if(progressEl) progressEl.style.width = Math.min(100, persen) + "%";
+      if(progressPct) progressPct.textContent = persenBulat + "%";
+      if(progressNote) progressNote.textContent = (data.lunas || 0) + " dari " + totalSantri + " santri sudah membayar";
 
       // Status periode SPP untuk membantu bendahara menentukan kapan
       // sisa SPP sudah boleh dipindahkan ke Kas.
