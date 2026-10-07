@@ -2,11 +2,11 @@ package com.ppfha.keuangan;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.CancellationSignal;
-import android.os.ParcelFileDescriptor;
-import android.print.PrintAttributes;
-import android.print.PrintDocumentAdapter;
-import android.print.PrintDocumentInfo;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.pdf.PdfDocument;
+import android.view.View;
+import java.io.FileOutputStream;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -47,49 +47,72 @@ public class MainActivity extends Activity {
         printView.getSettings().setJavaScriptEnabled(false);
         final File dir = new File(getCacheDir(), "laporan");
         if (!dir.exists()) dir.mkdirs();
+
         final String safeName = fileName == null || fileName.trim().isEmpty()
                 ? "Laporan-Keuangan.pdf" : fileName.replaceAll("[^a-zA-Z0-9._-]", "-");
         final File pdfFile = new File(dir, safeName);
 
+        printView.setBackgroundColor(Color.WHITE);
         printView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                final PrintDocumentAdapter adapter = view.createPrintDocumentAdapter("Laporan Keuangan");
-                final PrintAttributes attrs = new PrintAttributes.Builder()
-                        .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                        .setResolution(new PrintAttributes.Resolution("laporan", "Laporan", 300, 300))
-                        .setMinMargins(PrintAttributes.Margins.NO_MARGINS).build();
+                try {
+                    // A4 pada 72dpi. Konten diberi margin 30px.
+                    final int pageWidth = 595;
+                    final int pageHeight = 842;
+                    final int margin = 30;
+                    final int contentWidth = pageWidth - (margin * 2);
+                    final int contentHeightPerPage = pageHeight - (margin * 2);
 
-                adapter.onLayout(null, attrs, new CancellationSignal(), new PrintDocumentAdapter.LayoutResultCallback() {
-                    @Override public void onLayoutFinished(PrintDocumentInfo info, boolean changed) {
-                        try {
-                            final ParcelFileDescriptor pfd = ParcelFileDescriptor.open(pdfFile,
-                                    ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_TRUNCATE | ParcelFileDescriptor.MODE_READ_WRITE);
-                            adapter.onWrite(new android.print.PageRange[]{android.print.PageRange.ALL_PAGES}, pfd,
-                                    new CancellationSignal(), new PrintDocumentAdapter.WriteResultCallback() {
-                                @Override public void onWriteFinished(android.print.PageRange[] pages) {
-                                    try { pfd.close(); } catch (IOException ignored) {}
-                                    printView.destroy();
-                                    bagikanPDF(pdfFile, message);
-                                }
-                                @Override public void onWriteFailed(CharSequence error) {
-                                    try { pfd.close(); } catch (IOException ignored) {}
-                                    printView.destroy();
-                                    Toast.makeText(MainActivity.this, "Gagal membuat PDF.", Toast.LENGTH_LONG).show();
-                                }
-                            });
-                        } catch (Exception e) {
-                            printView.destroy();
-                            Toast.makeText(MainActivity.this, "Gagal menyiapkan PDF.", Toast.LENGTH_LONG).show();
+                    printView.measure(
+                            View.MeasureSpec.makeMeasureSpec(contentWidth, View.MeasureSpec.EXACTLY),
+                            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                    );
+                    final int contentHeight = Math.max(printView.getMeasuredHeight(), 1);
+                    printView.layout(0, 0, contentWidth, contentHeight);
+
+                    final int pageCount = Math.max(1,
+                            (contentHeight + contentHeightPerPage - 1) / contentHeightPerPage);
+
+                    PdfDocument document = new PdfDocument();
+                    try {
+                        for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                            PdfDocument.PageInfo pageInfo =
+                                    new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageIndex + 1).create();
+                            PdfDocument.Page page = document.startPage(pageInfo);
+                            Canvas canvas = page.getCanvas();
+                            canvas.drawColor(Color.WHITE);
+                            canvas.save();
+                            canvas.translate(margin, margin - (pageIndex * contentHeightPerPage));
+                            canvas.clipRect(0, pageIndex * contentHeightPerPage,
+                                    contentWidth, (pageIndex + 1) * contentHeightPerPage);
+                            printView.draw(canvas);
+                            canvas.restore();
+                            document.finishPage(page);
                         }
+
+                        FileOutputStream out = new FileOutputStream(pdfFile);
+                        try {
+                            document.writeTo(out);
+                        } finally {
+                            try { out.close(); } catch (IOException ignored) {}
+                        }
+                    } finally {
+                        document.close();
                     }
-                    @Override public void onLayoutFailed(CharSequence error) {
-                        printView.destroy();
-                        Toast.makeText(MainActivity.this, "Gagal membuat tata letak PDF.", Toast.LENGTH_LONG).show();
-                    }
-                }, null);
+
+                    printView.destroy();
+                    bagikanPDF(pdfFile, message);
+                } catch (Exception e) {
+                    printView.destroy();
+                    Toast.makeText(MainActivity.this,
+                            "Gagal membuat PDF: " + (e.getMessage() == null ? "kesalahan sistem" : e.getMessage()),
+                            Toast.LENGTH_LONG).show();
+                }
             }
         });
-        printView.loadDataWithBaseURL("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/", html, "text/html", "UTF-8", null);
+        printView.loadDataWithBaseURL(
+                "https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/",
+                html, "text/html", "UTF-8", null);
     }
 
     private void bagikanPDF(File pdfFile, String message) {
