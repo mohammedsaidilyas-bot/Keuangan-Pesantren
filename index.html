@@ -1004,9 +1004,12 @@ function bukaFormPengeluaran() {
       return total + Number(t.jumlah||0);
     },0);
 
+    // Saldo Awal Kas adalah saldo Kas sebelum tambahan SPP→Kas.
+    // getKasPondok() sudah mengembalikan saldo Kas awal tersebut,
+    // jadi jangan dikurangi lagi dengan transfer SPP.
     const saldoAwal=(data.saldoAwalKas !== undefined && data.saldoAwalKas !== null)
       ? Number(data.saldoAwalKas||0)
-      : Math.max(0,saldoBackend-sisaSPP);
+      : saldoBackend;
 
     const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
 
