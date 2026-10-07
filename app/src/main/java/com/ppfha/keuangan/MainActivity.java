@@ -12,6 +12,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.content.Intent;
+import android.content.ClipData;
 import android.net.Uri;
 import android.widget.Toast;
 import java.io.File;
@@ -98,6 +99,7 @@ public class MainActivity extends Activity {
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.putExtra(Intent.EXTRA_TEXT, message);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.setClipData(ClipData.newRawUri("Laporan PDF", uri));
         intent.setPackage("com.whatsapp");
         try {
             grantUriPermission("com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
