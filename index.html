@@ -258,6 +258,30 @@
   
 
     @media (min-width:1100px){.cards{grid-template-columns:repeat(4,1fr)}.cards .card:nth-child(5),.cards .card:nth-child(6){grid-column:span 2}}
+    /* Dashboard tablet: ringkas, rapi, dan tidak membuat konten menjadi teks panjang */
+    .dashboard-final-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+    .dashboard-final-grid .panel{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 3px 12px rgba(15,23,42,.07);min-width:0;overflow:hidden}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+    .panel-title{font-size:15px;font-weight:800;color:#1f2937}.panel-sub{font-size:11px;color:#64748b;margin-top:2px}
+    .action-chip{border:0;background:#f0fdfa;color:#0f766e;border-radius:9px;padding:6px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+    .income-highlight{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;border-radius:12px;padding:10px 12px}
+    .income-highlight .label{font-size:10px;color:#64748b}.income-highlight .value{font-size:18px;font-weight:800;color:#0f766e;margin-top:2px}
+    .expense-list{display:grid;gap:5px}.expense-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:11px}.expense-item:last-child{border-bottom:0}.expense-item .expense-main{min-width:0}.expense-item .expense-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-item .expense-meta{font-size:10px;color:#64748b;margin-top:2px}.expense-item .expense-amount{font-weight:800;color:#dc2626;white-space:nowrap}
+    .expense-bars{display:grid;grid-template-columns:1fr 1fr;gap:7px}.expense-bar-row{display:grid;grid-template-columns:78px 1fr auto;align-items:center;gap:6px;font-size:10px}.expense-bar-row .bar-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-bar-track{height:7px;background:#e5e7eb;border-radius:99px;overflow:hidden}.expense-bar-fill{height:100%;background:#f59e0b;border-radius:99px}.expense-bar-value{font-weight:700;color:#475569;white-space:nowrap}
+    .dashboard-period-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}.dashboard-period-pill{background:#f8fafc;border-radius:10px;padding:8px 10px}.dashboard-period-pill .small{font-size:10px;color:#64748b}.dashboard-period-pill .big{font-size:13px;font-weight:800;margin-top:2px;color:#334155}
+    .empty-state{padding:10px 0;color:#94a3b8;font-size:11px}
+    @media (min-width:700px){
+      body{overflow:hidden}
+      .header{padding:18px 32px}
+      .header h1{font-size:27px;margin-bottom:3px}.header p{font-size:14px}
+      .app-shell{height:calc(100vh - 105px);min-height:0}.sidebar{height:calc(100vh - 105px);min-height:0;padding:14px 12px}.side-item{padding:10px 12px;font-size:14px}
+      .main-area{height:calc(100vh - 105px);overflow:hidden}.main-area>.container{height:100%;padding:14px 24px;overflow:hidden}
+      .periode{padding:12px 16px;margin-bottom:10px;border-radius:15px}.periode-title{font-size:11px}.periode-value{font-size:21px}
+      #statusPeriodeBox{padding:10px 14px!important;margin-bottom:10px!important;border-radius:14px!important}.cards{gap:10px}.card{padding:12px 14px;border-radius:15px}.card-title{font-size:11px;margin-bottom:5px}.card-value{font-size:20px}.stat-icon{font-size:17px!important}
+      .dashboard-progress{margin-top:10px;padding:11px 14px;border-radius:15px}.progress-head{font-size:13px}.progress-track{height:8px;margin-top:7px}.progress-note{font-size:10px;margin-top:5px}
+      .dashboard-final-grid{grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.dashboard-final-grid .panel{padding:10px 13px;border-radius:14px;min-height:100px}.panel-title{font-size:13px}.panel-sub{font-size:10px}.income-highlight{padding:7px 9px}.income-highlight .value{font-size:16px}.dashboard-final-grid .panel:nth-child(3),.dashboard-final-grid .panel:nth-child(4){min-height:92px}
+    }
+    @media (min-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.cards .card{min-height:86px}.dashboard-final-grid{grid-template-columns:1fr 1fr}}
     @media (min-width:700px){.legacy-menu-section{display:none!important}.dashboard-final-grid{margin-top:16px}.main-area>.container{padding-top:18px}}
     @media (min-width:700px){.main-area>.container{max-width:none;width:100%;padding-left:24px;padding-right:24px}.app-shell{align-items:flex-start}.sidebar{min-height:calc(100vh - 102px)}}
     @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
