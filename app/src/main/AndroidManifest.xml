@@ -4,8 +4,8 @@
     <application
         android:theme="@style/AppTheme"
         android:label="Bendahara"
-        android:icon="@drawable/logo_pondok_new"
-        android:roundIcon="@drawable/logo_pondok_new"
+        android:icon="@drawable/logo_pondok_asli"
+        android:roundIcon="@drawable/logo_pondok_asli"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false">
