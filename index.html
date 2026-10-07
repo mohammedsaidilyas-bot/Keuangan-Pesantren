@@ -284,6 +284,10 @@
 
   <div class="container">
 
+    <div style="display:flex;justify-content:flex-end;margin:-4px 0 12px;">
+      <button onclick="muatUlangData()" style="border:0;background:white;color:#0f766e;border:1px solid #ccfbf1;border-radius:12px;padding:10px 14px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;">↻ Muat Ulang Data</button>
+    </div>
+
     <div class="periode">
       <div class="periode-title">Periode SPP</div>
       <div class="periode-value" id="periode">Memuat...</div>
@@ -1445,6 +1449,16 @@ function renderLaporanPengeluaran(){
     }
   }
   
+  async function muatUlangData(){
+    const btn=document.querySelector('button[onclick="muatUlangData()"]');
+    if(btn){btn.disabled=true;btn.textContent="⟳ Memuat...";}
+    try{
+      await Promise.all([loadDashboard(),loadKasPondok()]);
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent="↻ Muat Ulang Data";}
+    }
+  }
+
   loadDashboard();
   loadKasPondok();
 
