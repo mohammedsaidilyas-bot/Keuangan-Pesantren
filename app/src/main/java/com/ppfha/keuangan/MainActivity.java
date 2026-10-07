@@ -6,6 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.pdf.PdfDocument;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import java.io.FileOutputStream;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -44,7 +46,16 @@ public class MainActivity extends Activity {
 
     private void buatPDFDanBagikan(String html, String fileName, String message) {
         final WebView printView = new WebView(this);
-        printView.getSettings().setJavaScriptEnabled(false);
+        printView.getSettings().setJavaScriptEnabled(true);
+        printView.getSettings().setDomStorageEnabled(true);
+        printView.getSettings().setLoadWithOverviewMode(false);
+        printView.getSettings().setUseWideViewPort(false);
+        printView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        // WebView harus terpasang ke window agar benar-benar melakukan layout/paint sebelum digambar ke PDF.
+        FrameLayout.LayoutParams hiddenParams = new FrameLayout.LayoutParams(1, 1);
+        hiddenParams.leftMargin = -10;
+        hiddenParams.topMargin = -10;
+        addContentView(printView, hiddenParams);
         final File dir = new File(getCacheDir(), "laporan");
         if (!dir.exists()) dir.mkdirs();
 
@@ -55,6 +66,8 @@ public class MainActivity extends Activity {
         printView.setBackgroundColor(Color.WHITE);
         printView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
+                // Tunggu sebentar agar CSS/layout/painting selesai sebelum WebView digambar ke PDF.
+                printView.postDelayed(() -> {
                 try {
                     final int pageWidth = 595;
                     final int pageHeight = 842;
@@ -66,7 +79,9 @@ public class MainActivity extends Activity {
                             View.MeasureSpec.makeMeasureSpec(contentWidth, View.MeasureSpec.EXACTLY),
                             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
                     );
-                    final int contentHeight = Math.max(printView.getMeasuredHeight(), 1);
+                    int measuredHeight = printView.getMeasuredHeight();
+                    int webContentHeight = printView.getContentHeight();
+                    final int contentHeight = Math.max(Math.max(measuredHeight, webContentHeight), 1);
                     printView.layout(0, 0, contentWidth, contentHeight);
 
                     final int pageCount = Math.max(1,
@@ -107,9 +122,10 @@ public class MainActivity extends Activity {
                             "Gagal membuat PDF: " + (e.getMessage() == null ? "kesalahan sistem" : e.getMessage()),
                             Toast.LENGTH_LONG).show();
                 }
+                }, 800);
             }
         });
-        printView.loadDataWithBaseURL(
+        printView.loadDataWithBaseURL
                 "https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/",
                 html, "text/html", "UTF-8", null);
     }
