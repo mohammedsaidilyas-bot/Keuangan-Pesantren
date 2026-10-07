@@ -930,7 +930,7 @@
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Periode SPP (uang ini dibebankan ke periode ini)</label><select id="inputPeriode" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px"><option value="Januari">Januari</option><option value="Februari">Februari</option><option value="Maret">Maret</option><option value="April">April</option><option value="Mei">Mei</option><option value="Juni">Juni</option><option value="Juli">Juli</option><option value="Agustus">Agustus</option><option value="September">September</option><option value="Oktober">Oktober</option><option value="November">November</option><option value="Desember">Desember</option></select>' +
       '<label style="display:block;font-weight:700;margin:10px 0 6px">Catatan</label><textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;resize:vertical"></textarea>' +
       '<div id="formMessage" style="display:none;padding:10px;border-radius:10px;margin-top:12px;font-size:13px"></div>' +
-      '<button onclick="simpanPengeluaran()" style="width:100%;margin-top:14px;border:0;border-radius:12px;padding:14px;background:#0f766e;color:#fff;font-size:15px;font-weight:800">Simpan Pengeluaran</button>' +
+      '<button id="btnSimpanPengeluaran" class="save-btn" onclick="simpanPengeluaran()" style="width:100%;margin-top:14px;border:0;border-radius:12px;padding:14px;background:#0f766e;color:#fff;font-size:15px;font-weight:800">Simpan Pengeluaran</button>' +
       '</div>';
     document.body.appendChild(modal);
     document.getElementById("inputTanggal").value = new Date().toISOString().slice(0,10);
@@ -1232,7 +1232,8 @@
       document.getElementById("inputCatatan").value = "";
 
       setTimeout(function() {
-        tutupForm();
+        const modal = document.getElementById("modalCatatPengeluaran");
+        if (modal) modal.remove();
         loadDashboard();
       }, 700);
     } catch (error) {
