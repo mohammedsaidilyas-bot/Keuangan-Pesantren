@@ -93,16 +93,22 @@ public class MainActivity extends Activity {
     }
 
     private void bagikanPDF(File pdfFile, String message) {
+        if (!pdfFile.exists() || pdfFile.length() == 0) {
+            Toast.makeText(this, "PDF belum berhasil dibuat.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         Uri uri = Uri.parse("content://com.ppfha.keuangan.fileprovider/laporan/" + Uri.encode(pdfFile.getName()));
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("application/pdf");
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.putExtra(Intent.EXTRA_TEXT, message);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setClipData(ClipData.newRawUri("Laporan PDF", uri));
+        intent.setClipData(ClipData.newUri(getContentResolver(), "Laporan PDF", uri));
         intent.setPackage("com.whatsapp");
         try {
             grantUriPermission("com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Toast.makeText(this, "PDF siap dikirim ke WhatsApp.", Toast.LENGTH_SHORT).show();
             startActivity(intent);
         } catch (Exception e) {
             intent.setPackage(null);
