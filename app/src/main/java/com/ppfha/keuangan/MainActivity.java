@@ -14,7 +14,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
-import android.print.PrintManager;
+import android.print.PrintDocumentInfo;
+import android.print.PageRange;
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -59,10 +62,10 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * Setelah pratinjau HTML di aplikasi diperiksa, tombol Simpan PDF membuka
-     * Android Print Preview. Pengguna dapat memilih Save as PDF dan melihat
-     * hasil A4 landscape sebelum menyimpan. Tidak ada callback PrintDocument
-     * yang dibuat manual, sehingga aman untuk semua Android SDK yang dipakai.
+     * Simpan PDF langsung tanpa membuka Android Print Preview.
+     * WebView tetap merender HTML laporan, lalu PrintDocumentAdapter
+     * menulis hasil PDF ke file cache. Setelah selesai, file dipindahkan
+     * ke Download/Bendahara dan pengguna mendapat tombol Tutup.
      */
     private void bukaPratinjauCetakAndroid(String html, String fileName) {
         try {
@@ -87,11 +90,12 @@ public class MainActivity extends Activity {
             addContentView(printWebView, lp);
 
             printWebView.setWebViewClient(new WebViewClient() {
-                private boolean printed = false;
+                private boolean saved = false;
+
                 @Override public void onPageFinished(WebView view, String url) {
-                    if (printed) return;
-                    printed = true;
-                    printWebView.postDelayed(() -> mulaiPrint(fileName), 700);
+                    if (saved) return;
+                    saved = true;
+                    printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 700);
                 }
             });
 
@@ -99,31 +103,150 @@ public class MainActivity extends Activity {
                     "https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/",
                     html, "text/html", "UTF-8", null);
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal membuka pratinjau cetak: " + e.getMessage(),
+            Toast.makeText(this, "Gagal menyiapkan PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
         }
     }
 
-    private void mulaiPrint(String fileName) {
+    private void simpanPDFLangsung(String fileName) {
         try {
-            PrintManager printManager = (PrintManager) getSystemService(PRINT_SERVICE);
-            if (printManager == null) throw new IOException("Layanan cetak Android tidak tersedia");
+            File dir = new File(getCacheDir(), "laporan");
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw new IOException("Folder cache laporan tidak dapat dibuat");
+            }
 
-            printAdapter = printWebView.createPrintDocumentAdapter(
-                    fileName == null ? "Laporan-Keuangan" : fileName);
+            final String safeName = (fileName == null || fileName.trim().isEmpty())
+                    ? "Laporan-Keuangan.pdf" : fileName;
+            final File pdfFile = new File(dir, safeName);
+
+            if (pdfFile.exists()) pdfFile.delete();
+
+            printAdapter = printWebView.createPrintDocumentAdapter(safeName);
 
             PrintAttributes attributes = new PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
+                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
                     .setResolution(new PrintAttributes.Resolution(
                             "bendahara_pdf", "Bendahara PDF", 300, 300))
                     .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                     .build();
 
-            printManager.print("Laporan Keuangan Pesantren", printAdapter, attributes);
+            CancellationSignal cancellationSignal = new CancellationSignal();
+
+            printAdapter.onLayout(
+                    null,
+                    attributes,
+                    cancellationSignal,
+                    new PrintDocumentAdapter.LayoutResultCallback() {
+                        @Override public void onLayoutFinished(
+                                PrintDocumentInfo info, boolean changed) {
+                            try {
+                                ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
+                                        pdfFile,
+                                        ParcelFileDescriptor.MODE_CREATE
+                                                | ParcelFileDescriptor.MODE_TRUNCATE
+                                                | ParcelFileDescriptor.MODE_WRITE);
+
+                                printAdapter.onWrite(
+                                        new PageRange[]{PageRange.ALL_PAGES},
+                                        pfd,
+                                        cancellationSignal,
+                                        new PrintDocumentAdapter.WriteResultCallback() {
+                                            @Override public void onWriteFinished(PageRange[] pages) {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                runOnUiThread(() -> {
+                                                    if (pdfFile.exists() && pdfFile.length() > 0) {
+                                                        boolean ok = saveToDownload(pdfFile, safeName);
+                                                        if (ok) {
+                                                            tampilkanDialogPDFTersimpan(safeName);
+                                                        }
+                                                    } else {
+                                                        Toast.makeText(MainActivity.this,
+                                                                "PDF gagal dibuat.",
+                                                                Toast.LENGTH_LONG).show();
+                                                    }
+                                                    bersihkanPrintWebView();
+                                                });
+                                            }
+
+                                            @Override public void onWriteFailed(CharSequence error) {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                runOnUiThread(() -> {
+                                                    Toast.makeText(MainActivity.this,
+                                                            "Gagal membuat PDF: " + error,
+                                                            Toast.LENGTH_LONG).show();
+                                                    bersihkanPrintWebView();
+                                                });
+                                            }
+
+                                            @Override public void onWriteCancelled() {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                runOnUiThread(() -> {
+                                                    Toast.makeText(MainActivity.this,
+                                                            "Penyimpanan PDF dibatalkan.",
+                                                            Toast.LENGTH_LONG).show();
+                                                    bersihkanPrintWebView();
+                                                });
+                                            }
+                                        });
+                            } catch (Exception e) {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this,
+                                            "Gagal menyiapkan file PDF: " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show();
+                                    bersihkanPrintWebView();
+                                });
+                            }
+                        }
+
+                        @Override public void onLayoutFailed(CharSequence error) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this,
+                                        "Gagal menata laporan PDF: " + error,
+                                        Toast.LENGTH_LONG).show();
+                                bersihkanPrintWebView();
+                            });
+                        }
+
+                        @Override public void onLayoutCancelled() {
+                            runOnUiThread(() -> bersihkanPrintWebView());
+                        }
+                    },
+                    null
+            );
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal membuka cetak PDF: " + e.getMessage(),
+            Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
+            bersihkanPrintWebView();
         }
+    }
+
+    private void bersihkanPrintWebView() {
+        try {
+            if (printWebView != null) {
+                try { ((ViewGroup) printWebView.getParent()).removeView(printWebView); } catch (Exception ignored) {}
+                try { printWebView.destroy(); } catch (Exception ignored) {}
+                printWebView = null;
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void tampilkanDialogPDFTersimpan(String fileName) {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("PDF berhasil disimpan")
+                .setMessage("Laporan tersimpan di:\nDownload/Bendahara/" + fileName)
+                .setPositiveButton("Tutup", (dialog, which) -> {
+                    try {
+                        webView.evaluateJavascript(
+                                "(function(){var m=document.getElementById('previewLaporanKeuangan');"
+                                + "if(m)m.remove();"
+                                + "if(typeof loadDashboard==='function')loadDashboard();"
+                                + "})()",
+                                null);
+                    } catch (Exception ignored) {}
+                    dialog.dismiss();
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void pilihPDFUntukWhatsApp(String message) {
@@ -174,7 +297,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void saveToDownload(File f, String n) {
+    private boolean saveToDownload(File f, String n) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ContentValues v = new ContentValues();
@@ -183,22 +306,32 @@ public class MainActivity extends Activity {
                 v.put(MediaStore.Downloads.RELATIVE_PATH,
                         Environment.DIRECTORY_DOWNLOADS + "/Bendahara");
                 v.put(MediaStore.Downloads.IS_PENDING, 1);
+
                 Uri u = getContentResolver().insert(
                         MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), v);
                 if (u == null) throw new IOException("Download tidak tersedia");
+
                 try (InputStream in = new java.io.FileInputStream(f);
                      OutputStream o = getContentResolver().openOutputStream(u)) {
-                    byte[] b = new byte[8192]; int k;
+                    byte[] b = new byte[8192];
+                    int k;
                     while ((k = in.read(b)) != -1) o.write(b, 0, k);
                 }
-                v.clear(); v.put(MediaStore.Downloads.IS_PENDING, 0);
-                getContentResolver().update(u, v, null, null);
-                Toast.makeText(this, "PDF tersimpan di Download/Bendahara/" + n,
-                        Toast.LENGTH_LONG).show();
+
+                ContentValues done = new ContentValues();
+                done.put(MediaStore.Downloads.IS_PENDING, 0);
+                getContentResolver().update(u, done, null, null);
+                return true;
             }
+
+            Toast.makeText(this,
+                    "Android versi ini belum didukung untuk penyimpanan otomatis.",
+                    Toast.LENGTH_LONG).show();
+            return false;
         } catch (Exception e) {
             Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 
@@ -225,7 +358,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
-        try { if (printWebView != null) printWebView.destroy(); } catch (Exception ignored) {}
+        bersihkanPrintWebView();
         super.onDestroy();
     }
 
