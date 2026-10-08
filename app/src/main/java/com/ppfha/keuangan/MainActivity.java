@@ -71,6 +71,9 @@ public class MainActivity extends Activity {
             }
         });
         webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7001);
+        }
     }
 
     private class AndroidBridge {
