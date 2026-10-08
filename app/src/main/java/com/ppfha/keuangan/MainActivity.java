@@ -257,7 +257,9 @@ public class MainActivity extends Activity {
             }
 
             // Simpan juga otomatis ke Download/Bendahara.
-            saveToDownload(pdfFile, fileName);
+            if (!saveToDownload(pdfFile, fileName)) {
+                throw new IOException("PDF tidak dapat disimpan ke Download/Bendahara");
+            }
 
             if (shareToWhatsApp) {
                 Uri uri = Uri.parse(
@@ -296,6 +298,66 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG).show();
         } finally {
             bersihkanPrintWebView();
+        }
+    }
+
+    private boolean saveToDownload(File source, String fileName) {
+        if (source == null || !source.exists() || source.length() == 0) {
+            return false;
+        }
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
+                values.put(MediaStore.Downloads.RELATIVE_PATH,
+                        Environment.DIRECTORY_DOWNLOADS + "/Bendahara");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                Uri uri = getContentResolver().insert(
+                        MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                        values);
+                if (uri == null) throw new IOException("Folder Download/Bendahara tidak tersedia");
+
+                try (InputStream in = new java.io.FileInputStream(source);
+                     OutputStream out = getContentResolver().openOutputStream(uri)) {
+                    if (out == null) throw new IOException("Tidak dapat membuka file tujuan");
+                    byte[] buffer = new byte[8192];
+                    int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, count);
+                    }
+                    out.flush();
+                }
+
+                ContentValues done = new ContentValues();
+                done.put(MediaStore.Downloads.IS_PENDING, 0);
+                getContentResolver().update(uri, done, null, null);
+                return true;
+            }
+
+            File downloads = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS);
+            File folder = new File(downloads, "Bendahara");
+            if (!folder.exists() && !folder.mkdirs()) {
+                throw new IOException("Folder Download/Bendahara tidak dapat dibuat");
+            }
+
+            File target = new File(folder, fileName);
+            try (InputStream in = new java.io.FileInputStream(source);
+                 OutputStream out = new java.io.FileOutputStream(target)) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, count);
+                }
+                out.flush();
+            }
+            return target.exists() && target.length() > 0;
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 
