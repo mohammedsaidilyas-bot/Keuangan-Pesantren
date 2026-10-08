@@ -1870,8 +1870,24 @@ function simpanPreviewLaporanKePDF(){
     window.BendaharaAndroid.saveLaporanPDF(html,nama);
   }else{
     const w=window.open("","_blank");
-    if(!w){alert("Tidak dapat membuka laporan.");return;}
-    w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),500);
+    if(!w){alert("Tidak dapat membuka halaman cetak.");return;}
+    w.document.write(html);
+    w.document.close();
+    w.addEventListener("afterprint",function(){
+      try{w.close();}catch(e){}
+      const m=document.getElementById("previewLaporanKeuangan");
+      if(m)m.remove();
+      if(typeof loadDashboard==="function")loadDashboard();
+    });
+    w.focus();
+    setTimeout(function(){
+      try{w.print();}catch(e){
+        try{w.close();}catch(_){}
+        const m=document.getElementById("previewLaporanKeuangan");
+        if(m)m.remove();
+        if(typeof loadDashboard==="function")loadDashboard();
+      }
+    },500);
   }
 }
 function normalisasiPeriodeLaporan(v){return String(v||"").toLowerCase().replace(/\s+/g," ").trim();}
