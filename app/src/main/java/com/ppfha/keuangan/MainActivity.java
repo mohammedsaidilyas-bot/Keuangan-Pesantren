@@ -97,7 +97,7 @@ public class MainActivity extends Activity {
                 @Override public void onPageFinished(WebView view, String url) {
                     if (saved) return;
                     saved = true;
-                    printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 700);
+                    printWebView.postDelayed(() -> {\n                        printWebView.evaluateJavascript("window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;", null);\n                        printWebView.scrollTo(0, 0);\n                        printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 350);\n                    }, 900);
                 }
             });
 
