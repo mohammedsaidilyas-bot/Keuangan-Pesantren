@@ -14,7 +14,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -58,3 +58,11 @@ jobs:
           path: app/build/outputs/apk/release/Keuangan-Pesantren.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v1.0.0"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG"             --title "Bendahara v1.0.0"             --notes "APK Bendahara / Keuangan Pesantren. Build dengan penyimpanan PDF langsung ke Download/Bendahara."
+          gh release upload "$TAG" app/build/outputs/apk/release/Keuangan-Pesantren.apk --clobber
