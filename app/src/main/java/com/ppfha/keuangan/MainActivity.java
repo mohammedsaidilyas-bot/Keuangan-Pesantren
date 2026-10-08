@@ -51,6 +51,25 @@ public class MainActivity extends Activity {
         settings.setUseWideViewPort(true);
         webView.addJavascriptInterface(new AndroidBridge(), "BendaharaAndroid");
         webView.setWebViewClient(new WebViewClient());
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+            try {
+                android.app.DownloadManager.Request request = new android.app.DownloadManager.Request(Uri.parse(url));
+                request.setMimeType(mimeType != null ? mimeType : "application/octet-stream");
+                request.addRequestHeader("User-Agent", userAgent);
+                String fileName = android.webkit.URLUtil.guessFileName(url, contentDisposition, mimeType);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "Bendahara/" + fileName);
+                } else {
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                }
+                request.setNotificationVisibility(android.app.DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                android.app.DownloadManager dm = (android.app.DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                if (dm != null) dm.enqueue(request);
+                Toast.makeText(MainActivity.this, "Download dimulai: " + fileName, Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Gagal mengunduh: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
         webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
     }
 
@@ -99,7 +118,11 @@ public class MainActivity extends Activity {
                 @Override public void onPageFinished(WebView view, String url) {
                     if (saved) return;
                     saved = true;
-                    printWebView.postDelayed(() -> {\n                        printWebView.evaluateJavascript("window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;", null);\n                        printWebView.scrollTo(0, 0);\n                        printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 350);\n                    }, 900);
+                    printWebView.postDelayed(() -> {
+                        printWebView.evaluateJavascript("window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;", null);
+                        printWebView.scrollTo(0, 0);
+                        printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 350);
+                    }, 900);
                 }
             });
 
