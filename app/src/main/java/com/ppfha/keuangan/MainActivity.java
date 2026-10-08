@@ -3,6 +3,7 @@ package com.ppfha.keuangan;
 import android.app.Activity;
 import android.os.Bundle;
 import android.graphics.Color;
+import android.graphics.pdf.PdfDocument;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -110,109 +111,63 @@ public class MainActivity extends Activity {
 
     private void simpanPDFLangsung(String fileName) {
         try {
+            final String safeName = (fileName == null || fileName.trim().isEmpty())
+                    ? "Laporan-Keuangan.pdf" : fileName;
+
+            // A4 portrait: 595 x 842 points. WebView dirender pada lebar A4
+            // dengan skala 96dpi, lalu dipotong menjadi beberapa halaman PDF.
+            final int pageWidthPx = 794;
+            final float pointsPerPx = 595f / pageWidthPx;
+            final int pageHeightPx = Math.round(842f / pointsPerPx);
+
+            printWebView.measure(
+                    ViewGroup.MeasureSpec.makeMeasureSpec(pageWidthPx, ViewGroup.MeasureSpec.EXACTLY),
+                    ViewGroup.MeasureSpec.makeMeasureSpec(0, ViewGroup.MeasureSpec.UNSPECIFIED)
+            );
+            printWebView.layout(0, 0, pageWidthPx, printWebView.getMeasuredHeight());
+
+            final int contentHeightPx = printWebView.getMeasuredHeight();
+            if (contentHeightPx <= 0) throw new IOException("Isi laporan kosong");
+
             File dir = new File(getCacheDir(), "laporan");
             if (!dir.exists() && !dir.mkdirs()) {
                 throw new IOException("Folder cache laporan tidak dapat dibuat");
             }
 
-            final String safeName = (fileName == null || fileName.trim().isEmpty())
-                    ? "Laporan-Keuangan.pdf" : fileName;
             final File pdfFile = new File(dir, safeName);
-
             if (pdfFile.exists()) pdfFile.delete();
 
-            printAdapter = printWebView.createPrintDocumentAdapter(safeName);
+            PdfDocument document = new PdfDocument();
+            try {
+                int totalPages = (int)Math.ceil(contentHeightPx / (double)pageHeightPx);
 
-            PrintAttributes attributes = new PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                    .setResolution(new PrintAttributes.Resolution(
-                            "bendahara_pdf", "Bendahara PDF", 300, 300))
-                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                    .build();
+                for (int pageNumber = 0; pageNumber < totalPages; pageNumber++) {
+                    PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(
+                            595, 842, pageNumber + 1).create();
+                    PdfDocument.Page page = document.startPage(pageInfo);
 
-            CancellationSignal cancellationSignal = new CancellationSignal();
+                    android.graphics.Canvas canvas = page.getCanvas();
+                    canvas.save();
+                    canvas.scale(pointsPerPx, pointsPerPx);
+                    canvas.translate(0, -pageNumber * pageHeightPx);
+                    printWebView.draw(canvas);
+                    canvas.restore();
 
-            printAdapter.onLayout(
-                    null,
-                    attributes,
-                    cancellationSignal,
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override public void onLayoutFinished(
-                                PrintDocumentInfo info, boolean changed) {
-                            try {
-                                ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
-                                        pdfFile,
-                                        ParcelFileDescriptor.MODE_CREATE
-                                                | ParcelFileDescriptor.MODE_TRUNCATE
-                                                | ParcelFileDescriptor.MODE_WRITE);
+                    document.finishPage(page);
+                }
 
-                                printAdapter.onWrite(
-                                        new PageRange[]{PageRange.ALL_PAGES},
-                                        pfd,
-                                        cancellationSignal,
-                                        new PrintDocumentAdapter.WriteResultCallback() {
-                                            @Override public void onWriteFinished(PageRange[] pages) {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                runOnUiThread(() -> {
-                                                    if (pdfFile.exists() && pdfFile.length() > 0) {
-                                                        boolean ok = saveToDownload(pdfFile, safeName);
-                                                        if (ok) {
-                                                            tampilkanDialogPDFTersimpan(safeName);
-                                                        }
-                                                    } else {
-                                                        Toast.makeText(MainActivity.this,
-                                                                "PDF gagal dibuat.",
-                                                                Toast.LENGTH_LONG).show();
-                                                    }
-                                                    bersihkanPrintWebView();
-                                                });
-                                            }
+                try (OutputStream out = new java.io.FileOutputStream(pdfFile)) {
+                    document.writeTo(out);
+                }
+            } finally {
+                document.close();
+            }
 
-                                            @Override public void onWriteFailed(CharSequence error) {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                runOnUiThread(() -> {
-                                                    Toast.makeText(MainActivity.this,
-                                                            "Gagal membuat PDF: " + error,
-                                                            Toast.LENGTH_LONG).show();
-                                                    bersihkanPrintWebView();
-                                                });
-                                            }
-
-                                            @Override public void onWriteCancelled() {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                runOnUiThread(() -> {
-                                                    Toast.makeText(MainActivity.this,
-                                                            "Penyimpanan PDF dibatalkan.",
-                                                            Toast.LENGTH_LONG).show();
-                                                    bersihkanPrintWebView();
-                                                });
-                                            }
-                                        });
-                            } catch (Exception e) {
-                                runOnUiThread(() -> {
-                                    Toast.makeText(MainActivity.this,
-                                            "Gagal menyiapkan file PDF: " + e.getMessage(),
-                                            Toast.LENGTH_LONG).show();
-                                    bersihkanPrintWebView();
-                                });
-                            }
-                        }
-
-                        @Override public void onLayoutFailed(CharSequence error) {
-                            runOnUiThread(() -> {
-                                Toast.makeText(MainActivity.this,
-                                        "Gagal menata laporan PDF: " + error,
-                                        Toast.LENGTH_LONG).show();
-                                bersihkanPrintWebView();
-                            });
-                        }
-
-                        @Override public void onLayoutCancelled() {
-                            runOnUiThread(() -> bersihkanPrintWebView());
-                        }
-                    },
-                    null
-            );
+            boolean ok = saveToDownload(pdfFile, safeName);
+            if (ok) {
+                tampilkanDialogPDFTersimpan(safeName);
+            }
+            bersihkanPrintWebView();
         } catch (Exception e) {
             Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
