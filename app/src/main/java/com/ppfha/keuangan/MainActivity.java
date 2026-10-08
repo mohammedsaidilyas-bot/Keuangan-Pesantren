@@ -86,7 +86,7 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void shareLaporanPDF(final String html, final String fileName, final String message) {
-            runOnUiThread(() -> pilihPDFUntukWhatsApp(message));
+            runOnUiThread(() -> bukaPDFUntukWhatsApp(html, fileName, message));
         }
     }
 
@@ -97,11 +97,16 @@ public class MainActivity extends Activity {
      * ke Download/Bendahara dan pengguna mendapat tombol Tutup.
      */
     private void bukaPratinjauCetakAndroid(String html, String fileName) {
+        siapkanWebViewPDF(html, () -> tulisPDFDenganPrintAdapter(fileName, false, ""));
+    }
+
+    private void bukaPDFUntukWhatsApp(String html, String fileName, String message) {
+        siapkanWebViewPDF(html, () -> tulisPDFDenganPrintAdapter(fileName, true, message));
+    }
+
+    private void siapkanWebViewPDF(String html, final Runnable setelahSiap) {
         try {
-            if (printWebView != null) {
-                try { ((ViewGroup) printWebView.getParent()).removeView(printWebView); } catch (Exception ignored) {}
-                try { printWebView.destroy(); } catch (Exception ignored) {}
-            }
+            bersihkanPrintWebView();
 
             printWebView = new WebView(this);
             WebSettings s = printWebView.getSettings();
@@ -111,24 +116,28 @@ public class MainActivity extends Activity {
             s.setUseWideViewPort(false);
             s.setTextZoom(100);
             printWebView.setBackgroundColor(Color.WHITE);
-            printWebView.setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null);
 
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-            lp.leftMargin = -2000;
-            lp.topMargin = -2000;
+            lp.leftMargin = -3000;
+            lp.topMargin = -3000;
             addContentView(printWebView, lp);
 
             printWebView.setWebViewClient(new WebViewClient() {
-                private boolean saved = false;
+                private boolean selesai = false;
 
                 @Override public void onPageFinished(WebView view, String url) {
-                    if (saved) return;
-                    saved = true;
+                    if (selesai) return;
+                    selesai = true;
                     printWebView.postDelayed(() -> {
-                        printWebView.evaluateJavascript("window.scrollTo(0,0);document.documentElement.scrollTop=0;document.body.scrollTop=0;", null);
-                        printWebView.scrollTo(0, 0);
-                        printWebView.postDelayed(() -> simpanPDFLangsung(fileName), 350);
+                        try {
+                            printWebView.evaluateJavascript(
+                                    "(function(){window.scrollTo(0,0);"
+                                    + "document.documentElement.scrollTop=0;"
+                                    + "document.body.scrollTop=0;"
+                                    + "})();", null);
+                        } catch (Exception ignored) {}
+                        printWebView.postDelayed(setelahSiap, 700);
                     }, 900);
                 }
             });
@@ -139,71 +148,153 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             Toast.makeText(this, "Gagal menyiapkan PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
+            bersihkanPrintWebView();
         }
     }
 
-    private void simpanPDFLangsung(String fileName) {
+    /*
+     * Gunakan mesin PDF bawaan WebView/Android PrintDocumentAdapter.
+     * Ini menggantikan PdfDocument manual yang sebelumnya menyebabkan
+     * halaman terpotong, ukuran berantakan, dan PDF sulit disimpan.
+     */
+    private void tulisPDFDenganPrintAdapter(String fileName, boolean shareToWhatsApp, String message) {
         try {
+            if (printWebView == null) throw new IOException("WebView laporan belum siap");
+
             final String safeName = (fileName == null || fileName.trim().isEmpty())
                     ? "Laporan-Keuangan.pdf" : fileName;
 
-            // A4 portrait: 595 x 842 points. WebView dirender pada lebar A4
-            // dengan skala 96dpi, lalu dipotong menjadi beberapa halaman PDF.
-            final int pageWidthPx = 794;
-            final float pointsPerPx = 595f / pageWidthPx;
-            final int pageHeightPx = Math.round(842f / pointsPerPx);
-
-            printWebView.measure(
-                    ViewGroup.MeasureSpec.makeMeasureSpec(pageWidthPx, ViewGroup.MeasureSpec.EXACTLY),
-                    ViewGroup.MeasureSpec.makeMeasureSpec(0, ViewGroup.MeasureSpec.UNSPECIFIED)
-            );
-            printWebView.layout(0, 0, pageWidthPx, printWebView.getMeasuredHeight());
-
-            final int contentHeightPx = printWebView.getMeasuredHeight();
-            if (contentHeightPx <= 0) throw new IOException("Isi laporan kosong");
-
             File dir = new File(getCacheDir(), "laporan");
             if (!dir.exists() && !dir.mkdirs()) {
-                throw new IOException("Folder cache laporan tidak dapat dibuat");
+                throw new IOException("Folder laporan tidak dapat dibuat");
             }
 
             final File pdfFile = new File(dir, safeName);
             if (pdfFile.exists()) pdfFile.delete();
 
-            PdfDocument document = new PdfDocument();
-            try {
-                int totalPages = (int)Math.ceil(contentHeightPx / (double)pageHeightPx);
+            printAdapter = printWebView.createPrintDocumentAdapter("LaporanKeuangan");
 
-                for (int pageNumber = 0; pageNumber < totalPages; pageNumber++) {
-                    PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(
-                            595, 842, pageNumber + 1).create();
-                    PdfDocument.Page page = document.startPage(pageInfo);
+            PrintAttributes attrs = new PrintAttributes.Builder()
+                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                    .setResolution(new PrintAttributes.Resolution(
+                            "bendahara_pdf", "Bendahara PDF", 300, 300))
+                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                    .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                    .build();
 
-                    android.graphics.Canvas canvas = page.getCanvas();
-                    canvas.save();
-                    canvas.scale(pointsPerPx, pointsPerPx);
-                    canvas.translate(0, -pageNumber * pageHeightPx);
-                    printWebView.draw(canvas);
-                    canvas.restore();
+            printAdapter.onLayout(
+                    null,
+                    attrs,
+                    null,
+                    new PrintDocumentAdapter.LayoutResultCallback() {
+                        @Override public void onLayoutFinished(
+                                PrintDocumentInfo info, boolean changed) {
+                            try {
+                                ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
+                                        pdfFile,
+                                        ParcelFileDescriptor.MODE_CREATE
+                                                | ParcelFileDescriptor.MODE_TRUNCATE
+                                                | ParcelFileDescriptor.MODE_WRITE_ONLY);
 
-                    document.finishPage(page);
-                }
+                                printAdapter.onWrite(
+                                        new PageRange[]{PageRange.ALL_PAGES},
+                                        pfd,
+                                        new CancellationSignal(),
+                                        new PrintDocumentAdapter.WriteResultCallback() {
+                                            @Override public void onWriteFinished(PageRange[] pages) {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
+                                            }
 
-                try (OutputStream out = new java.io.FileOutputStream(pdfFile)) {
-                    document.writeTo(out);
-                }
-            } finally {
-                document.close();
-            }
+                                            @Override public void onWriteFailed(CharSequence error) {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                Toast.makeText(MainActivity.this,
+                                                        "Gagal membuat PDF: " + String.valueOf(error),
+                                                        Toast.LENGTH_LONG).show();
+                                                bersihkanPrintWebView();
+                                            }
 
-            boolean ok = saveToDownload(pdfFile, safeName);
-            if (ok) {
-                tampilkanDialogPDFTersimpan(safeName);
-            }
-            bersihkanPrintWebView();
+                                            @Override public void onWriteCancelled() {
+                                                try { pfd.close(); } catch (Exception ignored) {}
+                                                Toast.makeText(MainActivity.this,
+                                                        "Pembuatan PDF dibatalkan.",
+                                                        Toast.LENGTH_SHORT).show();
+                                                bersihkanPrintWebView();
+                                            }
+                                        });
+                            } catch (Exception e) {
+                                Toast.makeText(MainActivity.this,
+                                        "Gagal menulis PDF: " + e.getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                                bersihkanPrintWebView();
+                            }
+                        }
+
+                        @Override public void onLayoutFailed(CharSequence error) {
+                            Toast.makeText(MainActivity.this,
+                                    "Gagal menata halaman PDF: " + String.valueOf(error),
+                                    Toast.LENGTH_LONG).show();
+                            bersihkanPrintWebView();
+                        }
+
+                        @Override public void onLayoutCancelled() {
+                            bersihkanPrintWebView();
+                        }
+                    },
+                    null);
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
+            Toast.makeText(this, "Gagal membuat PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
+            bersihkanPrintWebView();
+        }
+    }
+
+    private void setelahPDFSelesai(File pdfFile, String fileName,
+                                   boolean shareToWhatsApp, String message) {
+        try {
+            if (!pdfFile.exists() || pdfFile.length() == 0) {
+                throw new IOException("File PDF kosong");
+            }
+
+            // Simpan juga otomatis ke Download/Bendahara.
+            saveToDownload(pdfFile, fileName);
+
+            if (shareToWhatsApp) {
+                Uri uri = Uri.parse(
+                        "content://com.ppfha.keuangan.fileprovider/laporan/"
+                                + Uri.encode(fileName));
+
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("application/pdf");
+                intent.putExtra(Intent.EXTRA_STREAM, uri);
+                if (message != null && !message.isEmpty()) {
+                    intent.putExtra(Intent.EXTRA_TEXT, message);
+                }
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.setClipData(ClipData.newRawUri("Laporan PDF", uri));
+                intent.setPackage("com.whatsapp");
+
+                try {
+                    grantUriPermission("com.whatsapp", uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    intent.setPackage(null);
+                    try {
+                        startActivity(Intent.createChooser(intent, "Kirim laporan PDF"));
+                    } catch (Exception ex) {
+                        Toast.makeText(this,
+                                "PDF sudah tersimpan, tetapi WhatsApp tidak tersedia.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            } else {
+                tampilkanDialogPDFTersimpan(fileName);
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "PDF gagal disimpan: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        } finally {
             bersihkanPrintWebView();
         }
     }
@@ -235,114 +326,6 @@ public class MainActivity extends Activity {
                 })
                 .setCancelable(false)
                 .show();
-    }
-
-    private void pilihPDFUntukWhatsApp(String message) {
-        pendingWhatsAppMessage = message == null ? "" : message;
-        Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        pick.addCategory(Intent.CATEGORY_OPENABLE);
-        pick.setType("application/pdf");
-        pick.putExtra(Intent.EXTRA_TITLE, "Pilih laporan PDF");
-        try {
-            startActivityForResult(pick, PICK_PDF_FOR_WHATSAPP);
-        } catch (Exception e) {
-            Toast.makeText(this, "Tidak dapat membuka pemilih PDF.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void bagikanUriPDF(Uri uri, String message) {
-        if (uri == null) {
-            Toast.makeText(this, "PDF belum dipilih.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("application/pdf");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        if (message != null && !message.isEmpty()) intent.putExtra(Intent.EXTRA_TEXT, message);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setClipData(ClipData.newRawUri("Laporan PDF", uri));
-        intent.setPackage("com.whatsapp");
-        try {
-            grantUriPermission("com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
-        } catch (Exception e) {
-            intent.setPackage(null);
-            try { startActivity(Intent.createChooser(intent, "Kirim laporan PDF")); }
-            catch (Exception ex) { Toast.makeText(this, "WhatsApp tidak tersedia.", Toast.LENGTH_LONG).show(); }
-        }
-    }
-
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_PDF_FOR_WHATSAPP && resultCode == RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            if (uri != null) {
-                try {
-                    getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (Exception ignored) {}
-                bagikanUriPDF(uri, pendingWhatsAppMessage);
-            }
-        }
-    }
-
-    private boolean saveToDownload(File f, String n) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                ContentValues v = new ContentValues();
-                v.put(MediaStore.Downloads.DISPLAY_NAME, n);
-                v.put(MediaStore.Downloads.MIME_TYPE, "application/pdf");
-                v.put(MediaStore.Downloads.RELATIVE_PATH,
-                        Environment.DIRECTORY_DOWNLOADS + "/Bendahara");
-                v.put(MediaStore.Downloads.IS_PENDING, 1);
-
-                Uri u = getContentResolver().insert(
-                        MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), v);
-                if (u == null) throw new IOException("Download tidak tersedia");
-
-                try (InputStream in = new java.io.FileInputStream(f);
-                     OutputStream o = getContentResolver().openOutputStream(u)) {
-                    byte[] b = new byte[8192];
-                    int k;
-                    while ((k = in.read(b)) != -1) o.write(b, 0, k);
-                }
-
-                ContentValues done = new ContentValues();
-                done.put(MediaStore.Downloads.IS_PENDING, 0);
-                getContentResolver().update(u, done, null, null);
-                return true;
-            }
-
-            Toast.makeText(this,
-                    "Android versi ini belum didukung untuk penyimpanan otomatis.",
-                    Toast.LENGTH_LONG).show();
-            return false;
-        } catch (Exception e) {
-            Toast.makeText(this, "Gagal menyimpan PDF: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    private void bagikanPDF(File pdfFile, String message) {
-        if (!pdfFile.exists() || pdfFile.length() == 0) return;
-        Uri uri = Uri.parse("content://com.ppfha.keuangan.fileprovider/laporan/" +
-                Uri.encode(pdfFile.getName()));
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("application/pdf");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        intent.putExtra(Intent.EXTRA_TEXT, message);
-        intent.putExtra("jid", "6282219644442@s.whatsapp.net");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.setClipData(ClipData.newUri(getContentResolver(), "Laporan PDF", uri));
-        intent.setPackage("com.whatsapp");
-        try {
-            grantUriPermission("com.whatsapp", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
-        } catch (Exception e) {
-            intent.setPackage(null);
-            try { startActivity(Intent.createChooser(intent, "Kirim laporan PDF")); }
-            catch (Exception ignored) {}
-        }
     }
 
     @Override protected void onDestroy() {
