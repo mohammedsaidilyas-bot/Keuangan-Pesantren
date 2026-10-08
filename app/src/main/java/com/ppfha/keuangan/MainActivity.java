@@ -73,6 +73,10 @@ public class MainActivity extends Activity {
         webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7001);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && Build.VERSION.SDK_INT <= Build.VERSION_CODES.P
+                && checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"}, 7002);
         }
     }
 
