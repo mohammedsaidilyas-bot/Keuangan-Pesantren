@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WebView.enableSlowWholeDocumentDraw();
         webView = new WebView(this);
         setContentView(webView);
         WebSettings settings = webView.getSettings();
@@ -80,10 +81,11 @@ public class MainActivity extends Activity {
             WebSettings s = printWebView.getSettings();
             s.setJavaScriptEnabled(true);
             s.setDomStorageEnabled(true);
-            s.setLoadWithOverviewMode(true);
-            s.setUseWideViewPort(true);
+            s.setLoadWithOverviewMode(false);
+            s.setUseWideViewPort(false);
             s.setTextZoom(100);
             printWebView.setBackgroundColor(Color.WHITE);
+            printWebView.setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null);
 
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
