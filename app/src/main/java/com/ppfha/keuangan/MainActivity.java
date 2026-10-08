@@ -169,79 +169,45 @@ public class MainActivity extends Activity {
                 throw new IOException("Folder laporan tidak dapat dibuat");
             }
 
-            final File pdfFile = new File(dir, safeName);
+            File pdfFile = new File(dir, safeName);
             if (pdfFile.exists()) pdfFile.delete();
 
-            printAdapter = printWebView.createPrintDocumentAdapter("LaporanKeuangan");
+            final int pageWidth = 595;
+            final int pageHeight = 842;
 
-            PrintAttributes attrs = new PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                    .setResolution(new PrintAttributes.Resolution(
-                            "bendahara_pdf", "Bendahara PDF", 300, 300))
-                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-                    .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
-                    .build();
+            printWebView.measure(
+                    View.MeasureSpec.makeMeasureSpec(pageWidth, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            printWebView.layout(0, 0, pageWidth, printWebView.getMeasuredHeight());
 
-            printAdapter.onLayout(
-                    null,
-                    attrs,
-                    null,
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override public void onLayoutFinished(
-                                PrintDocumentInfo info, boolean changed) {
-                            try {
-                                ParcelFileDescriptor pfd = ParcelFileDescriptor.open(
-                                        pdfFile,
-                                        ParcelFileDescriptor.MODE_CREATE
-                                                | ParcelFileDescriptor.MODE_TRUNCATE
-                                                | ParcelFileDescriptor.MODE_WRITE_ONLY);
+            int contentHeight = printWebView.getMeasuredHeight();
+            if (contentHeight <= 0) throw new IOException("Isi laporan kosong");
 
-                                printAdapter.onWrite(
-                                        new PageRange[]{PageRange.ALL_PAGES},
-                                        pfd,
-                                        new CancellationSignal(),
-                                        new PrintDocumentAdapter.WriteResultCallback() {
-                                            @Override public void onWriteFinished(PageRange[] pages) {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
-                                            }
+            int pageCount = (contentHeight + pageHeight - 1) / pageHeight;
+            PdfDocument document = new PdfDocument();
+            try {
+                for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                    PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(
+                            pageWidth, pageHeight, pageIndex + 1).create();
+                    PdfDocument.Page page = document.startPage(pageInfo);
+                    android.graphics.Canvas canvas = page.getCanvas();
+                    canvas.save();
+                    canvas.clipRect(0, 0, pageWidth, pageHeight);
+                    canvas.translate(0, -pageIndex * pageHeight);
+                    printWebView.draw(canvas);
+                    canvas.restore();
+                    document.finishPage(page);
+                }
 
-                                            @Override public void onWriteFailed(CharSequence error) {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                Toast.makeText(MainActivity.this,
-                                                        "Gagal membuat PDF: " + String.valueOf(error),
-                                                        Toast.LENGTH_LONG).show();
-                                                bersihkanPrintWebView();
-                                            }
+                try (OutputStream out = new java.io.FileOutputStream(pdfFile)) {
+                    document.writeTo(out);
+                    out.flush();
+                }
+            } finally {
+                document.close();
+            }
 
-                                            @Override public void onWriteCancelled() {
-                                                try { pfd.close(); } catch (Exception ignored) {}
-                                                Toast.makeText(MainActivity.this,
-                                                        "Pembuatan PDF dibatalkan.",
-                                                        Toast.LENGTH_SHORT).show();
-                                                bersihkanPrintWebView();
-                                            }
-                                        });
-                            } catch (Exception e) {
-                                Toast.makeText(MainActivity.this,
-                                        "Gagal menulis PDF: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                                bersihkanPrintWebView();
-                            }
-                        }
-
-                        @Override public void onLayoutFailed(CharSequence error) {
-                            Toast.makeText(MainActivity.this,
-                                    "Gagal menata halaman PDF: " + String.valueOf(error),
-                                    Toast.LENGTH_LONG).show();
-                            bersihkanPrintWebView();
-                        }
-
-                        @Override public void onLayoutCancelled() {
-                            bersihkanPrintWebView();
-                        }
-                    },
-                    null);
+            setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
         } catch (Exception e) {
             Toast.makeText(this, "Gagal membuat PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
