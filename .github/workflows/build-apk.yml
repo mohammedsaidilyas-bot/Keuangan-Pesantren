@@ -66,3 +66,17 @@ jobs:
           TAG="v1.0.0"
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG"             --title "Bendahara v1.0.0"             --notes "APK Bendahara / Keuangan Pesantren. Build dengan penyimpanan PDF langsung ke Download/Bendahara."
           gh release upload "$TAG" app/build/outputs/apk/release/Keuangan-Pesantren.apk --clobber
+
+      - name: Publish APK to GitHub Pages
+        run: |
+          mkdir -p downloads
+          cp app/build/outputs/apk/release/Keuangan-Pesantren.apk downloads/Keuangan-Pesantren.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/Keuangan-Pesantren.apk
+          if git diff --cached --quiet; then
+            echo "APK Pages copy unchanged"
+          else
+            git commit -m "Publish APK for direct download [skip ci]"
+            git push
+          fi
