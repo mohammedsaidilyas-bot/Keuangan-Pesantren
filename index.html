@@ -1847,7 +1847,7 @@ function tampilkanPreviewLaporanKeuangan(){
   const modal=document.createElement("div");
   modal.id="previewLaporanKeuangan";
   modal.style.cssText="position:fixed;inset:0;background:#111827;z-index:100000;display:flex;flex-direction:column;";
-  modal.innerHTML='<div style="height:58px;flex:none;background:white;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.18)"><div><b style="font-size:15px;color:#172554">👁️ Pratinjau Laporan</b><div style="font-size:10px;color:#64748b">Periksa isi laporan sebelum disimpan sebagai PDF</div></div><button onclick="document.getElementById(\'previewLaporanKeuangan\').remove()" style="border:0;background:#f1f5f9;color:#334155;border-radius:10px;padding:9px 12px;font-weight:800">Tutup</button></div><div style="flex:1;min-height:0;background:#d1d5db;padding:10px;overflow:auto"><iframe id="iframePreviewLaporan" style="display:block;width:100%;height:100%;min-height:700px;border:0;background:white;box-shadow:0 2px 12px rgba(0,0,0,.18)" title="Pratinjau laporan"></iframe></div><div style="flex:none;background:white;padding:10px;display:flex;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.18)"><button onclick="simpanPreviewLaporanKePDF()" style="flex:1;border:0;background:#0f766e;color:white;border-radius:11px;padding:12px;font-weight:800">📄 Simpan PDF</button><button onclick="kirimLaporanWhatsApp()" style="flex:1;border:0;background:#25D366;color:white;border-radius:11px;padding:12px;font-weight:800">📲 WhatsApp</button></div>';
+  modal.innerHTML='<div style="height:58px;flex:none;background:white;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.18)"><div><b style="font-size:15px;color:#172554">👁️ Pratinjau Laporan</b><div style="font-size:10px;color:#64748b">Periksa isi laporan sebelum disimpan sebagai PDF</div></div><button onclick="document.getElementById(\'previewLaporanKeuangan\').remove()" style="border:0;background:#f1f5f9;color:#334155;border-radius:10px;padding:9px 12px;font-weight:800">Tutup</button></div><div style="flex:1;min-height:0;background:#d1d5db;padding:10px;overflow:auto"><iframe id="iframePreviewLaporan" style="display:block;width:100%;height:100%;min-height:700px;border:0;background:white;box-shadow:0 2px 12px rgba(0,0,0,.18)" title="Pratinjau laporan"></iframe></div><div style="flex:none;background:white;padding:10px;display:flex;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.18)"><button onclick="simpanPreviewLaporanKePDF()" style="flex:1;border:0;background:#0f766e;color:white;border-radius:11px;padding:12px;font-weight:800">📄 Simpan PDF</button><button onclick="bagikanLaporanPDF()" style="flex:1;border:0;background:#2563eb;color:white;border-radius:11px;padding:12px;font-weight:800">📤 Bagikan PDF</button></div>';
   document.body.appendChild(modal);
   const frame=document.getElementById("iframePreviewLaporan");
   if(frame){
@@ -1892,7 +1892,7 @@ function simpanPreviewLaporanKePDF(){
 }
 function normalisasiPeriodeLaporan(v){return String(v||"").toLowerCase().replace(/\s+/g," ").trim();}
 function tanggalLaporan(v){if(!v)return "-";const d=new Date(v);return isNaN(d.getTime())?String(v):d.toLocaleDateString("id-ID");}
-function kirimLaporanWhatsApp(){
+function bagikanLaporanPDF(){
   const d=window.__laporanKeuanganData;
   if(!d){alert("Data laporan belum siap.");return;}
   const pesan="Assalamu'alaikum.\n\nBerikut laporan keuangan Pondok Pesantren Fathul Huda Al Qorrobiyah periode "+d.periode+".";
@@ -1901,8 +1901,7 @@ function kirimLaporanWhatsApp(){
     window.BendaharaAndroid.shareLaporanPDF(pdfHtml,"Laporan-Keuangan-"+String(d.periode||"").replace(/[^a-zA-Z0-9_-]/g,"-")+".pdf",pesan);
     return;
   }
-  const nomor="6282219644442";
-  window.open("https://wa.me/"+nomor+"?text="+encodeURIComponent(pesan+"\n\nLaporan lengkap tersedia dalam PDF."),"_blank");
+  alert("Simpan laporan sebagai PDF terlebih dahulu, lalu bagikan file PDF yang tersimpan.");
 }
 function cetakLaporanKeuangan(returnOnly){
   const d=window.__laporanKeuanganData; if(!d)return;
