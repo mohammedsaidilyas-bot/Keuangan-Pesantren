@@ -103,23 +103,38 @@ public class MainActivity extends Activity {
     }
 
     private void bukaPDFUntukWhatsApp(String html, String fileName, String message) {
-        // Pisahkan alur WhatsApp dari cetak PDF agar tombol ini tidak membuka Print Preview.
+        // Pilih file PDF laporan yang sudah disimpan, kemudian bagikan sebagai lampiran.
+        pendingWhatsAppMessage = message == null ? "" : message;
         try {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_TEXT, (message == null ? "" : message)
-                    + "\\n\\nLampirkan PDF dari folder Download/Bendahara.");
-            intent.setPackage("com.whatsapp");
-            startActivity(intent);
+            Intent pick = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            pick.addCategory(Intent.CATEGORY_OPENABLE);
+            pick.setType("application/pdf");
+            startActivityForResult(pick, PICK_PDF_FOR_WHATSAPP);
+            Toast.makeText(this,
+                    "Pilih PDF laporan dari folder Download/Bendahara untuk dibagikan.",
+                    Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            try {
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("text/plain");
-                intent.putExtra(Intent.EXTRA_TEXT, message == null ? "" : message);
-                startActivity(Intent.createChooser(intent, "Kirim laporan"));
-            } catch (Exception ignored) {
-                Toast.makeText(this, "WhatsApp tidak dapat dibuka.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Tidak dapat membuka pemilih file PDF.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != PICK_PDF_FOR_WHATSAPP || resultCode != RESULT_OK || data == null) return;
+        Uri uri = data.getData();
+        if (uri == null) return;
+        try {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("application/pdf");
+            share.putExtra(Intent.EXTRA_STREAM, uri);
+            if (pendingWhatsAppMessage != null && !pendingWhatsAppMessage.isEmpty()) {
+                share.putExtra(Intent.EXTRA_TEXT, pendingWhatsAppMessage);
             }
+            share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            share.setClipData(ClipData.newUri(getContentResolver(), "Laporan PDF", uri));
+            startActivity(Intent.createChooser(share, "Bagikan laporan PDF"));
+        } catch (Exception e) {
+            Toast.makeText(this, "PDF tidak dapat dibagikan.", Toast.LENGTH_LONG).show();
         }
     }
 
