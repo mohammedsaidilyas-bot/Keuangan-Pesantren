@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
     private PrintDocumentAdapter printAdapter;
     private static final int PICK_PDF_FOR_WHATSAPP = 4101;
     private String pendingWhatsAppMessage = "";
+    private boolean returningFromPrint = false;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,7 +103,24 @@ public class MainActivity extends Activity {
     }
 
     private void bukaPDFUntukWhatsApp(String html, String fileName, String message) {
-        siapkanWebViewPDF(html, () -> tulisPDFDenganPrintAdapter(fileName, true, message));
+        // Pisahkan alur WhatsApp dari cetak PDF agar tombol ini tidak membuka Print Preview.
+        try {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("text/plain");
+            intent.putExtra(Intent.EXTRA_TEXT, (message == null ? "" : message)
+                    + "\\n\\nLampirkan PDF dari folder Download/Bendahara.");
+            intent.setPackage("com.whatsapp");
+            startActivity(intent);
+        } catch (Exception e) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_TEXT, message == null ? "" : message);
+                startActivity(Intent.createChooser(intent, "Kirim laporan"));
+            } catch (Exception ignored) {
+                Toast.makeText(this, "WhatsApp tidak dapat dibuka.", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 
     private void siapkanWebViewPDF(String html, final Runnable setelahSiap) {
@@ -185,6 +203,7 @@ public class MainActivity extends Activity {
                     .build();
 
             printAdapter = printWebView.createPrintDocumentAdapter(safeName);
+            returningFromPrint = true;
             printManager.print(safeName, printAdapter, attributes);
             Toast.makeText(this,
                     "Pilih 'Save as PDF' pada menu cetak Android untuk menyimpan laporan.",
@@ -335,6 +354,20 @@ public class MainActivity extends Activity {
                 })
                 .setCancelable(false)
                 .show();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (returningFromPrint) {
+            returningFromPrint = false;
+            bersihkanPrintWebView();
+            if (webView != null) {
+                webView.postDelayed(() -> webView.evaluateJavascript(
+                        "(function(){var m=document.getElementById('previewLaporanKeuangan');"
+                        + "if(m)m.remove();if(typeof loadDashboard==='function')loadDashboard();})()",
+                        null), 250);
+            }
+        }
     }
 
     @Override protected void onDestroy() {
