@@ -19,6 +19,7 @@ import android.print.PrintDocumentInfo;
 import android.print.PageRange;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
