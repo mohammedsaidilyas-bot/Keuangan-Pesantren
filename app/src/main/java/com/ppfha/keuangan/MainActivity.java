@@ -159,61 +159,69 @@ public class MainActivity extends Activity {
      * halaman terpotong, ukuran berantakan, dan PDF sulit disimpan.
      */
     private void tulisPDFDenganPrintAdapter(String fileName, boolean shareToWhatsApp, String message) {
-        try {
-            if (printWebView == null) throw new IOException("WebView laporan belum siap");
-
-            final String safeName = (fileName == null || fileName.trim().isEmpty())
-                    ? "Laporan-Keuangan.pdf" : fileName;
-
-            File dir = new File(getCacheDir(), "laporan");
-            if (!dir.exists() && !dir.mkdirs()) {
-                throw new IOException("Folder laporan tidak dapat dibuat");
-            }
-
-            File pdfFile = new File(dir, safeName);
-            if (pdfFile.exists()) pdfFile.delete();
-
-            final int pageWidth = 595;
-            final int pageHeight = 842;
-
-            printWebView.measure(
-                    View.MeasureSpec.makeMeasureSpec(pageWidth, View.MeasureSpec.EXACTLY),
-                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-            printWebView.layout(0, 0, pageWidth, printWebView.getMeasuredHeight());
-
-            int contentHeight = printWebView.getMeasuredHeight();
-            if (contentHeight <= 0) throw new IOException("Isi laporan kosong");
-
-            int pageCount = (contentHeight + pageHeight - 1) / pageHeight;
-            PdfDocument document = new PdfDocument();
-            try {
-                for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-                    PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(
-                            pageWidth, pageHeight, pageIndex + 1).create();
-                    PdfDocument.Page page = document.startPage(pageInfo);
-                    android.graphics.Canvas canvas = page.getCanvas();
-                    canvas.save();
-                    canvas.clipRect(0, 0, pageWidth, pageHeight);
-                    canvas.translate(0, -pageIndex * pageHeight);
-                    printWebView.draw(canvas);
-                    canvas.restore();
-                    document.finishPage(page);
-                }
-
-                try (OutputStream out = new java.io.FileOutputStream(pdfFile)) {
-                    document.writeTo(out);
-                    out.flush();
-                }
-            } finally {
-                document.close();
-            }
-
-            setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
-        } catch (Exception e) {
-            Toast.makeText(this, "Gagal membuat PDF: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
+        if (printWebView == null) {
+            Toast.makeText(this, "WebView laporan belum siap", Toast.LENGTH_LONG).show();
             bersihkanPrintWebView();
+            return;
         }
+
+        final String safeName = (fileName == null || fileName.trim().isEmpty())
+                ? "Laporan-Keuangan.pdf" : fileName;
+
+        // Ambil tinggi dokumen HTML sebenarnya; tinggi viewport WebView saja
+        // membuat bagian bawah laporan terpotong ketika digambar ke PDF.
+        printWebView.evaluateJavascript(
+                "(function(){return Math.max(document.body.scrollHeight,"
+                + "document.documentElement.scrollHeight,document.body.offsetHeight,"
+                + "document.documentElement.offsetHeight);})()",
+                value -> printWebView.post(() -> {
+                    try {
+                        int pageWidth = 595;
+                        int pageHeight = 842;
+                        int contentHeight = (int) Math.ceil(Double.parseDouble(value));
+                        if (contentHeight <= 0) throw new IOException("Isi laporan kosong");
+
+                        printWebView.measure(
+                                View.MeasureSpec.makeMeasureSpec(pageWidth, View.MeasureSpec.EXACTLY),
+                                View.MeasureSpec.makeMeasureSpec(contentHeight, View.MeasureSpec.EXACTLY));
+                        printWebView.layout(0, 0, pageWidth, contentHeight);
+
+                        File dir = new File(getCacheDir(), "laporan");
+                        if (!dir.exists() && !dir.mkdirs()) {
+                            throw new IOException("Folder laporan tidak dapat dibuat");
+                        }
+                        File pdfFile = new File(dir, safeName);
+                        if (pdfFile.exists()) pdfFile.delete();
+
+                        int pageCount = (contentHeight + pageHeight - 1) / pageHeight;
+                        PdfDocument document = new PdfDocument();
+                        try {
+                            for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                                PdfDocument.PageInfo info = new PdfDocument.PageInfo.Builder(
+                                        pageWidth, pageHeight, pageIndex + 1).create();
+                                PdfDocument.Page page = document.startPage(info);
+                                android.graphics.Canvas canvas = page.getCanvas();
+                                canvas.save();
+                                canvas.clipRect(0, 0, pageWidth, pageHeight);
+                                canvas.translate(0, -pageIndex * pageHeight);
+                                printWebView.draw(canvas);
+                                canvas.restore();
+                                document.finishPage(page);
+                            }
+                            try (OutputStream out = new java.io.FileOutputStream(pdfFile)) {
+                                document.writeTo(out);
+                                out.flush();
+                            }
+                        } finally {
+                            document.close();
+                        }
+                        setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Gagal membuat PDF: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        bersihkanPrintWebView();
+                    }
+                }));
     }
 
     private void setelahPDFSelesai(File pdfFile, String fileName,
