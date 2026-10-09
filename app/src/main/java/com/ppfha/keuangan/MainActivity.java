@@ -165,76 +165,32 @@ public class MainActivity extends Activity {
             return;
         }
 
-        final String safeName = (fileName == null || fileName.trim().isEmpty())
-                ? "Laporan-Keuangan.pdf" : fileName;
         try {
-            File dir = new File(getCacheDir(), "laporan");
-            if (!dir.exists() && !dir.mkdirs()) {
-                throw new IOException("Folder laporan tidak dapat dibuat");
+            // PrintManager yang membuat dan mengelola callback resmi Android.
+            // WebView menangani paginasi HTML/CSS sendiri agar tabel tidak
+            // dipotong dengan cara menggambar viewport secara manual.
+            android.print.PrintManager printManager =
+                    (android.print.PrintManager) getSystemService(PRINT_SERVICE);
+            if (printManager == null) {
+                throw new IOException("Layanan cetak Android tidak tersedia");
             }
-            File pdfFile = new File(dir, safeName);
-            if (pdfFile.exists()) pdfFile.delete();
 
-            // Biarkan mesin cetak WebView menangani paginasi HTML/CSS,
-            // bukan menggambar potongan viewport secara manual.
-            printAdapter = printWebView.createPrintDocumentAdapter(safeName);
+            String safeName = (fileName == null || fileName.trim().isEmpty())
+                    ? "Laporan-Keuangan.pdf" : fileName.replaceAll("\\.pdf$", "");
             PrintAttributes attributes = new PrintAttributes.Builder()
                     .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                    .setResolution(new PrintAttributes.Resolution("bendahara", "Bendahara PDF", 300, 300))
+                    .setResolution(new PrintAttributes.Resolution(
+                            "bendahara", "Bendahara PDF", 300, 300))
                     .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
                     .build();
 
-            printAdapter.onLayout(null, attributes, new CancellationSignal(),
-                    new PrintDocumentAdapter.LayoutResultCallback() {
-                        @Override public void onLayoutFinished(PrintDocumentInfo info, boolean changed) {
-                            ParcelFileDescriptor descriptor = null;
-                            try {
-                                descriptor = ParcelFileDescriptor.open(pdfFile,
-                                        ParcelFileDescriptor.MODE_CREATE
-                                                | ParcelFileDescriptor.MODE_TRUNCATE
-                                                | ParcelFileDescriptor.MODE_READ_WRITE);
-                                final ParcelFileDescriptor output = descriptor;
-                                printAdapter.onWrite(new PageRange[]{PageRange.ALL_PAGES}, output,
-                                        new CancellationSignal(),
-                                        new PrintDocumentAdapter.WriteResultCallback() {
-                                            @Override public void onWriteFinished(PageRange[] pages) {
-                                                try { output.close(); } catch (Exception ignored) {}
-                                                setelahPDFSelesai(pdfFile, safeName, shareToWhatsApp, message);
-                                            }
-
-                                            @Override public void onWriteFailed(CharSequence error) {
-                                                try { output.close(); } catch (Exception ignored) {}
-                                                Toast.makeText(MainActivity.this,
-                                                        "Gagal merender PDF: " + error,
-                                                        Toast.LENGTH_LONG).show();
-                                                bersihkanPrintWebView();
-                                            }
-
-                                            @Override public void onWriteCancelled() {
-                                                try { output.close(); } catch (Exception ignored) {}
-                                                bersihkanPrintWebView();
-                                            }
-                                        });
-                            } catch (Exception e) {
-                                if (descriptor != null) try { descriptor.close(); } catch (Exception ignored) {}
-                                Toast.makeText(MainActivity.this, "Gagal membuat PDF: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                                bersihkanPrintWebView();
-                            }
-                        }
-
-                        @Override public void onLayoutFailed(CharSequence error) {
-                            Toast.makeText(MainActivity.this, "Gagal menata halaman PDF: " + error,
-                                    Toast.LENGTH_LONG).show();
-                            bersihkanPrintWebView();
-                        }
-
-                        @Override public void onLayoutCancelled() {
-                            bersihkanPrintWebView();
-                        }
-                    }, null);
+            printAdapter = printWebView.createPrintDocumentAdapter(safeName);
+            printManager.print(safeName, printAdapter, attributes);
+            Toast.makeText(this,
+                    "Pilih 'Save as PDF' pada menu cetak Android untuk menyimpan laporan.",
+                    Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(this, "Gagal membuat PDF: " + e.getMessage(),
+            Toast.makeText(this, "Gagal membuka cetak PDF: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
             bersihkanPrintWebView();
         }
