@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <application
         android:theme="@style/AppTheme"
-        android:label="Bendahara"
+        android:label="PPFHA SPP & Bendahara"
         android:icon="@drawable/logo_pondok"
         android:roundIcon="@drawable/logo_pondok"
         android:allowBackup="true"
@@ -19,10 +19,10 @@
         </activity>
         <provider
             android:name=".PdfFileProvider"
-            android:authorities="com.ppfha.keuangan.fileprovider"
+            android:authorities="com.ppfha.gabungan.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true" />
-    <service
+        <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
@@ -32,5 +32,5 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/logo_pondok" />
-        </application>
+    </application>
 </manifest>
