@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
 
             if (shareToWhatsApp) {
                 Uri uri = Uri.parse(
-                        "content://com.ppfha.keuangan.fileprovider/laporan/"
+                        "content://com.ppfha.gabungan.fileprovider/laporan/"
                                 + Uri.encode(fileName));
 
                 Intent intent = new Intent(Intent.ACTION_SEND);
