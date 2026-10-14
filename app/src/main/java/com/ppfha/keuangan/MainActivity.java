@@ -39,6 +39,7 @@ public class MainActivity extends Activity {
     private static final int PICK_PDF_FOR_WHATSAPP = 4101;
     private String pendingWhatsAppMessage = "";
     private boolean returningFromPrint = false;
+    private String selectedRole = "";
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,7 +53,14 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         webView.addJavascriptInterface(new AndroidBridge(), "BendaharaAndroid");
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if ("bendahara".equals(selectedRole) && url != null && url.startsWith("https://spp-pesantren-zeta.vercel.app/")) {
+                    view.evaluateJavascript("(function(){if(document.getElementById('ppfha-menu-keuangan'))return;var b=document.createElement('button');b.id='ppfha-menu-keuangan';b.textContent='📊 Menu Keuangan Pesantren';b.setAttribute('style','position:fixed;z-index:2147483647;right:12px;top:12px;background:#064e3b;color:white;border:2px solid #a7f3d0;border-radius:14px;padding:11px 14px;font:700 12px Arial;box-shadow:0 4px 14px #0005;');b.onclick=function(){if(window.BendaharaAndroid)BendaharaAndroid.openFinance();};document.body.appendChild(b);})();", null);
+                }
+            }
+        });
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
             try {
                 android.app.DownloadManager.Request request = new android.app.DownloadManager.Request(Uri.parse(url));
@@ -72,7 +80,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "Gagal mengunduh: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-        webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
+        tampilkanPilihPeran();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7001);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
@@ -82,7 +90,31 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void tampilkanPilihPeran() {
+        selectedRole = "";
+        String html = "<!doctype html><html lang='id'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='margin:0;background:#052e24;font-family:Arial,sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box'><main style='width:100%;max-width:390px;text-align:center'><img src='https://lh3.googleusercontent.com/d/1nisPkmO93MQycG2iEWxMduwWb6ZOh0kA' style='width:100px;height:100px;object-fit:contain'><h2 style='margin:12px 0 4px'>Pondok Pesantren</h2><h3 style='margin:0;color:#a7f3d0'>Fathul Huda Al-Qorrobiyah</h3><p style='color:#d1fae5;font-size:13px;margin:12px 0 26px'>Silakan pilih akses sesuai kebutuhan</p><button onclick=\"BendaharaAndroid.pilihPeran('wali')\" style='width:100%;padding:17px;border:0;border-radius:16px;background:#10b981;color:#052e24;font-size:16px;font-weight:bold;margin-bottom:12px'>👨‍👩‍👦 Wali Santri</button><button onclick=\"BendaharaAndroid.pilihPeran('bendahara')\" style='width:100%;padding:17px;border:1px solid #6ee7b7;border-radius:16px;background:#064e3b;color:white;font-size:16px;font-weight:bold'>🔐 Bendahara</button><p style='font-size:11px;color:#a7f3d0;margin-top:28px'>SPP PPFHA • Keuangan Pesantren</p></main></body></html>";
+        webView.loadDataWithBaseURL("https://spp-pesantren-zeta.vercel.app/", html, "text/html", "UTF-8", null);
+    }
+
+    private void pilihPeran(String role) {
+        selectedRole = "bendahara".equals(role) ? "bendahara" : "wali";
+        webView.loadUrl("https://spp-pesantren-zeta.vercel.app/");
+    }
+
+    private void bukaHalamanKeuangan() {
+        selectedRole = "bendahara";
+        webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
+    }
+
     private class AndroidBridge {
+        @JavascriptInterface public void pilihPeran(final String role) {
+            runOnUiThread(() -> MainActivity.this.pilihPeran(role));
+        }
+
+        @JavascriptInterface public void openFinance() {
+            runOnUiThread(() -> bukaHalamanKeuangan());
+        }
+
         @JavascriptInterface public void saveLaporanPDF(final String html, final String fileName) {
             runOnUiThread(() -> bukaPratinjauCetakAndroid(html, fileName));
         }
