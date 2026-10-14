@@ -112,7 +112,15 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface public void openFinance() {
-            runOnUiThread(() -> bukaHalamanKeuangan());
+            runOnUiThread(() -> {
+                if (!"bendahara".equals(selectedRole)) {
+                    Toast.makeText(MainActivity.this,
+                            "Menu keuangan hanya tersedia dari akses Bendahara.",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                bukaHalamanKeuangan();
+            });
         }
 
         @JavascriptInterface public void saveLaporanPDF(final String html, final String fileName) {
