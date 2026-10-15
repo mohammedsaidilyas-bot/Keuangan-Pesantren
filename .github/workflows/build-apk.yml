@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Tang Pesantren APK
 
 on:
   workflow_dispatch:
@@ -47,14 +47,14 @@ jobs:
 
           "$BUILD_TOOLS/zipalign" -f 4             app/build/outputs/apk/release/app-release-unsigned.apk             app/build/outputs/apk/release/keuangan-pesantren-aligned.apk
 
-          "$BUILD_TOOLS/apksigner" sign             --ks keuangan-pesantren-release.jks             --ks-key-alias keuangan             --ks-pass pass:android             --key-pass pass:android             --out app/build/outputs/apk/release/Keuangan-Pesantren.apk             app/build/outputs/apk/release/keuangan-pesantren-aligned.apk
+          "$BUILD_TOOLS/apksigner" sign             --ks keuangan-pesantren-release.jks             --ks-key-alias keuangan             --ks-pass pass:android             --key-pass pass:android             --out app/build/outputs/apk/release/Tang Pesantren.apk             app/build/outputs/apk/release/keuangan-pesantren-aligned.apk
 
-          "$BUILD_TOOLS/apksigner" verify             --verbose             app/build/outputs/apk/release/Keuangan-Pesantren.apk
+          "$BUILD_TOOLS/apksigner" verify             --verbose             app/build/outputs/apk/release/Tang Pesantren.apk
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Keuangan-Pesantren-APK
+          name: Tang-Pesantren-APK
           path: app/build/outputs/apk/release/Keuangan-Pesantren.apk
           if-no-files-found: error
           retention-days: 7
