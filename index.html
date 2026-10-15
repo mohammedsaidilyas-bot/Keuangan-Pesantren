@@ -1005,16 +1005,15 @@ function bukaFormPengeluaran() {
       return total + Number(t.jumlah||0);
     },0);
 
-    // Saldo Awal Kas adalah saldo Kas sebelum tambahan SPP→Kas.
-    // getKasPondok() sudah mengembalikan saldo Kas awal tersebut,
-    // jadi jangan dikurangi lagi dengan transfer SPP.
-    // getKasPondok saat ini mengembalikan saldoKas = saldo Kas sebelum transfer SPP.
-    // Gunakan saldoKas sebagai Saldo Awal agar tidak mengambil nilai saldoAwalKas
-    // yang sudah terpotong oleh transfer SPP.
-    const saldoAwal=saldoBackend;
+    // saldoBackend sudah memuat saldo Kas setelah pemasukan/pengeluaran Kas,
+    // tetapi belum memasukkan transfer SPP→Kas.
+    // Hitung Saldo Awal agar rincian dan saldo akhir konsisten.
+    const saldoAwal = saldoBackend - pemasukan + pengeluaran;
 
-    // Transfer SPP→Kas ditambahkan setelah Saldo Awal.
-    const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
+    // Saldo akhir = saldo awal + pemasukan + transfer SPP→Kas - pengeluaran.
+    // Ini sama dengan saldoBackend + transfer SPP→Kas, tanpa menghitung pemasukan
+    // dan pengeluaran dua kali.
+    const saldoTampil = saldoAwal + pemasukan + sisaSPP - pengeluaran;
 
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
