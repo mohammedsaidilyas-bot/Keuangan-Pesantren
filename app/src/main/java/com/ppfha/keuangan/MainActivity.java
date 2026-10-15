@@ -8,6 +8,8 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
 import android.content.Intent;
 import android.content.ContentValues;
 import android.os.Build;
@@ -42,6 +44,8 @@ public class MainActivity extends Activity {
     private WebView printWebView;
     private PrintDocumentAdapter printAdapter;
     private static final int PICK_PDF_FOR_WHATSAPP = 4101;
+    private static final int PICK_IMAGE_FOR_WEBVIEW = 4102;
+    private ValueCallback<Uri[]> fileChooserCallback;
     private String pendingWhatsAppMessage = "";
     private boolean returningFromPrint = false;
     private String selectedRole = "";
@@ -59,6 +63,40 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         webView.addJavascriptInterface(new AndroidBridge(), "BendaharaAndroid");
+        // Aktifkan pemilih berkas untuk input type=file pada portal pembayaran online.
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePathCallback,
+                                             FileChooserParams fileChooserParams) {
+                if (fileChooserCallback != null) {
+                    fileChooserCallback.onReceiveValue(null);
+                    fileChooserCallback = null;
+                }
+                fileChooserCallback = filePathCallback;
+                try {
+                    Intent intent = fileChooserParams != null
+                            ? fileChooserParams.createIntent()
+                            : new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("image/*");
+                    if (intent.resolveActivity(getPackageManager()) == null) {
+                        fileChooserCallback.onReceiveValue(null);
+                        fileChooserCallback = null;
+                        Toast.makeText(MainActivity.this, "Tidak ada aplikasi untuk memilih foto.", Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+                    startActivityForResult(intent, PICK_IMAGE_FOR_WEBVIEW);
+                    return true;
+                } catch (Exception e) {
+                    if (fileChooserCallback != null) {
+                        fileChooserCallback.onReceiveValue(null);
+                        fileChooserCallback = null;
+                    }
+                    Toast.makeText(MainActivity.this, "Pemilih foto tidak dapat dibuka.", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
@@ -331,6 +369,24 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE_FOR_WEBVIEW) {
+            if (fileChooserCallback != null) {
+                Uri[] results = null;
+                if (resultCode == RESULT_OK && data != null) {
+                    Uri selected = data.getData();
+                    if (selected != null) results = new Uri[]{selected};
+                    else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN
+                            && data.getClipData() != null) {
+                        int count = data.getClipData().getItemCount();
+                        results = new Uri[count];
+                        for (int i = 0; i < count; i++) results[i] = data.getClipData().getItemAt(i).getUri();
+                    }
+                }
+                fileChooserCallback.onReceiveValue(results);
+                fileChooserCallback = null;
+            }
+            return;
+        }
         if (requestCode != PICK_PDF_FOR_WHATSAPP || resultCode != RESULT_OK || data == null) return;
         Uri uri = data.getData();
         if (uri == null) return;
@@ -597,6 +653,10 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if (fileChooserCallback != null) {
+            fileChooserCallback.onReceiveValue(null);
+            fileChooserCallback = null;
+        }
         bersihkanPrintWebView();
         super.onDestroy();
     }
