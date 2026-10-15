@@ -239,13 +239,17 @@ public class MainActivity extends Activity {
                         }
                     }
                     result = response.toString();
-                    if (result.isEmpty()) result = new org.json.JSONObject()
-                            .put("success", false)
-                            .put("message", "Server tidak mengembalikan respons (HTTP " + code + ")").toString();
+                    if (result.isEmpty()) {
+                        java.util.HashMap<String, Object> error = new java.util.HashMap<>();
+                        error.put("success", false);
+                        error.put("message", "Server tidak mengembalikan respons (HTTP " + code + ")");
+                        result = new org.json.JSONObject(error).toString();
+                    }
                 } catch (Exception e) {
-                    result = new org.json.JSONObject()
-                            .put("success", false)
-                            .put("message", "Koneksi gagal: " + e.getMessage()).toString();
+                    java.util.HashMap<String, Object> error = new java.util.HashMap<>();
+                    error.put("success", false);
+                    error.put("message", "Koneksi gagal: " + e.getMessage());
+                    result = new org.json.JSONObject(error).toString();
                 } finally {
                     if (connection != null) connection.disconnect();
                 }
