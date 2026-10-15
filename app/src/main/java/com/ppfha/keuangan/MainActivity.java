@@ -8,6 +8,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.content.Intent;
@@ -98,6 +99,17 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return bukaTautanEksternal(request.getUrl());
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return bukaTautanEksternal(Uri.parse(url));
+            }
+
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if ("bendahara".equals(selectedRole) && url != null && url.startsWith("https://spp-pesantren-zeta.vercel.app/")) {
@@ -135,6 +147,51 @@ public class MainActivity extends Activity {
                 && Build.VERSION.SDK_INT <= Build.VERSION_CODES.P
                 && checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"}, 7002);
+        }
+    }
+
+    /**
+     * Tangani tautan aplikasi seperti whatsapp:// di luar WebView.
+     * Jika skema WhatsApp tidak dapat dibuka, coba tautan HTTPS resmi
+     * agar pengguna tetap dapat meneruskan pesan kuitansi.
+     */
+    private boolean bukaTautanEksternal(Uri uri) {
+        if (uri == null) return false;
+        String scheme = uri.getScheme();
+        if (scheme == null || "http".equalsIgnoreCase(scheme)
+                || "https".equalsIgnoreCase(scheme)
+                || "file".equalsIgnoreCase(scheme)
+                || "about".equalsIgnoreCase(scheme)
+                || "data".equalsIgnoreCase(scheme)) {
+            return false;
+        }
+
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
+            return true;
+        } catch (Exception e) {
+            if ("whatsapp".equalsIgnoreCase(scheme)) {
+                try {
+                    String phone = uri.getQueryParameter("phone");
+                    String text = uri.getQueryParameter("text");
+                    Uri.Builder fallback = Uri.parse("https://wa.me/").buildUpon();
+                    if (phone != null && !phone.trim().isEmpty()) {
+                        fallback.appendPath(phone.replaceAll("[^0-9]", ""));
+                    }
+                    if (text != null) fallback.appendQueryParameter("text", text);
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, fallback.build());
+                    startActivity(browserIntent);
+                    return true;
+                } catch (Exception ignored) {
+                    Toast.makeText(this,
+                            "WhatsApp tidak dapat dibuka. Pastikan WhatsApp terpasang.",
+                            Toast.LENGTH_LONG).show();
+                    return true;
+                }
+            }
+            Toast.makeText(this, "Tautan tidak dapat dibuka.", Toast.LENGTH_SHORT).show();
+            return true;
         }
     }
 
