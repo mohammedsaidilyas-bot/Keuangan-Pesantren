@@ -239,9 +239,13 @@ public class MainActivity extends Activity {
                         }
                     }
                     result = response.toString();
-                    if (result.isEmpty()) result = "{\\"success\\":false,\\"message\\":\\"Server tidak mengembalikan respons (HTTP " + code + ")\\"}";
+                    if (result.isEmpty()) result = new org.json.JSONObject()
+                            .put("success", false)
+                            .put("message", "Server tidak mengembalikan respons (HTTP " + code + ")").toString();
                 } catch (Exception e) {
-                    result = "{\\"success\\":false,\\"message\\":\\"Koneksi gagal: " + e.getMessage().replace("\\", "/").replace("\\"", "'") + "\\"}";
+                    result = new org.json.JSONObject()
+                            .put("success", false)
+                            .put("message", "Koneksi gagal: " + e.getMessage()).toString();
                 } finally {
                     if (connection != null) connection.disconnect();
                 }
