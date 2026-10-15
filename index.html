@@ -1826,7 +1826,11 @@ async function bukaLaporanKeuanganPDF(){
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
     const sisaSebelum=Math.max(0,diterima-totalSPP), sisaAkhir=Math.max(0,sisaSebelum-totalTransfer);
-    const saldoAwal=Number(kas.saldoKas||0), pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0), saldoAkhir=saldoAwal+pemasukanKas+totalTransfer-pengeluaranKas;
+    // saldoKas dari backend sudah mencakup pemasukan/pengeluaran kas reguler.
+    // Pisahkan saldo awal agar pemasukan tidak dihitung dua kali pada laporan.
+    const saldoBackend=Number(kas.saldoKas||0), pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0);
+    const saldoAwal=saldoBackend-pemasukanKas+pengeluaranKas;
+    const saldoAkhir=saldoAwal+pemasukanKas+totalTransfer-pengeluaranKas;
     const tgl=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
     window.__laporanKeuanganData={periode,santri,expSPP,expKas,trPeriode,total,lunas,belum,tagihan,diterima,tunggakan,totalSPP,totalTransfer,sisaSebelum,sisaAkhir,saldoAwal,pemasukanKas,pengeluaranKas,saldoAkhir,tgl};
     const isi=document.getElementById("laporanKeuanganIsi");
