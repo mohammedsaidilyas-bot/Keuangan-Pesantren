@@ -30,6 +30,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
     // Build acuan: PDF web sudah diuji kembali ke Dashboard setelah cetak.
@@ -151,11 +154,11 @@ public class MainActivity extends Activity {
         String html = "<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Bisyarah PPFHA</title>"
             + "<style>*{box-sizing:border-box}body{margin:0;background:#f1f8f6;font-family:Arial,sans-serif;color:#153b35}.top{padding:20px;background:linear-gradient(135deg,#075e54,#0f766e);color:white;border-radius:0 0 22px 22px}.wrap{max-width:700px;margin:auto;padding:16px}.card{background:white;border:1px solid #dcece6;border-radius:16px;padding:16px;margin-bottom:14px}.field{width:100%;padding:12px;border:1px solid #d5e5df;border-radius:10px;margin:6px 0 12px;font-size:14px}.btn{padding:12px;border:0;border-radius:10px;font-weight:bold}.muted{font-size:12px;color:#71867f}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}</style></head>"
             + "<body><header class='top'><button class='btn' style='background:#ffffff20;color:white' onclick='BendaharaAndroid.openHome()'>← Beranda</button><div style='font-size:12px;margin-top:16px;color:#c9f7e7'>PONDOK PESANTREN FATHUL HUDA AL-QORROBIYAH</div><h2 style='margin:6px 0'>🕌 Pencatatan Bisyarah</h2><div style='font-size:13px'>Catat dan pantau pembayaran bisyarah ustaz/guru</div></header><main class='wrap'>"
-            + "<div style='padding:12px;border-radius:10px;background:#fff4d5;color:#805b12;font-size:12px;line-height:1.5;margin-bottom:14px'><b>Mode percobaan:</b> data hanya disimpan di perangkat ini. Belum terhubung ke database utama atau laporan keuangan.</div>"
+            + "<div id='koneksi' style='padding:12px;border-radius:10px;background:#e0f2fe;color:#075985;font-size:12px;line-height:1.5;margin-bottom:14px'>Data akan dikirim ke database utama. Tunggu konfirmasi sebelum menutup halaman.</div>"
             + "<div class='grid'><div class='card'><div class='muted'>Total tercatat</div><h2 id='total'>Rp 0</h2></div><div class='card'><div class='muted'>Jumlah catatan</div><h2 id='count'>0</h2></div></div>"
-            + "<section class='card'><h3>Tambah Bisyarah</h3><form id='form'><label class='muted'>Nama Ustadz atau Pengurus</label><input class='field' id='nama' required placeholder='Contoh: Ustadz Ahmad atau Pengurus Asrama' maxlength='100'><div class='grid'><div><label class='muted'>Tanggal</label><input class='field' id='tanggal' type='date' required></div><div><label class='muted'>Jumlah (Rp)</label><input class='field' id='jumlah' type='number' min='1' required placeholder='500000'></div></div><label class='muted'>Status</label><select class='field' id='status'><option>Belum Dibayar</option><option>Sudah Dibayar</option></select><label class='muted'>Catatan (opsional)</label><input class='field' id='catatan' placeholder='Contoh: Bisyarah bulan Oktober'><button class='btn' style='width:100%;background:#087f5b;color:white' type='submit'>+ Simpan Catatan</button></form></section>"
-            + "<section class='card'><h3>Riwayat Bisyarah</h3><div id='list' class='muted'>Belum ada catatan.</div><button class='btn' style='margin-top:12px;background:#fee2e2;color:#991b1b' onclick='hapus()'>Hapus Semua Catatan</button></section></main>"
-            + "<script>const k='ppfha_bisyarah_prototype_v1',q=id=>document.getElementById(id);q('tanggal').value=new Date().toISOString().slice(0,10);function data(){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}function rp(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)}function safe(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}function draw(){let a=data();q('total').textContent=rp(a.reduce((sum,x)=>sum+Number(x.jumlah),0));q('count').textContent=a.length;let list=q('list');list.innerHTML='';if(!a.length){list.textContent='Belum ada catatan.';return}a.slice().reverse().forEach(x=>{let d=document.createElement('div');d.style.cssText='border-top:1px solid #e6efeb;padding:12px 0';d.innerHTML='<b>'+safe(x.nama)+'</b><div>'+rp(x.jumlah)+' · '+safe(x.tanggal)+'</div><div>'+safe(x.status)+'</div><div>'+safe(x.catatan)+'</div>';let b=document.createElement('button');b.className='btn';b.style.cssText='margin-top:6px;background:#e7f5ef';b.textContent='Ubah Status';b.onclick=()=>toggle(x.id);d.appendChild(b);list.appendChild(d)})}q('form').onsubmit=e=>{e.preventDefault();let a=data();a.push({id:String(Date.now()),nama:q('nama').value.trim(),tanggal:q('tanggal').value,jumlah:Number(q('jumlah').value),status:q('status').value,catatan:q('catatan').value.trim()});localStorage.setItem(k,JSON.stringify(a));q('nama').value='';q('jumlah').value='';q('catatan').value='';draw()};function toggle(id){let a=data(),x=a.find(y=>y.id===id);if(x){x.status=x.status==='Sudah Dibayar'?'Belum Dibayar':'Sudah Dibayar';localStorage.setItem(k,JSON.stringify(a));draw()}}function hapus(){if(confirm('Hapus semua catatan percobaan?')){localStorage.removeItem(k);draw()}}draw();</script></body></html>";
+            + "<section class='card'><h3>Tambah Bisyarah</h3><form id='form'><label class='muted'>Nama Ustadz atau Pengurus</label><input class='field' id='nama' required placeholder='Contoh: Ustadz Ahmad atau Pengurus Asrama' maxlength='100'><div class='grid'><div><label class='muted'>Tanggal</label><input class='field' id='tanggal' type='date' required></div><div><label class='muted'>Jumlah (Rp)</label><input class='field' id='jumlah' type='number' min='1' required placeholder='500000'></div></div><label class='muted'>Status</label><select class='field' id='status'><option>Belum Dibayar</option><option>Sudah Dibayar</option></select><label class='muted'>Catatan (opsional)</label><input class='field' id='catatan' placeholder='Contoh: Bisyarah bulan Oktober'><button id='simpan' class='btn' style='width:100%;background:#087f5b;color:white' type='submit'>+ Simpan Catatan</button></form></section>"
+            + "<section class='card'><h3>Riwayat Bisyarah (catatan dari perangkat ini)</h3><div id='list' class='muted'>Belum ada catatan di perangkat ini.</div></section></main>"
+            + "<script>const k='ppfha_bisyarah_prototype_v1',q=id=>document.getElementById(id);q('tanggal').value=new Date().toISOString().slice(0,10);function data(){try{return JSON.parse(localStorage.getItem(k)||'[]')}catch(e){return []}}function rp(n){return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n)}function safe(s){return String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}function draw(){let a=data();q('total').textContent=rp(a.reduce((sum,x)=>sum+Number(x.jumlah),0));q('count').textContent=a.length;let list=q('list');list.innerHTML='';if(!a.length){list.textContent='Belum ada catatan di perangkat ini.';return}a.slice().reverse().forEach(x=>{let d=document.createElement('div');d.style.cssText='border-top:1px solid #e6efeb;padding:12px 0';d.innerHTML='<b>'+safe(x.nama)+'</b><div>'+rp(x.jumlah)+' · '+safe(x.tanggal)+'</div><div>'+safe(x.status)+'</div><div>'+safe(x.catatan)+'</div><div class=muted>ID: '+safe(x.id)+'</div>';list.appendChild(d)})}let pending=null;window.__bisyarahResult=function(raw){let b=q('simpan');b.disabled=false;b.textContent='+ Simpan Catatan';let r;try{r=JSON.parse(raw)}catch(e){q('koneksi').textContent='Respons server tidak terbaca. Periksa Apps Script.';q('koneksi').style.background='#fee2e2';q('koneksi').style.color='#991b1b';return}if(!r||r.success!==true){q('koneksi').textContent='Gagal menyimpan ke database: '+((r&&r.message)||raw||'Tidak ada respons');q('koneksi').style.background='#fee2e2';q('koneksi').style.color='#991b1b';return}let a=data();a.push({id:r.id||('SERVER-'+Date.now()),nama:pending.nama,tanggal:pending.tanggal,jumlah:pending.jumlah,status:pending.status,catatan:pending.catatan});localStorage.setItem(k,JSON.stringify(a));q('form').reset();q('tanggal').value=new Date().toISOString().slice(0,10);q('koneksi').textContent='Berhasil disimpan ke database utama. ID: '+(r.id||'-');q('koneksi').style.background='#dcfce7';q('koneksi').style.color='#166534';draw()};q('form').onsubmit=e=>{e.preventDefault();pending={nama:q('nama').value.trim(),tanggal:q('tanggal').value,jumlah:Number(q('jumlah').value),status:q('status').value,catatan:q('catatan').value.trim()};if(!pending.nama||!pending.tanggal||pending.jumlah<=0){alert('Lengkapi nama, tanggal, dan jumlah.');return}let b=q('simpan');b.disabled=true;b.textContent='Menyimpan...';q('koneksi').textContent='Mengirim data ke database...';try{BendaharaAndroid.simpanBisyarah(JSON.stringify({action:'catatBisyarah',nama:pending.nama,tanggal:pending.tanggal,jumlah:pending.jumlah,status:pending.status,catatan:pending.catatan}),'bisyarah')}catch(err){b.disabled=false;b.textContent='+ Simpan Catatan';q('koneksi').textContent='Koneksi gagal: '+err.message;q('koneksi').style.background='#fee2e2';q('koneksi').style.color='#991b1b'}};draw();</script></body></html>";
         webView.loadDataWithBaseURL("https://spp-pesantren-zeta.vercel.app/", html, "text/html", "UTF-8", null);
     }
 
@@ -194,6 +197,60 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public void openBisyarah() {
             runOnUiThread(() -> bukaBisyarah());
+        }
+
+        @JavascriptInterface public void simpanBisyarah(final String payload, final String callbackId) {
+            new Thread(() -> {
+                String result;
+                HttpURLConnection connection = null;
+                try {
+                    URL url = new URL("https://script.google.com/macros/s/AKfycbzXSerzZbcNn-1nVnH1Hg8TwvdhNGX2KML88IdF9RKLCpoLpzQ39G9K8TPJiqn5GZ10EQ/exec");
+                    connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setDoOutput(true);
+                    connection.setConnectTimeout(20000);
+                    connection.setReadTimeout(30000);
+                    connection.setInstanceFollowRedirects(false);
+                    connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    byte[] body = payload.getBytes(StandardCharsets.UTF_8);
+                    connection.setFixedLengthStreamingMode(body.length);
+                    try (OutputStream out = connection.getOutputStream()) {
+                        out.write(body);
+                        out.flush();
+                    }
+                    int code = connection.getResponseCode();
+                    String location = connection.getHeaderField("Location");
+                    if ((code == 301 || code == 302 || code == 303 || code == 307 || code == 308)
+                            && location != null && !location.isEmpty()) {
+                        connection.disconnect();
+                        connection = (HttpURLConnection) new URL(location).openConnection();
+                        connection.setRequestMethod("GET");
+                        connection.setConnectTimeout(20000);
+                        connection.setReadTimeout(30000);
+                        code = connection.getResponseCode();
+                    }
+                    InputStream in = code >= 400 ? connection.getErrorStream() : connection.getInputStream();
+                    StringBuilder response = new StringBuilder();
+                    if (in != null) {
+                        try (InputStream stream = in) {
+                            byte[] buffer = new byte[4096];
+                            int n;
+                            while ((n = stream.read(buffer)) != -1) response.append(new String(buffer, 0, n, StandardCharsets.UTF_8));
+                        }
+                    }
+                    result = response.toString();
+                    if (result.isEmpty()) result = "{\\"success\\":false,\\"message\\":\\"Server tidak mengembalikan respons (HTTP " + code + ")\\"}";
+                } catch (Exception e) {
+                    result = "{\\"success\\":false,\\"message\\":\\"Koneksi gagal: " + e.getMessage().replace("\\", "/").replace("\\"", "'") + "\\"}";
+                } finally {
+                    if (connection != null) connection.disconnect();
+                }
+                final String answer = result;
+                runOnUiThread(() -> {
+                    if (webView != null) webView.evaluateJavascript(
+                            "if(window.__bisyarahResult)window.__bisyarahResult(" + org.json.JSONObject.quote(answer) + ");", null);
+                });
+            }).start();
         }
 
         @JavascriptInterface public void saveLaporanPDF(final String html, final String fileName) {
