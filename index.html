@@ -804,14 +804,10 @@
       console.log("Data Kas Pondok:", data);
 
       if (data && data.success) {
-        // Samakan rumus dashboard dengan Rekap Kas Pondok:
-        // saldo dasar + pemasukan kas - pengeluaran kas + transfer SPP -> Kas.
-        let saldoKas = Number(data.saldoKas || 0)
-          + Number(data.pemasukanKas || 0)
-          - Number(data.pengeluaranKas || 0);
+        let saldoKas = Number(data.saldoKas || 0);
 
-        // Backend belum memasukkan transfer SPP -> Kas ke saldo dasar.
-        // Tambahkan transfer yang tercatat di sheet keuangan tepat satu kali.
+        // Backend lama belum memasukkan transaksi Transfer SPP -> Kas.
+        // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
         try {
           const txResponse = await fetch(
             API_URL + "?action=getTransferSPP&_=" + Date.now(),
@@ -1009,16 +1005,13 @@ function bukaFormPengeluaran() {
       return total + Number(t.jumlah||0);
     },0);
 
-    // Saldo Awal Kas adalah saldo Kas sebelum tambahan SPP→Kas.
-    // getKasPondok() sudah mengembalikan saldo Kas awal tersebut,
-    // jadi jangan dikurangi lagi dengan transfer SPP.
-    // getKasPondok saat ini mengembalikan saldoKas = saldo Kas sebelum transfer SPP.
-    // Gunakan saldoKas sebagai Saldo Awal agar tidak mengambil nilai saldoAwalKas
-    // yang sudah terpotong oleh transfer SPP.
+    // saldoBackend sudah merupakan saldo Kas terkini dari backend,
+    // termasuk pemasukan/pengeluaran Kas yang sudah dicatat.
+    // Jangan tambahkan pemasukan dan kurangi pengeluaran lagi agar tidak dihitung ganda.
     const saldoAwal=saldoBackend;
 
-    // Transfer SPP→Kas ditambahkan setelah Saldo Awal.
-    const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
+    // Hanya tambahkan transfer SPP→Kas yang belum masuk ke saldo backend.
+    const saldoTampil=saldoAwal+sisaSPP;
 
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
@@ -1035,7 +1028,7 @@ function bukaFormPengeluaran() {
       </div>
       <div style="background:#f8fafc;border-radius:16px;padding:16px">
         <div style="font-weight:800;color:#172554;margin-bottom:8px">Rumus Saldo</div>
-        <div style="color:#475569;font-size:14px;line-height:1.7">Saldo Awal + Pemasukan Kas + Sisa SPP ke Kas − Pengeluaran Kas</div>
+        <div style="color:#475569;font-size:14px;line-height:1.7">Saldo Kas terkini + Sisa SPP ke Kas yang belum masuk saldo</div>
       </div>`;
   }catch(error){
     document.getElementById("rekapKasLoading").textContent="Rekap Kas belum dapat dimuat.";
