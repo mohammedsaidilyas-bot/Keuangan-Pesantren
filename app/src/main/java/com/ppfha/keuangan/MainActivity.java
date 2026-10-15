@@ -116,31 +116,23 @@ public class MainActivity extends Activity {
     }
 
     private void mintaSandiBendahara() {
-        final EditText sandi = new EditText(this);
-        sandi.setSingleLine(true);
-        sandi.setHint("Masukkan sandi Bendahara");
-        sandi.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-        int padding = (int) (20 * getResources().getDisplayMetrics().density);
-        sandi.setPadding(padding, padding, padding, padding);
-
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Akses Bendahara")
-                .setMessage("Masukkan sandi untuk melanjutkan.")
-                .setView(sandi)
-                .setPositiveButton("Masuk", (dialog, which) -> {
-                    if ("999999".equals(sandi.getText().toString())) {
-                        tampilkanBerandaBendahara();
-                    } else {
-                        selectedRole = "";
-                        Toast.makeText(MainActivity.this, "Sandi salah. Akses ditolak.", Toast.LENGTH_LONG).show();
-                    }
-                })
-                .setNegativeButton("Batal", (dialog, which) -> {
-                    selectedRole = "";
-                    dialog.dismiss();
-                })
-                .setCancelable(false)
-                .show();
+        selectedRole = "";
+        String html = "<!doctype html><html lang='id'><head><meta charset='utf-8'>"
+            + "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1'>"
+            + "<meta name='theme-color' content='#032e25'><title>Akses Bendahara</title>"
+            + "<style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;color:#fff8e7;background:radial-gradient(ellipse at top,#0c6650,#04372c 55%,#021e19)}"
+            + "body:before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.3;background:repeating-radial-gradient(circle at 0 0,transparent 0 18px,#c6a75a22 19px 20px,transparent 21px 38px)}"
+            + ".card{position:relative;width:100%;max-width:750px;text-align:center;padding:56px 34px 32px;border:1px solid #c6a75a88;border-radius:28px;background:linear-gradient(145deg,#043c30f5,#01271ff7);box-shadow:0 22px 65px #0008}"
+            + ".logo{position:absolute;top:-45px;left:50%;transform:translateX(-50%);width:90px;height:90px;object-fit:contain;filter:drop-shadow(0 5px 8px #0008)}"
+            + ".lock{font-size:40px;color:#dfc477;margin:12px 0 8px}h1{font:500 clamp(28px,4vw,42px) Georgia,serif;margin:0 0 10px}.sub{font-size:clamp(14px,2.2vw,20px);line-height:1.5;color:#c2d4cc;margin:0 auto 28px}"
+            + ".field{display:flex;align-items:center;gap:12px;border:2px solid #cbb36e;border-radius:20px;padding:6px 15px;margin-bottom:20px;background:linear-gradient(110deg,#082f2c,#123d3c)}.field span{font-size:25px;color:#d9d9c8}.field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:white;font-size:17px;padding:15px 0}.field input::placeholder{color:#9eaaa5}.eye{border:0;background:transparent;color:#c6d4ce;font-size:23px;padding:8px}"
+            + ".btn{width:100%;border-radius:19px;padding:17px 16px;font-size:17px;font-weight:bold;cursor:pointer}.enter{border:2px solid #d9bc64;background:linear-gradient(100deg,#08734f,#10a36b,#08734f);color:white}.cancel{margin-top:14px;border:2px solid #61776f;background:transparent;color:#c0cbc5}@media(max-width:520px){.card{padding:48px 20px 24px;border-radius:23px}.logo{width:82px;height:82px;top:-40px}.field input{font-size:15px}.btn{font-size:15px;padding:15px}}</style></head>"
+            + "<body><main class='card'><img class='logo' src='https://lh3.googleusercontent.com/d/1nisPkmO93MQycG2iEWxMduwWb6ZOh0kA' alt='Logo Pondok'>"
+            + "<div class='lock'>🔒</div><h1>Akses Bendahara</h1><p class='sub'>Masukkan sandi untuk melanjutkan<br>ke menu Bendahara.</p>"
+            + "<form id='login'><div class='field'><span>♙</span><input id='sandi' type='password' inputmode='numeric' placeholder='Masukkan sandi Bendahara' required><button class='eye' id='lihat' type='button'>◉</button></div>"
+            + "<button class='btn enter' type='submit'>⇥ &nbsp; MASUK</button><button class='btn cancel' id='batal' type='button'>× &nbsp; BATAL</button></form></main>"
+            + "<script>const p=document.getElementById('sandi');document.getElementById('lihat').onclick=function(){p.type=p.type==='password'?'text':'password'};document.getElementById('login').onsubmit=function(e){e.preventDefault();BendaharaAndroid.verifikasiSandi(p.value)};document.getElementById('batal').onclick=function(){BendaharaAndroid.kembaliPilihAkses()};</script></body></html>";
+        webView.loadDataWithBaseURL("https://spp-pesantren-zeta.vercel.app/", html, "text/html", "UTF-8", null);
     }
 
     private void tampilkanBerandaBendahara() {
@@ -193,6 +185,17 @@ public class MainActivity extends Activity {
     }
 
     private class AndroidBridge {
+        @JavascriptInterface public void verifikasiSandi(final String password) {
+            runOnUiThread(() -> {
+                if ("999999".equals(password)) {
+                    tampilkanBerandaBendahara();
+                } else {
+                    webView.evaluateJavascript("(function(){var p=document.getElementById('sandi');if(p){p.value='';p.placeholder='Sandi salah, coba lagi';p.focus();}})()", null);
+                    Toast.makeText(MainActivity.this, "Sandi salah. Akses ditolak.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         @JavascriptInterface public void pilihPeran(final String role) {
             runOnUiThread(() -> MainActivity.this.pilihPeran(role));
         }
