@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <application
         android:theme="@style/AppTheme"
-        android:label="Tang Pesantren"
+        android:label="Bendahara"
         android:icon="@drawable/logo_pondok"
         android:roundIcon="@drawable/logo_pondok"
         android:allowBackup="true"
