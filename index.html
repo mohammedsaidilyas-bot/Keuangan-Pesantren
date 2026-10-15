@@ -804,10 +804,14 @@
       console.log("Data Kas Pondok:", data);
 
       if (data && data.success) {
-        let saldoKas = Number(data.saldoKas || 0);
+        // Samakan rumus dashboard dengan Rekap Kas Pondok:
+        // saldo dasar + pemasukan kas - pengeluaran kas + transfer SPP -> Kas.
+        let saldoKas = Number(data.saldoKas || 0)
+          + Number(data.pemasukanKas || 0)
+          - Number(data.pengeluaranKas || 0);
 
-        // Backend lama belum memasukkan transaksi Transfer SPP -> Kas.
-        // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
+        // Backend belum memasukkan transfer SPP -> Kas ke saldo dasar.
+        // Tambahkan transfer yang tercatat di sheet keuangan tepat satu kali.
         try {
           const txResponse = await fetch(
             API_URL + "?action=getTransferSPP&_=" + Date.now(),
