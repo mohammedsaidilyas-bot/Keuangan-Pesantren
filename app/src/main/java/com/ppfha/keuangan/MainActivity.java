@@ -23,6 +23,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.text.InputType;
 import android.content.ClipData;
 import android.net.Uri;
 import android.provider.Settings;
@@ -105,12 +107,40 @@ public class MainActivity extends Activity {
     }
 
     private void pilihPeran(String role) {
-        selectedRole = "bendahara".equals(role) ? "bendahara" : "wali";
-        if ("bendahara".equals(selectedRole)) {
-            tampilkanBerandaBendahara();
-        } else {
-            webView.loadUrl("https://spp-pesantren-zeta.vercel.app/");
+        if ("bendahara".equals(role)) {
+            mintaSandiBendahara();
+            return;
         }
+        selectedRole = "wali";
+        webView.loadUrl("https://spp-pesantren-zeta.vercel.app/");
+    }
+
+    private void mintaSandiBendahara() {
+        final EditText sandi = new EditText(this);
+        sandi.setSingleLine(true);
+        sandi.setHint("Masukkan sandi Bendahara");
+        sandi.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        sandi.setPadding(padding, padding, padding, padding);
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Akses Bendahara")
+                .setMessage("Masukkan sandi untuk melanjutkan.")
+                .setView(sandi)
+                .setPositiveButton("Masuk", (dialog, which) -> {
+                    if ("999999".equals(sandi.getText().toString())) {
+                        tampilkanBerandaBendahara();
+                    } else {
+                        selectedRole = "";
+                        Toast.makeText(MainActivity.this, "Sandi salah. Akses ditolak.", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Batal", (dialog, which) -> {
+                    selectedRole = "";
+                    dialog.dismiss();
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void tampilkanBerandaBendahara() {
