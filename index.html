@@ -794,56 +794,110 @@
 
 
   async function loadKasPondok() {
-    try {
-      const response = await fetch(
-        API_URL + "?action=getKasPondok&_=" + Date.now(),
-        { cache: "no-store" }
-      );
-      const data = await response.json();
-
-      console.log("Data Kas Pondok:", data);
-
-      if (data && data.success) {
-        // data.saldoKas adalah saldo awal yang dikirim backend.
-        // Hitung saldo tampil dengan arus kas yang dinormalisasi positif:
-        // saldo awal + pemasukan + transfer SPP->Kas - pengeluaran Kas.
-        const saldoAwal = Number(data.saldoKas || 0);
-        const pemasukanKas = Math.abs(Number(data.pemasukanKas || 0));
-        let pengeluaranKas = Math.abs(Number(data.pengeluaranKas || 0));
-        let transferSPP = 0;
-
-        try {
-          const [txResponse, expResponse] = await Promise.all([
-            fetch(API_URL + "?action=getTransferSPP&_=" + Date.now(), { cache: "no-store" }),
-            fetch(API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(), { cache: "no-store" })
-          ]);
-          const txData = await txResponse.json();
-          const expData = await expResponse.json();
-          const transfers = (txData && txData.success && Array.isArray(txData.transaksi))
-            ? txData.transaksi : [];
-          const expenses = (expData && expData.success && Array.isArray(expData.transaksi))
-            ? expData.transaksi : [];
-
-          transferSPP = transfers
-            .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
-            .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
-            .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
-
-          // Jika transaksi rinci tersedia, gunakan hanya pengeluaran ber-sumber Kas.
-          // Math.abs mencegah nominal bertanda minus membalik arah perhitungan.
-          const pengeluaranKasRinci = expenses
-            .filter(t => String(t.sumber || "").trim().toUpperCase() === "KAS")
-            .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
-          if (pengeluaranKasRinci > 0) pengeluaranKas = pengeluaranKasRinci;
-        } catch (e) {
-          console.log("Gagal membaca rincian Kas:", e);
-        }
-
-        const saldoKas = saldoAwal + pemasukanKas + transferSPP - pengeluaranKas;
-        document.getElementById("kas").textContent = rupiah(saldoKas);
+    const elKas = document.getElementById("kas");
+    const norm = v => String(v ?? "").toLowerCase().replace(/\\s+/g, " ").trim();
+    const amount = v => {
+      if (typeof v === "number") return Math.abs(v);
+      const n = Number(String(v ?? "").replace(/[^0-9,-]/g, "").replace(/,/g, ""));
+      return Number.isFinite(n) ? Math.abs(n) : 0;
+    };
+    const field = (obj, names) => {
+      if (!obj || typeof obj !== "object") return undefined;
+      for (const name of names) if (obj[name] !== undefined && obj[name] !== null && obj[name] !== "") return obj[name];
+      const lower = names.map(x => x.toLowerCase());
+      for (const [key, value] of Object.entries(obj)) {
+        if (lower.includes(String(key).toLowerCase()) && value !== undefined && value !== null && value !== "") return value;
       }
+      return undefined;
+    };
+    const unwrap = obj => {
+      if (!obj || typeof obj !== "object") return obj;
+      for (const key of ["data", "ringkasan", "hasil", "summary", "result"]) {
+        if (obj[key] && typeof obj[key] === "object") return { ...obj, ...obj[key] };
+      }
+      return obj;
+    };
+    const findTransactions = (obj, depth = 0) => {
+      if (!obj || typeof obj !== "object" || depth > 4) return [];
+      if (Array.isArray(obj)) {
+        if (obj.some(t => t && typeof t === "object" && field(t, ["jenis", "Jenis", "tipe", "type"]) !== undefined)) return obj;
+        for (const child of obj) { const found = findTransactions(child, depth + 1); if (found.length) return found; }
+      } else {
+        for (const child of Object.values(obj)) { const found = findTransactions(child, depth + 1); if (found.length) return found; }
+      }
+      return [];
+    };
+
+    try {
+      const [kasResponse, ringResponse, txResponse, transferResponse] = await Promise.all([
+        fetch(API_URL + "?action=getKasPondok&_=" + Date.now(), { cache: "no-store" }),
+        fetch(API_URL + "?action=getRingkasanKeuangan&_=" + Date.now(), { cache: "no-store" }),
+        fetch(API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(), { cache: "no-store" }),
+        fetch(API_URL + "?action=getTransferSPP&_=" + Date.now(), { cache: "no-store" })
+      ]);
+      const kasData = unwrap(await kasResponse.json());
+      const ringData = unwrap(await ringResponse.json());
+      const txData = await txResponse.json();
+      const transferData = await transferResponse.json();
+
+      // Gunakan angka agregat backend jika tersedia; ini lebih akurat daripada
+      // getPengeluaranTerbaru yang hanya dipakai untuk daftar transaksi terbaru.
+      const pickNumber = (objects, names) => {
+        for (const obj of objects) {
+          const v = field(obj, names);
+          if (v !== undefined && Number.isFinite(amount(v))) return amount(v);
+        }
+        return null;
+      };
+      const pemasukanAgregat = pickNumber([ringData, kasData], [
+        "pemasukanKas", "totalPemasukanKas", "totalKasMasuk", "pemasukan_kas", "kasMasuk"
+      ]);
+      const pengeluaranAgregat = pickNumber([ringData, kasData], [
+        "pengeluaranKas", "totalPengeluaranKas", "totalKasKeluar", "pengeluaran_kas", "kasKeluar"
+      ]);
+      const saldoLangsung = pickNumber([ringData, kasData], [
+        "saldoAkhirKas", "saldoKasAkhir", "saldoKasSaatIni", "saldoAkhir", "saldoKas"
+      ]);
+
+      const transaksi = findTransactions(txData);
+      const pemasukanRinci = transaksi
+        .filter(t => norm(field(t, ["jenis", "Jenis", "tipe", "type"])) === "pemasukan")
+        .filter(t => norm(field(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"])) === "kas")
+        .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
+      const pengeluaranRinci = transaksi
+        .filter(t => norm(field(t, ["jenis", "Jenis", "tipe", "type"])) === "pengeluaran")
+        .filter(t => norm(field(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"])) === "kas")
+        .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
+
+      const transferList = findTransactions(transferData);
+      const transferSPP = transferList
+        .filter(t => norm(field(t, ["jenis", "Jenis", "tipe", "type"])) === "transfer")
+        .filter(t => {
+          const ket = norm(field(t, ["keterangan", "Keterangan"]));
+          return ket.startsWith("sisa spp periode ") || ket.includes("sisa uang spp");
+        })
+        .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
+
+      let saldoKas;
+      if (saldoLangsung !== null && field(ringData, ["saldoAkhirKas", "saldoKasAkhir", "saldoKasSaatIni", "saldoAkhir"]) !== undefined) {
+        // Backend mengirim saldo akhir, jangan tambahkan pemasukan lagi.
+        saldoKas = saldoLangsung;
+      } else {
+        const saldoAwal = amount(field(kasData, ["saldoAwalKas", "kasAwal", "saldoAwal", "saldoKas"]) ?? 0);
+        const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
+        const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
+        saldoKas = saldoAwal + pemasukanKas + transferSPP - pengeluaranKas;
+      }
+
+      if (elKas) elKas.textContent = rupiah(saldoKas);
+      console.log("Ringkasan Kas dari database:", {
+        saldoKas, pemasukanKas: pemasukanAgregat ?? pemasukanRinci,
+        pengeluaranKas: pengeluaranAgregat ?? pengeluaranRinci,
+        transaksiRinciTerbaca: transaksi.length, kasData, ringData
+      });
     } catch (error) {
-      console.log("Gagal mengambil Kas Pondok:", error);
+      console.error("Gagal membaca pemasukan/pengeluaran Kas dari Google Sheets:", error);
+      if (elKas) elKas.textContent = "Gagal memuat";
     }
   }
 
