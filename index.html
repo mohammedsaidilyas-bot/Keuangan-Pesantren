@@ -853,7 +853,7 @@
     try {
       const dashboard = window.dashboardKeuangan || {};
       const periodeAktif = String(dashboard.periode || document.getElementById("periode")?.textContent || "")
-        .toLowerCase().replace(/\\s+/g, " ").trim();
+        .toLowerCase().replace(/\s+/g, " ").trim();
       const sppMasuk = Number(dashboard.sppMasuk || 0);
       const pengeluaranSPP = Math.abs(Number(dashboard.pengeluaranSPP || 0));
 
@@ -873,7 +873,7 @@
 
       const transferSPP = transferTransaksi
         .filter(t => String(t.periode ?? t.Priode ?? t.priode ?? "")
-          .toLowerCase().replace(/\\s+/g, " ").trim() === periodeAktif)
+          .toLowerCase().replace(/\s+/g, " ").trim() === periodeAktif)
         .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
 
       const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
