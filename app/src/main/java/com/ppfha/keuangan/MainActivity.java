@@ -113,26 +113,8 @@ public class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 if ("bendahara".equals(selectedRole) && url != null && url.startsWith("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/")) {
-                    String hotfix = "(function(){"
-                        + "if(window.__ppfhaSaldoFixApplied)return;window.__ppfhaSaldoFixApplied=true;"
-                        + "var api='https://script.google.com/macros/s/AKfycbzXSerzZbcNn-1nVnH1Hg8TwvdhNGX2KML88IdF9RKLCpoLpzQ39G9K8TPJiqn5GZ10EQ/exec';"
-                        + "var norm=function(v){return String(v||'').trim().toLowerCase().replace(/\\s+/g,' ')};"
-                        + "var src=function(t){return String(t.sumber||'').trim().toUpperCase()};"
-                        + "var amt=function(t){return Math.abs(Number(t.jumlah||0))};"
-                        // Keep the page’s original loadRingkasan; it reads the complete SPP aggregate.
-                        + "window.loadKasPondok=async function(){try{"
-                        + "var rs=await Promise.all([fetch(api+'?action=getKasPondok&_='+Date.now(),{cache:'no-store'}),fetch(api+'?action=getPengeluaranTerbaru&_='+Date.now(),{cache:'no-store'}),fetch(api+'?action=getTransferSPP&_='+Date.now(),{cache:'no-store'})]);"
-                        + "var k=await rs[0].json(),ed=await rs[1].json(),td=await rs[2].json();if(!k||!k.success)return;"
-                        + "var rows=ed&&ed.success&&Array.isArray(ed.transaksi)?ed.transaksi:[];var tr=td&&td.success&&Array.isArray(td.transaksi)?td.transaksi:[];"
-                        + "var expenseRows=rows.filter(function(t){return src(t)==='KAS'}).reduce(function(n,t){return n+amt(t)},0);"
-                        + "var expense=Math.max(Math.abs(Number(k.pengeluaranKas||0)),expenseRows);"
-                        + "var income=Math.abs(Number(k.pemasukanKas||0));"
-                        + "var transfer=tr.filter(function(t){return String(t.jenis||'').trim().toLowerCase()==='transfer'&&norm(t.keterangan).indexOf('sisa spp periode ')===0}).reduce(function(n,t){return n+amt(t)},0);"
-                        + "var saldo=Number(k.saldoKas||0)+income+transfer-expense;var el=document.getElementById('kas');if(el)el.textContent=window.rupiah(saldo);"
-                        + "}catch(e){console.log('Perhitungan saldo Kas dashboard gagal',e)}};"
-                        + "if(typeof window.loadDashboard==='function')window.loadDashboard();"
-                        + "})();";
-                    view.evaluateJavascript(hotfix, null);
+                    // Jangan menimpa fungsi dashboard dari index.html; biarkan sistem web memakai ringkasan asli.
+
                 }
                 if ("bendahara".equals(selectedRole) && url != null && url.startsWith("https://spp-pesantren-zeta.vercel.app/")) {
                     view.evaluateJavascript("(function(){if(document.getElementById('ppfha-menu-keuangan'))return;var b=document.createElement('button');b.id='ppfha-menu-keuangan';b.textContent='⌂ Beranda Bendahara';b.setAttribute('style','position:fixed;z-index:2147483647;right:12px;top:12px;background:#064e3b;color:white;border:2px solid #a7f3d0;border-radius:14px;padding:11px 14px;font:700 12px Arial;box-shadow:0 4px 14px #0005;');b.onclick=function(){if(window.BendaharaAndroid)BendaharaAndroid.openHome();};document.body.appendChild(b);})();", null);
