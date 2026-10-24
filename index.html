@@ -879,11 +879,16 @@
         .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
 
       let saldoKas;
-      if (saldoLangsung !== null && field(ringData, ["saldoAkhirKas", "saldoKasAkhir", "saldoKasSaatIni", "saldoAkhir"]) !== undefined) {
-        // Backend mengirim saldo akhir, jangan tambahkan pemasukan lagi.
+      // Endpoint getKasPondok mengembalikan field saldoKas sebagai saldo
+      // kas terkini. Prioritaskan nilai ini supaya tidak ditambah pemasukan/
+      // transfer dan dikurangi pengeluaran untuk kedua kalinya.
+      const saldoKasAktual = field(kasData, ["saldoKasSaatIni", "saldoAkhirKas", "saldoKasAkhir", "saldoKas"]);
+      if (saldoKasAktual !== undefined) {
+        saldoKas = amount(saldoKasAktual);
+      } else if (saldoLangsung !== null && field(ringData, ["saldoAkhirKas", "saldoKasAkhir", "saldoKasSaatIni", "saldoAkhir"]) !== undefined) {
         saldoKas = saldoLangsung;
       } else {
-        const saldoAwal = amount(field(kasData, ["saldoAwalKas", "kasAwal", "saldoAwal", "saldoKas"]) ?? 0);
+        const saldoAwal = amount(field(kasData, ["saldoAwalKas", "kasAwal", "saldoAwal"]) ?? 0);
         const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
         const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
         saldoKas = saldoAwal + pemasukanKas + transferSPP - pengeluaranKas;
