@@ -849,10 +849,11 @@
         }
         return null;
       };
-      const pemasukanAgregat = pickNumber([ringData, kasData], [
+      // Utamakan agregat khusus Kas Pondok agar Dashboard cocok dengan Rekap Kas.
+      const pemasukanAgregat = pickNumber([kasData, ringData], [
         "pemasukanKas", "totalPemasukanKas", "totalKasMasuk", "pemasukan_kas", "kasMasuk"
       ]);
-      const pengeluaranAgregat = pickNumber([ringData, kasData], [
+      const pengeluaranAgregat = pickNumber([kasData, ringData], [
         "pengeluaranKas", "totalPengeluaranKas", "totalKasKeluar", "pengeluaran_kas", "kasKeluar"
       ]);
       const saldoLangsung = pickNumber([ringData, kasData], [
@@ -878,15 +879,12 @@
         })
         .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
 
-      // getKasPondok adalah sumber saldo kas terkini. Jangan gunakan agregat
-      // getRingkasanKeuangan yang dapat berisi total yang berbeda/terhitung ulang.
-      const saldoKasBackend = field(kasData, ["saldoKasSaatIni", "saldoAkhirKas", "saldoKasAkhir", "saldoKas"]);
+      // Samakan dengan Rekap Kas: saldo awal + pemasukan - pengeluaran.
+      // Field saldoKas backend saat ini terhitung ganda, jadi tidak dipakai.
       const saldoAwalTerkonfirmasi = 5918000;
       const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
       const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
-      const saldoKas = saldoKasBackend !== undefined
-        ? amount(saldoKasBackend)
-        : saldoAwalTerkonfirmasi + pemasukanKas - pengeluaranKas;
+      const saldoKas = saldoAwalTerkonfirmasi + pemasukanKas - pengeluaranKas;
 
       if (elKas) elKas.textContent = rupiah(saldoKas);
       console.log("Ringkasan Kas dari database:", {
@@ -1940,7 +1938,7 @@ async function bukaLaporanKeuanganPDF(){
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
     const sisaSebelum=Math.max(0,diterima-totalSPP), sisaAkhir=Math.max(0,sisaSebelum-totalTransfer);
-    const saldoAwal=Number(kas.saldoKas||0), pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0), saldoAkhir=saldoAwal+pemasukanKas+totalTransfer-pengeluaranKas;
+    const saldoAwal=5918000, pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0), saldoAkhir=saldoAwal+pemasukanKas-pengeluaranKas;
     const tgl=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
     window.__laporanKeuanganData={periode,santri,expSPP,expKas,trPeriode,total,lunas,belum,tagihan,diterima,tunggakan,totalSPP,totalTransfer,sisaSebelum,sisaAkhir,saldoAwal,pemasukanKas,pengeluaranKas,saldoAkhir,tgl};
     const isi=document.getElementById("laporanKeuanganIsi");
