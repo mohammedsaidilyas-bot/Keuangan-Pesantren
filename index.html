@@ -878,12 +878,15 @@
         })
         .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
 
-      // Tampilkan saldo yang sama dengan Rekap Kas Pondok. Nilai aktual
-      // dihitung dari saldo awal terkonfirmasi dan agregat transaksi kas.
+      // getKasPondok adalah sumber saldo kas terkini. Jangan gunakan agregat
+      // getRingkasanKeuangan yang dapat berisi total yang berbeda/terhitung ulang.
+      const saldoKasBackend = field(kasData, ["saldoKasSaatIni", "saldoAkhirKas", "saldoKasAkhir", "saldoKas"]);
       const saldoAwalTerkonfirmasi = 5918000;
       const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
       const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
-      const saldoKas = saldoAwalTerkonfirmasi + pemasukanKas - pengeluaranKas;
+      const saldoKas = saldoKasBackend !== undefined
+        ? amount(saldoKasBackend)
+        : saldoAwalTerkonfirmasi + pemasukanKas - pengeluaranKas;
 
       if (elKas) elKas.textContent = rupiah(saldoKas);
       console.log("Ringkasan Kas dari database:", {
