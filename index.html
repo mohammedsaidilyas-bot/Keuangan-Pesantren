@@ -1095,7 +1095,9 @@ function bukaFormPengeluaran() {
 
     if(!data.success) throw new Error(data.message||"Gagal mengambil saldo Kas");
 
-    const saldoAwal=Number(data.saldoKas||0);
+    // getKasPondok mengirim saldo kas terkini pada field saldoKas,
+    // bukan saldo awal. Simpan sebagai saldo akhir aktual agar tidak dihitung dua kali.
+    const saldoKasAktual=Math.abs(Number(data.saldoKas||0));
     const pemasukan=Math.abs(Number(data.pemasukanKas||0));
     let pengeluaran=Math.abs(Number(data.pengeluaranKas||0));
 
@@ -1119,7 +1121,10 @@ function bukaFormPengeluaran() {
       if(totalKas>0) pengeluaran=totalKas;
     } catch(e) { console.log("Gagal mengambil rincian pengeluaran Kas:",e); }
 
-    const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
+    // Saldo awal dihitung mundur dari saldo aktual agar rekap menampilkan
+    // saldo awal yang benar dan saldo akhir sama dengan dashboard Bendahara.
+    const saldoAwal=saldoKasAktual-pemasukan-sisaSPP+pengeluaran;
+    const saldoTampil=saldoKasAktual;
 
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
@@ -1136,7 +1141,7 @@ function bukaFormPengeluaran() {
       </div>
       <div style="background:#f8fafc;border-radius:16px;padding:16px">
         <div style="font-weight:800;color:#172554;margin-bottom:8px">Rumus Saldo</div>
-        <div style="color:#475569;font-size:14px;line-height:1.7">Saldo Kas terkini + Sisa SPP ke Kas yang belum masuk saldo</div>
+        <div style="color:#475569;font-size:14px;line-height:1.7">Saldo awal + pemasukan Kas + transfer SPP ke Kas − pengeluaran Kas = saldo akhir Kas</div>
       </div>`;
   }catch(error){
     document.getElementById("rekapKasLoading").textContent="Rekap Kas belum dapat dimuat.";
