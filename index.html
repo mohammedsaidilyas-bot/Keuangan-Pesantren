@@ -1931,7 +1931,8 @@ async function bukaLaporanKeuanganPDF(){
     const expKas=semuaExp.filter(t=>String(t.sumber??t.Sumber??"").toUpperCase().trim()==="KAS");
     const angkaLaporan=v=>{if(typeof v==="number")return Math.abs(v);const n=Number(String(v??"").replace(/[^0-9,-]/g,"").replace(/,/g,""));return Number.isFinite(n)?Math.abs(n):0;};
     const totalAgregat=dash.pengeluaranSPP??dash.totalPengeluaranSPP??ring?.pengeluaranSPP??ring?.totalPengeluaranSPP??ring?.totalPengeluaranSpp??ring?.pengeluaranSpp??ring?.pengeluaran_spp??ring?.total_pengeluaran_spp;
-    const totalSPP=totalAgregat!==undefined&&totalAgregat!==null&&totalAgregat!==""?angkaLaporan(totalAgregat):expSPP.reduce((n,t)=>n+angkaLaporan(t.jumlah??t.Jumlah??t.nominal??t.Nominal),0);
+    const totalSPPDashboard=window.pengeluaranSPPDashboard;
+    const totalSPP=(totalSPPDashboard!==undefined&&totalSPPDashboard!==null&&Number.isFinite(Number(totalSPPDashboard)))?angkaLaporan(totalSPPDashboard):(totalAgregat!==undefined&&totalAgregat!==null&&totalAgregat!==""?angkaLaporan(totalAgregat):expSPP.reduce((n,t)=>n+angkaLaporan(t.jumlah??t.Jumlah??t.nominal??t.Nominal),0));
     const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
