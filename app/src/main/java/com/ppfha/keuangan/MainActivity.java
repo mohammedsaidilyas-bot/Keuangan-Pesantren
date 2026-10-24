@@ -72,7 +72,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(MainActivity.this, "Gagal mengunduh: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
-        webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
+        webView.loadUrl("https://raw.githack.com/mohammedsaidilyas-bot/Keuangan-Pesantren/gabung-spp-bendahara/index.html?v=6af4339a10c86b218b5a8a39409322ae59c79906");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 7001);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
