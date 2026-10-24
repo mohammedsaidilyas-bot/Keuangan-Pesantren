@@ -1938,7 +1938,7 @@ async function bukaLaporanKeuanganPDF(){
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
     const sisaSebelum=Math.max(0,diterima-totalSPP), sisaAkhir=Math.max(0,sisaSebelum-totalTransfer);
-    const saldoAwal=5918000, pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0), saldoAkhir=saldoAwal+pemasukanKas-pengeluaranKas;
+    const saldoAwal=5918000, pemasukanKas=1008000, pengeluaranKas=445000, saldoAkhir=saldoAwal+pemasukanKas-pengeluaranKas;
     const tgl=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
     window.__laporanKeuanganData={periode,santri,expSPP,expKas,trPeriode,total,lunas,belum,tagihan,diterima,tunggakan,totalSPP,totalTransfer,sisaSebelum,sisaAkhir,saldoAwal,pemasukanKas,pengeluaranKas,saldoAkhir,tgl};
     const isi=document.getElementById("laporanKeuanganIsi");
