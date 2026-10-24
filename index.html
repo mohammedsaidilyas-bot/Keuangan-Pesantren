@@ -848,16 +848,37 @@
   }
 
   async function loadRingkasan() {
-    // Gunakan total pengeluaran SPP dari getDashboardKeuangan,
-    // bukan getPengeluaranTerbaru yang bisa saja hanya memuat transaksi terbaru.
+    // Baca transaksi pengeluaran langsung dari endpoint yang terhubung
+    // ke Google Sheets. Jangan bergantung pada properti dashboard yang
+    // belum tentu dikirim oleh getDashboardKeuangan.
     try {
-      const dashboard = window.dashboardKeuangan || {};
-      const periodeAktif = String(dashboard.periode || document.getElementById("periode")?.textContent || "")
-        .toLowerCase().replace(/\s+/g, " ").trim();
-      const sppMasuk = Number(dashboard.sppMasuk || 0);
-      const pengeluaranSPP = Math.abs(Number(dashboard.pengeluaranSPP || 0));
+      const response = await fetch(
+        API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+      const transaksi = (data && data.success && Array.isArray(data.transaksi))
+        ? data.transaksi : [];
 
-      // Transfer SPP -> Kas hanya mengurangi sisa SPP pada periode yang sama.
+      const periodeAktif = String(
+        window.dashboardKeuangan?.periode ||
+        document.getElementById("periode")?.textContent || ""
+      ).toLowerCase().replace(/\s+/g, " ").trim();
+
+      const pengeluaranSPP = transaksi
+        .filter(t => String(t.sumber || "").trim().toUpperCase() === "SPP")
+        .filter(t => {
+          const p = String(t.periode ?? t.Priode ?? t.priode ?? "")
+            .toLowerCase().replace(/\s+/g, " ").trim();
+          // Data lama yang belum punya periode tetap dihitung berdasarkan
+          // transaksi yang dikembalikan endpoint, agar tidak hilang.
+          return !p || p === periodeAktif;
+        })
+        .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
+
+      const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
+
+      // Hanya transfer SPP untuk periode aktif yang mengurangi sisa periode ini.
       let transferTransaksi = [];
       try {
         const transferResponse = await fetch(
@@ -874,7 +895,7 @@
       const transferSPP = transferTransaksi
         .filter(t => String(t.periode ?? t.Priode ?? t.priode ?? "")
           .toLowerCase().replace(/\s+/g, " ").trim() === periodeAktif)
-        .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+        .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
 
       const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
       window.pengeluaranSPPDashboard = pengeluaranSPP;
@@ -894,7 +915,7 @@
       if (expenseBar) expenseBar.style.height = Math.max(8, Math.round(pengeluaranSPP / maxBar * 36)) + "px";
       if (incomeBar) incomeBar.style.height = Math.max(8, Math.round(sppMasuk / maxBar * 36)) + "px";
     } catch (error) {
-      console.log("Ringkasan SPP belum dapat dihitung:", error);
+      console.log("Gagal membaca pengeluaran dari database:", error);
     }
 
     // Saldo Kas Pondok ditangani oleh loadKasPondok().
