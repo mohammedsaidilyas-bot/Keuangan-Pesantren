@@ -848,37 +848,53 @@
   }
 
   async function loadRingkasan() {
-    // Baca transaksi pengeluaran langsung dari endpoint yang terhubung
-    // ke Google Sheets. Jangan bergantung pada properti dashboard yang
-    // belum tentu dikirim oleh getDashboardKeuangan.
     try {
-      const response = await fetch(
-        API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
-        { cache: "no-store" }
-      );
-      const data = await response.json();
-      const transaksi = (data && data.success && Array.isArray(data.transaksi))
-        ? data.transaksi : [];
-
       const periodeAktif = String(
         window.dashboardKeuangan?.periode ||
         document.getElementById("periode")?.textContent || ""
       ).toLowerCase().replace(/\s+/g, " ").trim();
+      const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
 
-      const pengeluaranSPP = transaksi
+      // Utamakan endpoint ringkasan yang menghitung total dari database,
+      // karena getPengeluaranTerbaru hanya untuk daftar transaksi terbaru.
+      let ringkasan = {};
+      try {
+        const ringResponse = await fetch(
+          API_URL + "?action=getRingkasanKeuangan&_=" + Date.now(),
+          { cache: "no-store" }
+        );
+        const ringData = await ringResponse.json();
+        if (ringData && ringData.success) ringkasan = ringData;
+      } catch (e) {
+        console.log("Ringkasan backend belum tersedia:", e);
+      }
+
+      let transaksi = [];
+      try {
+        const response = await fetch(
+          API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
+          { cache: "no-store" }
+        );
+        const data = await response.json();
+        if (data && data.success && Array.isArray(data.transaksi)) transaksi = data.transaksi;
+      } catch (e) {
+        console.log("Gagal membaca transaksi terbaru:", e);
+      }
+
+      const totalDariTransaksi = transaksi
         .filter(t => String(t.sumber || "").trim().toUpperCase() === "SPP")
         .filter(t => {
           const p = String(t.periode ?? t.Priode ?? t.priode ?? "")
             .toLowerCase().replace(/\s+/g, " ").trim();
-          // Data lama yang belum punya periode tetap dihitung berdasarkan
-          // transaksi yang dikembalikan endpoint, agar tidak hilang.
           return !p || p === periodeAktif;
         })
         .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
 
-      const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
+      const totalRingkasan = Number(ringkasan.pengeluaranSPP || 0);
+      // Jika backend mengirim total positif, gunakan total lengkap tersebut.
+      // Jika tidak, tampilkan total transaksi yang berhasil dibaca sebagai fallback.
+      const pengeluaranSPP = totalRingkasan > 0 ? Math.abs(totalRingkasan) : totalDariTransaksi;
 
-      // Hanya transfer SPP untuk periode aktif yang mengurangi sisa periode ini.
       let transferTransaksi = [];
       try {
         const transferResponse = await fetch(
@@ -897,9 +913,12 @@
           .toLowerCase().replace(/\s+/g, " ").trim() === periodeAktif)
         .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
 
-      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
-      window.pengeluaranSPPDashboard = pengeluaranSPP;
+      const sisaDariRingkasan = Number(ringkasan.sisaSPP);
+      const sisaSPP = Number.isFinite(sisaDariRingkasan) && totalRingkasan > 0
+        ? Math.max(0, sisaDariRingkasan)
+        : Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
 
+      window.pengeluaranSPPDashboard = pengeluaranSPP;
       const elPengeluaran = document.getElementById("pengeluaranSPP");
       const elSisa = document.getElementById("sisaSPP");
       if (elPengeluaran) elPengeluaran.textContent = rupiah(pengeluaranSPP);
@@ -915,10 +934,8 @@
       if (expenseBar) expenseBar.style.height = Math.max(8, Math.round(pengeluaranSPP / maxBar * 36)) + "px";
       if (incomeBar) incomeBar.style.height = Math.max(8, Math.round(sppMasuk / maxBar * 36)) + "px";
     } catch (error) {
-      console.log("Gagal membaca pengeluaran dari database:", error);
+      console.log("Gagal membaca ringkasan pengeluaran:", error);
     }
-
-    // Saldo Kas Pondok ditangani oleh loadKasPondok().
   }
 
 function bukaFormPengeluaran() {
