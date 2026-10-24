@@ -848,6 +848,13 @@
   }
 
   async function loadRingkasan() {
+    // Ambil agregat lengkap dari backend yang membaca seluruh sheet keuangan.
+    // getPengeluaranTerbaru dibatasi untuk tampilan daftar, jadi bukan sumber
+    // utama total pengeluaran pada kartu dashboard.
+    const elPengeluaran = document.getElementById("pengeluaranSPP");
+    const elSisa = document.getElementById("sisaSPP");
+    const expenseBarValue = document.getElementById("expenseBarValue");
+    const incomeBarValue = document.getElementById("incomeBarValue");
     try {
       const periodeAktif = String(
         window.dashboardKeuangan?.periode ||
@@ -855,86 +862,87 @@
       ).toLowerCase().replace(/\s+/g, " ").trim();
       const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
 
-      // Utamakan endpoint ringkasan yang menghitung total dari database,
-      // karena getPengeluaranTerbaru hanya untuk daftar transaksi terbaru.
-      let ringkasan = {};
-      try {
-        const ringResponse = await fetch(
-          API_URL + "?action=getRingkasanKeuangan&_=" + Date.now(),
-          { cache: "no-store" }
-        );
-        const ringData = await ringResponse.json();
-        if (ringData && ringData.success) ringkasan = ringData;
-      } catch (e) {
-        console.log("Ringkasan backend belum tersedia:", e);
+      const [ringResponse, txResponse] = await Promise.all([
+        fetch(API_URL + "?action=getRingkasanKeuangan&_=" + Date.now(), { cache: "no-store" }),
+        fetch(API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(), { cache: "no-store" })
+      ]);
+      const ringData = await ringResponse.json();
+      const txData = await txResponse.json();
+
+      // Terima format hasil ringkasan langsung maupun yang dibungkus di data.
+      const ring = ringData?.data && typeof ringData.data === "object"
+        ? { ...ringData, ...ringData.data } : ringData;
+      const transaksi = txData && txData.success && Array.isArray(txData.transaksi)
+        ? txData.transaksi : [];
+
+      // Backend ringkasan menghitung seluruh baris di Google Sheets.
+      // Cari nama field yang lazim dipakai tanpa menganggap field yang hilang = 0.
+      const fieldPengeluaran = ["pengeluaranSPP", "totalPengeluaranSPP", "totalSPP"];
+      let totalBackend = null;
+      for (const key of fieldPengeluaran) {
+        if (ring && ring[key] !== undefined && ring[key] !== null && ring[key] !== "") {
+          const n = Number(ring[key]);
+          if (Number.isFinite(n)) { totalBackend = Math.abs(n); break; }
+        }
       }
 
-      let transaksi = [];
-      try {
-        const response = await fetch(
-          API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
-          { cache: "no-store" }
-        );
-        const data = await response.json();
-        if (data && data.success && Array.isArray(data.transaksi)) transaksi = data.transaksi;
-      } catch (e) {
-        console.log("Gagal membaca transaksi terbaru:", e);
-      }
-
-      const totalDariTransaksi = transaksi
+      // Fallback transaksi terbaru hanya digunakan bila backend tidak menyediakan
+      // nilai agregat. Ini tidak diklaim sebagai total seluruh sheet.
+      const totalTerbaru = transaksi
+        .filter(t => String(t.jenis || "").trim().toLowerCase() === "pengeluaran")
         .filter(t => String(t.sumber || "").trim().toUpperCase() === "SPP")
         .filter(t => {
           const p = String(t.periode ?? t.Priode ?? t.priode ?? "")
             .toLowerCase().replace(/\s+/g, " ").trim();
           return !p || p === periodeAktif;
         })
-        .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
+        .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
 
-      const totalRingkasan = Number(ringkasan.pengeluaranSPP || 0);
-      // Jika backend mengirim total positif, gunakan total lengkap tersebut.
-      // Jika tidak, tampilkan total transaksi yang berhasil dibaca sebagai fallback.
-      const pengeluaranSPP = totalRingkasan > 0 ? Math.abs(totalRingkasan) : totalDariTransaksi;
-
-      let transferTransaksi = [];
-      try {
-        const transferResponse = await fetch(
-          API_URL + "?action=getTransferSPP&_=" + Date.now(),
-          { cache: "no-store" }
-        );
-        const transferData = await transferResponse.json();
-        transferTransaksi = (transferData && transferData.success && Array.isArray(transferData.transaksi))
-          ? transferData.transaksi : [];
-      } catch (e) {
-        console.log("Gagal membaca transfer SPP:", e);
+      const pengeluaranSPP = totalBackend !== null ? totalBackend : totalTerbaru;
+      const fieldSisa = ["sisaSPP", "saldoSPP"];
+      let sisaBackend = null;
+      for (const key of fieldSisa) {
+        if (ring && ring[key] !== undefined && ring[key] !== null && ring[key] !== "") {
+          const n = Number(ring[key]);
+          if (Number.isFinite(n)) { sisaBackend = Math.max(0, n); break; }
+        }
       }
 
-      const transferSPP = transferTransaksi
-        .filter(t => String(t.periode ?? t.Priode ?? t.priode ?? "")
-          .toLowerCase().replace(/\s+/g, " ").trim() === periodeAktif)
-        .reduce((total, t) => total + Math.abs(Number(t.jumlah || 0)), 0);
+      let transferSPP = 0;
+      try {
+        const trResponse = await fetch(API_URL + "?action=getTransferSPP&_=" + Date.now(), { cache: "no-store" });
+        const trData = await trResponse.json();
+        const transfers = trData && trData.success && Array.isArray(trData.transaksi)
+          ? trData.transaksi : [];
+        transferSPP = transfers
+          .filter(t => String(t.periode ?? t.Priode ?? t.priode ?? "")
+            .toLowerCase().replace(/\s+/g, " ").trim() === periodeAktif)
+          .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+      } catch (e) {
+        console.warn("Transfer SPP belum terbaca:", e);
+      }
 
-      const sisaDariRingkasan = Number(ringkasan.sisaSPP);
-      const sisaSPP = Number.isFinite(sisaDariRingkasan) && totalRingkasan > 0
-        ? Math.max(0, sisaDariRingkasan)
+      const sisaSPP = sisaBackend !== null
+        ? sisaBackend
         : Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
 
       window.pengeluaranSPPDashboard = pengeluaranSPP;
-      const elPengeluaran = document.getElementById("pengeluaranSPP");
-      const elSisa = document.getElementById("sisaSPP");
       if (elPengeluaran) elPengeluaran.textContent = rupiah(pengeluaranSPP);
       if (elSisa) elSisa.textContent = rupiah(sisaSPP);
-
-      const expenseBarValue = document.getElementById("expenseBarValue");
       if (expenseBarValue) expenseBarValue.textContent = rupiah(pengeluaranSPP);
-      const incomeBarValue = document.getElementById("incomeBarValue");
       if (incomeBarValue) incomeBarValue.textContent = rupiah(sppMasuk);
       const expenseBar = document.getElementById("expenseBar");
       const incomeBar = document.getElementById("incomeBar");
       const maxBar = Math.max(sppMasuk, pengeluaranSPP, 1);
       if (expenseBar) expenseBar.style.height = Math.max(8, Math.round(pengeluaranSPP / maxBar * 36)) + "px";
       if (incomeBar) incomeBar.style.height = Math.max(8, Math.round(sppMasuk / maxBar * 36)) + "px";
+
+      if (totalBackend === null) {
+        console.warn("getRingkasanKeuangan tidak mengirim field total pengeluaran SPP; kartu memakai jumlah transaksi terbaru saja.");
+      }
     } catch (error) {
-      console.log("Gagal membaca ringkasan pengeluaran:", error);
+      console.error("Gagal membaca ringkasan dari database:", error);
+      if (elPengeluaran && !elPengeluaran.textContent.trim()) elPengeluaran.textContent = "Gagal memuat";
     }
   }
 
