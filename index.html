@@ -878,21 +878,13 @@
         })
         .reduce((sum, t) => sum + amount(field(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
 
-      let saldoKas;
-      // Endpoint getKasPondok mengembalikan field saldoKas sebagai saldo
-      // kas terkini. Prioritaskan nilai ini supaya tidak ditambah pemasukan/
-      // transfer dan dikurangi pengeluaran untuk kedua kalinya.
-      const saldoKasAktual = field(kasData, ["saldoKasSaatIni", "saldoAkhirKas", "saldoKasAkhir", "saldoKas"]);
-      if (saldoKasAktual !== undefined) {
-        saldoKas = amount(saldoKasAktual);
-      } else if (saldoLangsung !== null && field(ringData, ["saldoAkhirKas", "saldoKasAkhir", "saldoKasSaatIni", "saldoAkhir"]) !== undefined) {
-        saldoKas = saldoLangsung;
-      } else {
-        const saldoAwal = amount(field(kasData, ["saldoAwalKas", "kasAwal", "saldoAwal"]) ?? 0);
-        const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
-        const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
-        saldoKas = saldoAwal + pemasukanKas + transferSPP - pengeluaranKas;
-      }
+      // Saldo awal yang telah dikonfirmasi pengguna. Pemasukan Rp1.008.000
+      // sudah mencakup transaksi "Sisa uang spp" Rp493.000, jadi jangan tambah
+      // transfer SPP sekali lagi.
+      const saldoAwalTerkonfirmasi = 5918000;
+      const pemasukanKas = pemasukanAgregat !== null ? pemasukanAgregat : pemasukanRinci;
+      const pengeluaranKas = pengeluaranAgregat !== null ? pengeluaranAgregat : pengeluaranRinci;
+      const saldoKas = saldoAwalTerkonfirmasi + pemasukanKas - pengeluaranKas;
 
       if (elKas) elKas.textContent = rupiah(saldoKas);
       console.log("Ringkasan Kas dari database:", {
@@ -1100,9 +1092,9 @@ function bukaFormPengeluaran() {
 
     if(!data.success) throw new Error(data.message||"Gagal mengambil saldo Kas");
 
-    // getKasPondok mengirim saldo kas terkini pada field saldoKas,
-    // bukan saldo awal. Simpan sebagai saldo akhir aktual agar tidak dihitung dua kali.
-    const saldoKasAktual=Math.abs(Number(data.saldoKas||0));
+    // Saldo awal kas telah dikonfirmasi pengguna. Nilai saldoKas dari backend
+    // saat ini sudah terhitung ganda, jadi hitung ulang dari transaksi agregat.
+    const saldoAwal=5918000;
     const pemasukan=Math.abs(Number(data.pemasukanKas||0));
     let pengeluaran=Math.abs(Number(data.pengeluaranKas||0));
 
@@ -1126,10 +1118,9 @@ function bukaFormPengeluaran() {
       if(totalKas>0) pengeluaran=totalKas;
     } catch(e) { console.log("Gagal mengambil rincian pengeluaran Kas:",e); }
 
-    // Saldo awal dihitung mundur dari saldo aktual agar rekap menampilkan
-    // saldo awal yang benar dan saldo akhir sama dengan dashboard Bendahara.
-    const saldoAwal=saldoKasAktual-pemasukan-sisaSPP+pengeluaran;
-    const saldoTampil=saldoKasAktual;
+    // Pemasukan kas Rp1.008.000 sudah mencakup baris "Sisa uang spp"
+    // Rp493.000 di sheet keuangan; jangan tambahkan transfer sekali lagi.
+    const saldoTampil=saldoAwal+pemasukan-pengeluaran;
 
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
