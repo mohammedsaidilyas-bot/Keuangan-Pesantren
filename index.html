@@ -804,29 +804,42 @@
       console.log("Data Kas Pondok:", data);
 
       if (data && data.success) {
-        let saldoKas = Number(data.saldoKas || 0);
+        // data.saldoKas adalah saldo awal yang dikirim backend.
+        // Hitung saldo tampil dengan arus kas yang dinormalisasi positif:
+        // saldo awal + pemasukan + transfer SPP->Kas - pengeluaran Kas.
+        const saldoAwal = Number(data.saldoKas || 0);
+        const pemasukanKas = Math.abs(Number(data.pemasukanKas || 0));
+        let pengeluaranKas = Math.abs(Number(data.pengeluaranKas || 0));
+        let transferSPP = 0;
 
-        // Backend lama belum memasukkan transaksi Transfer SPP -> Kas.
-        // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
         try {
-          const txResponse = await fetch(
-            API_URL + "?action=getTransferSPP&_=" + Date.now(),
-            { cache: "no-store" }
-          );
+          const [txResponse, expResponse] = await Promise.all([
+            fetch(API_URL + "?action=getTransferSPP&_=" + Date.now(), { cache: "no-store" }),
+            fetch(API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(), { cache: "no-store" })
+          ]);
           const txData = await txResponse.json();
-          const transaksi = (txData && txData.success && Array.isArray(txData.transaksi))
+          const expData = await expResponse.json();
+          const transfers = (txData && txData.success && Array.isArray(txData.transaksi))
             ? txData.transaksi : [];
+          const expenses = (expData && expData.success && Array.isArray(expData.transaksi))
+            ? expData.transaksi : [];
 
-          const transferSPP = transaksi
+          transferSPP = transfers
             .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
             .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
-            .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+            .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
 
-          saldoKas += transferSPP;
+          // Jika transaksi rinci tersedia, gunakan hanya pengeluaran ber-sumber Kas.
+          // Math.abs mencegah nominal bertanda minus membalik arah perhitungan.
+          const pengeluaranKasRinci = expenses
+            .filter(t => String(t.sumber || "").trim().toUpperCase() === "KAS")
+            .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+          if (pengeluaranKasRinci > 0) pengeluaranKas = pengeluaranKasRinci;
         } catch (e) {
-          console.log("Gagal membaca transfer SPP ke Kas:", e);
+          console.log("Gagal membaca rincian Kas:", e);
         }
 
+        const saldoKas = saldoAwal + pemasukanKas + transferSPP - pengeluaranKas;
         document.getElementById("kas").textContent = rupiah(saldoKas);
       }
     } catch (error) {
@@ -885,7 +898,14 @@
           const d = bulanTransaksi(t.tanggal);
           return !d || bulanAktif === undefined || (d.bulan === bulanAktif && d.tahun === tahunAktif);
         })
-        .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+
+      // Semua nominal pengeluaran diperlakukan sebagai nilai positif,
+      // walaupun endpoint mengirim nominal bertanda minus.
+      const pengeluaranKas = transaksi
+        .filter(t => String(t.sumber || "").trim().toUpperCase() === "KAS")
+        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+      window.pengeluaranKasDashboard = pengeluaranKas;
 
       const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
 
@@ -906,7 +926,7 @@
 
       const transferSPP = transferTransaksi
         .filter(t => normalisasiPeriode(String(t.periode ?? t.Priode ?? t.priode)) === periodeAktif)
-        .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
 
       const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
 
@@ -994,24 +1014,31 @@ function bukaFormPengeluaran() {
 
     if(!data.success) throw new Error(data.message||"Gagal mengambil saldo Kas");
 
-    const saldoBackend=Number(data.saldoKas||0);
-    const pemasukan=Number(data.pemasukanKas||0);
-    const pengeluaran=Number(data.pengeluaranKas||0);
+    const saldoAwal=Number(data.saldoKas||0);
+    const pemasukan=Math.abs(Number(data.pemasukanKas||0));
+    let pengeluaran=Math.abs(Number(data.pengeluaranKas||0));
 
     const transferList=(transferData && transferData.success && Array.isArray(transferData.transaksi))
       ? transferData.transaksi : [];
 
-    const sisaSPP=transferList.reduce((total,t)=>{
-      return total + Number(t.jumlah||0);
-    },0);
+    const sisaSPP=transferList
+      .filter(t => String(t.jenis||"").trim().toLowerCase() === "transfer")
+      .filter(t => String(t.keterangan||"").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
+      .reduce((total,t)=> total + Math.abs(Number(t.jumlah||0)), 0);
 
-    // saldoBackend sudah merupakan saldo Kas terkini dari backend,
-    // termasuk pemasukan/pengeluaran Kas yang sudah dicatat.
-    // Jangan tambahkan pemasukan dan kurangi pengeluaran lagi agar tidak dihitung ganda.
-    const saldoAwal=saldoBackend;
+    // Ambil total pengeluaran Kas dari rincian transaksi agar nominal bertanda
+    // minus tetap dihitung sebagai pengeluaran dan hanya mengurangi saldo Kas.
+    try {
+      const expResponse=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"});
+      const expData=await expResponse.json();
+      const expenses=(expData&&expData.success&&Array.isArray(expData.transaksi))?expData.transaksi:[];
+      const totalKas=expenses
+        .filter(t=>String(t.sumber||"").trim().toUpperCase()==="KAS")
+        .reduce((n,t)=>n+Math.abs(Number(t.jumlah||0)),0);
+      if(totalKas>0) pengeluaran=totalKas;
+    } catch(e) { console.log("Gagal mengambil rincian pengeluaran Kas:",e); }
 
-    // Hanya tambahkan transfer SPP→Kas yang belum masuk ke saldo backend.
-    const saldoTampil=saldoAwal+sisaSPP;
+    const saldoTampil=saldoAwal+pemasukan+sisaSPP-pengeluaran;
 
     document.getElementById("rekapKasLoading").style.display="none";
     document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
