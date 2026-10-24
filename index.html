@@ -848,69 +848,16 @@
   }
 
   async function loadRingkasan() {
-
-    // Ringkasan pengeluaran SPP dihitung langsung dari transaksi nyata,
-    // sehingga kartu dashboard tidak bergantung pada ringkasan backend lama.
+    // Gunakan total pengeluaran SPP dari getDashboardKeuangan,
+    // bukan getPengeluaranTerbaru yang bisa saja hanya memuat transaksi terbaru.
     try {
-      const response = await fetch(
-        API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(),
-        { cache: "no-store" }
-      );
-      const data = await response.json();
-      const transaksi = (data && data.success && Array.isArray(data.transaksi))
-        ? data.transaksi : [];
+      const dashboard = window.dashboardKeuangan || {};
+      const periodeAktif = String(dashboard.periode || document.getElementById("periode")?.textContent || "")
+        .toLowerCase().replace(/\\s+/g, " ").trim();
+      const sppMasuk = Number(dashboard.sppMasuk || 0);
+      const pengeluaranSPP = Math.abs(Number(dashboard.pengeluaranSPP || 0));
 
-      const periode = String(document.getElementById("periode")?.textContent || "").trim().toLowerCase();
-      const bulanMap = {
-        januari:0, februari:1, maret:2, april:3, mei:4, juni:5,
-        juli:6, agustus:7, september:8, oktober:9, november:10, desember:11
-      };
-      const bulanAktif = bulanMap[periode];
-      const tahunAktif = new Date().getFullYear();
-
-      function bulanTransaksi(tanggal) {
-        const s = String(tanggal || "").trim();
-        let m;
-        if ((m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/))) return {bulan:Number(m[2])-1,tahun:Number(m[3])};
-        if ((m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) return {bulan:Number(m[2])-1,tahun:Number(m[1])};
-        return null;
-      }
-
-      function normalisasiPeriode(v) {
-        return String(v || "")
-          .toLowerCase()
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-
-      // Pengeluaran SPP dibebankan berdasarkan kolom PERIODE,
-      // bukan berdasarkan tanggal transaksi. Jadi pengeluaran bulan
-      // berikutnya tetap bisa mengurangi saldo periode sebelumnya.
-      const periodeAktif = normalisasiPeriode(document.getElementById("periode")?.textContent || "");
-
-      const pengeluaranSPP = transaksi
-        .filter(t => String(t.sumber || "").toUpperCase() === "SPP")
-        .filter(t => {
-          const periodeTransaksi = normalisasiPeriode(t.periode ?? t.Priode ?? t.priode);
-          if (periodeTransaksi) return periodeTransaksi === periodeAktif;
-
-          // Kompatibilitas untuk transaksi lama yang belum memiliki periode.
-          const d = bulanTransaksi(t.tanggal);
-          return !d || bulanAktif === undefined || (d.bulan === bulanAktif && d.tahun === tahunAktif);
-        })
-        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
-
-      // Semua nominal pengeluaran diperlakukan sebagai nilai positif,
-      // walaupun endpoint mengirim nominal bertanda minus.
-      const pengeluaranKas = transaksi
-        .filter(t => String(t.sumber || "").trim().toUpperCase() === "KAS")
-        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
-      window.pengeluaranKasDashboard = pengeluaranKas;
-
-      const sppMasuk = Number(window.dashboardKeuangan?.sppMasuk || 0);
-
-      // Transfer SPP -> Kas dibaca dari endpoint khusus karena
-      // getPengeluaranTerbaru memang hanya mengembalikan pengeluaran.
+      // Transfer SPP -> Kas hanya mengurangi sisa SPP pada periode yang sama.
       let transferTransaksi = [];
       try {
         const transferResponse = await fetch(
@@ -925,31 +872,32 @@
       }
 
       const transferSPP = transferTransaksi
-        .filter(t => normalisasiPeriode(String(t.periode ?? t.Priode ?? t.priode)) === periodeAktif)
-        .reduce((n,t) => n + Math.abs(Number(t.jumlah || 0)), 0);
+        .filter(t => String(t.periode ?? t.Priode ?? t.priode ?? "")
+          .toLowerCase().replace(/\\s+/g, " ").trim() === periodeAktif)
+        .reduce((n, t) => n + Math.abs(Number(t.jumlah || 0)), 0);
 
       const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
+      window.pengeluaranSPPDashboard = pengeluaranSPP;
 
-      const elPengeluaran=document.getElementById("pengeluaranSPP");
-      const elSisa=document.getElementById("sisaSPP");
-      if(elPengeluaran) elPengeluaran.textContent=rupiah(pengeluaranSPP);
-      if(elSisa) elSisa.textContent=rupiah(sisaSPP);
+      const elPengeluaran = document.getElementById("pengeluaranSPP");
+      const elSisa = document.getElementById("sisaSPP");
+      if (elPengeluaran) elPengeluaran.textContent = rupiah(pengeluaranSPP);
+      if (elSisa) elSisa.textContent = rupiah(sisaSPP);
 
-      const expenseBarValue=document.getElementById("expenseBarValue");
-      if(expenseBarValue) expenseBarValue.textContent=rupiah(pengeluaranSPP);
-      const incomeBarValue=document.getElementById("incomeBarValue");
-      if(incomeBarValue) incomeBarValue.textContent=rupiah(sppMasuk);
-      const expenseBar=document.getElementById("expenseBar");
-      const incomeBar=document.getElementById("incomeBar");
-      const maxBar=Math.max(sppMasuk,pengeluaranSPP,1);
-      if(expenseBar) expenseBar.style.height=Math.max(8,Math.round(pengeluaranSPP/maxBar*36))+"px";
-      if(incomeBar) incomeBar.style.height=Math.max(8,Math.round(sppMasuk/maxBar*36))+"px";
+      const expenseBarValue = document.getElementById("expenseBarValue");
+      if (expenseBarValue) expenseBarValue.textContent = rupiah(pengeluaranSPP);
+      const incomeBarValue = document.getElementById("incomeBarValue");
+      if (incomeBarValue) incomeBarValue.textContent = rupiah(sppMasuk);
+      const expenseBar = document.getElementById("expenseBar");
+      const incomeBar = document.getElementById("incomeBar");
+      const maxBar = Math.max(sppMasuk, pengeluaranSPP, 1);
+      if (expenseBar) expenseBar.style.height = Math.max(8, Math.round(pengeluaranSPP / maxBar * 36)) + "px";
+      if (incomeBar) incomeBar.style.height = Math.max(8, Math.round(sppMasuk / maxBar * 36)) + "px";
     } catch (error) {
-      console.log("Pengeluaran SPP belum dapat dihitung:", error);
+      console.log("Ringkasan SPP belum dapat dihitung:", error);
     }
 
-    // Saldo Kas Pondok ditangani oleh loadKasPondok()
-    // agar transfer SPP -> Kas tidak tertimpa saldo backend lama.
+    // Saldo Kas Pondok ditangani oleh loadKasPondok().
   }
 
 function bukaFormPengeluaran() {
