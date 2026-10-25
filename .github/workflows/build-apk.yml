@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - gabung-spp-bendahara
+      - gabung-uang-jajan-santri
     paths:
       - 'app/**'
       - 'build.gradle'
