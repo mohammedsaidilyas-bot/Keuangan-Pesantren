@@ -53,6 +53,25 @@ public class MainActivity extends Activity {
     private boolean returningFromPrint = false;
     private String selectedRole = "";
     private String pendingFinanceAction = "";
+    private PermissionRequest pendingCameraRequest;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 7101) {
+            PermissionRequest request = pendingCameraRequest;
+            pendingCameraRequest = null;
+            if (request != null) {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    Toast.makeText(this, "Izin kamera diberikan. Tekan Scan sekali lagi.", Toast.LENGTH_LONG).show();
+                } else {
+                    request.deny();
+                    Toast.makeText(this, "Izin kamera diperlukan untuk scan QR.", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,15 +97,16 @@ public class MainActivity extends Activity {
                     for (String resource : request.getResources()) {
                         if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) asksCamera = true;
                     }
-                    if (trusted && asksCamera && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                            && checkSelfPermission(android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    if (!trusted || !asksCamera) {
+                        request.deny();
+                        return;
+                    }
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                            || checkSelfPermission(android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                         request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
                     } else {
-                        request.deny();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                                && checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                            requestPermissions(new String[]{android.Manifest.permission.CAMERA}, 7101);
-                        }
+                        pendingCameraRequest = request;
+                        requestPermissions(new String[]{android.Manifest.permission.CAMERA}, 7101);
                     }
                 });
             }
