@@ -983,7 +983,25 @@
         })
         .reduce((sum, t) => sum + money(val(t, ["jumlah", "Jumlah", "nominal", "Nominal", "total", "Total"])), 0);
 
-      const pengeluaranSPP = totalBackend !== null ? totalBackend : pengeluaranSPPTransaksi;
+      // Utamakan penjumlahan transaksi rinci dari sheet keuangan. Agregat
+      // lama getRingkasanKeuangan bisa tidak sinkron (contoh: Rp288.000
+      // padahal baris SPP Oktober pada sheet berjumlah Rp669.000).
+      // Gunakan agregat hanya jika endpoint transaksi tidak menyediakan
+      // satu pun transaksi SPP untuk periode aktif.
+      const adaTransaksiSPP = transaksi.some(t =>
+        norm(val(t, ["jenis", "Jenis", "tipe", "type"])) === "pengeluaran" &&
+        (() => {
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          return sumber === "spp" || sumber.startsWith("spp ") || sumber.includes("dana spp");
+        })() &&
+        (() => {
+          const p = norm(val(t, ["periode", "Priode", "priode", "Periode SPP"]));
+          return !p || !periodeAktif || p.includes(periodeAktif) || periodeAktif.includes(p) ||
+            norm(val(t, ["sumber", "Sumber"])).includes(periodeAktif);
+        })()
+      );
+      const pengeluaranSPP = adaTransaksiSPP ? pengeluaranSPPTransaksi :
+        (totalBackend !== null ? totalBackend : pengeluaranSPPTransaksi);
 
       let sisaBackend = null;
       const sisa = val(ring, ["sisaSPP", "saldoSPP", "sisa_spp", "saldo_spp"]);
@@ -1005,9 +1023,9 @@
         console.warn("Transfer SPP belum terbaca:", e);
       }
 
-      const sisaSPP = sisaBackend !== null
-        ? sisaBackend
-        : Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
+      // Hitung saldo dari angka transaksi yang sama dengan kartu pengeluaran,
+      // agar saldo tidak memakai agregat backend yang sudah tidak sinkron.
+      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
 
       window.pengeluaranSPPDashboard = pengeluaranSPP;
       if (elPengeluaran) elPengeluaran.textContent = rupiah(pengeluaranSPP);
