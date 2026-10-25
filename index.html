@@ -1900,9 +1900,19 @@ async function bukaLaporanKeuanganPDF(){
     // Ringkasan laporan harus sama dengan kartu dashboard yang sudah menghitung
     // seluruh transaksi SPP dari sumber yang benar, bukan hanya daftar transaksi terbaru.
     const totalSPPCatatan = expSPP.reduce((n,t)=>n+Math.abs(Number(String(t.jumlah ?? t.Jumlah ?? 0).replace(/[^0-9,-]/g,"").replace(/,/g,"") || 0)),0);
-    const totalSPP = Number.isFinite(Number(window.pengeluaranSPPDashboard))
-      ? Number(window.pengeluaranSPPDashboard)
-      : (Number.isFinite(Number(dash.pengeluaranSPP)) ? Number(dash.pengeluaranSPP) : totalSPPCatatan);
+    // Ambil angka yang benar-benar tampil pada kartu dashboard (sudah dihitung
+    // dari transaksi detail). Ini menghindari nilai agregat lama 288000 dari API.
+    const parseRupiah = v => {
+      if (typeof v === "number") return Math.abs(v);
+      const digits = String(v ?? "").replace(/[^0-9]/g, "");
+      return digits ? Number(digits) : 0;
+    };
+    const angkaKartuDashboard = parseRupiah(document.getElementById("pengeluaranSPP")?.textContent);
+    const angkaVariabelDashboard = parseRupiah(window.pengeluaranSPPDashboard);
+    const totalSPP = angkaKartuDashboard > 0
+      ? angkaKartuDashboard
+      : (angkaVariabelDashboard > 0 ? angkaVariabelDashboard
+      : (Number.isFinite(Number(dash.pengeluaranSPP)) ? Number(dash.pengeluaranSPP) : totalSPPCatatan));
     const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
