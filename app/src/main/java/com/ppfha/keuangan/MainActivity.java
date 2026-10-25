@@ -10,6 +10,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
+import android.content.pm.PackageManager;
 import android.webkit.ValueCallback;
 import android.content.Intent;
 import android.content.ContentValues;
@@ -66,6 +68,29 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new AndroidBridge(), "BendaharaAndroid");
         // Aktifkan pemilih berkas untuk input type=file pada portal pembayaran online.
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(() -> {
+                    boolean trusted = request.getOrigin() != null
+                            && ("https://uang-jajan-santri-ppfha.vercel.app".equals(request.getOrigin().getScheme() + "://" + request.getOrigin().getHost())
+                                || "https://spp-pesantren-zeta.vercel.app".equals(request.getOrigin().getScheme() + "://" + request.getOrigin().getHost()));
+                    boolean asksCamera = false;
+                    for (String resource : request.getResources()) {
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) asksCamera = true;
+                    }
+                    if (trusted && asksCamera && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                            && checkSelfPermission(android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    } else {
+                        request.deny();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                                && checkSelfPermission(android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{android.Manifest.permission.CAMERA}, 7101);
+                        }
+                    }
+                });
+            }
+
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> filePathCallback,
                                              FileChooserParams fileChooserParams) {
