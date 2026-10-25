@@ -1895,7 +1895,12 @@ async function bukaLaporanKeuanganPDF(){
     };
     const expSPP=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="spp" && cocokPeriodeSPP(t));
     const expKas=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="kas");
-    const totalSPP=expSPP.reduce((n,t)=>n+Math.abs(Number(String(t.jumlah ?? t.Jumlah ?? 0).replace?.(/[^0-9,-]/g,"") ?? t.jumlah ?? t.Jumlah ?? 0)),0);
+    // Ringkasan laporan harus sama dengan kartu dashboard yang sudah menghitung
+    // seluruh transaksi SPP dari sumber yang benar, bukan hanya daftar transaksi terbaru.
+    const totalSPPCatatan = expSPP.reduce((n,t)=>n+Math.abs(Number(String(t.jumlah ?? t.Jumlah ?? 0).replace(/[^0-9,-]/g,"").replace(/,/g,"") || 0)),0);
+    const totalSPP = Number.isFinite(Number(window.pengeluaranSPPDashboard))
+      ? Number(window.pengeluaranSPPDashboard)
+      : (Number.isFinite(Number(dash.pengeluaranSPP)) ? Number(dash.pengeluaranSPP) : totalSPPCatatan);
     const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
