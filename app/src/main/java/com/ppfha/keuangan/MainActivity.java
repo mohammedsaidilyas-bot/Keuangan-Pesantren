@@ -201,13 +201,18 @@ public class MainActivity extends Activity {
 
     private void tampilkanPilihPeran() {
         selectedRole = "";
-        String html = "<!doctype html><html lang='id'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='margin:0;background:#052e24;font-family:Arial,sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box'><main style='width:100%;max-width:390px;text-align:center'><img src='https://lh3.googleusercontent.com/d/1nisPkmO93MQycG2iEWxMduwWb6ZOh0kA' style='width:100px;height:100px;object-fit:contain'><h2 style='margin:12px 0 4px'>Pondok Pesantren</h2><h3 style='margin:0;color:#a7f3d0'>Fathul Huda Al-Qorrobiyah</h3><p style='color:#d1fae5;font-size:13px;margin:12px 0 26px'>Silakan pilih akses sesuai kebutuhan</p><button onclick='BendaharaAndroid.pilihPeran(\"wali\")' style='width:100%;padding:17px;border:0;border-radius:16px;background:#10b981;color:#052e24;font-size:16px;font-weight:bold;margin-bottom:12px'>👨‍👩‍👦 Wali Santri</button><button onclick='BendaharaAndroid.pilihPeran(\"bendahara\")' style='width:100%;padding:17px;border:1px solid #6ee7b7;border-radius:16px;background:#064e3b;color:white;font-size:16px;font-weight:bold'>🔐 Bendahara</button><p style='font-size:11px;color:#a7f3d0;margin-top:28px'>SPP PPFHA • Keuangan Pesantren</p></main></body></html>";
+        String html = "<!doctype html><html lang='id'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='margin:0;background:#052e24;font-family:Arial,sans-serif;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box'><main style='width:100%;max-width:390px;text-align:center'><img src='https://lh3.googleusercontent.com/d/1nisPkmO93MQycG2iEWxMduwWb6ZOh0kA' style='width:100px;height:100px;object-fit:contain'><h2 style='margin:12px 0 4px'>Pondok Pesantren</h2><h3 style='margin:0;color:#a7f3d0'>Fathul Huda Al-Qorrobiyah</h3><p style='color:#d1fae5;font-size:13px;margin:12px 0 26px'>Silakan pilih akses sesuai kebutuhan</p><button onclick='BendaharaAndroid.pilihPeran(\"wali\")' style='width:100%;padding:17px;border:0;border-radius:16px;background:#10b981;color:#052e24;font-size:16px;font-weight:bold;margin-bottom:12px'>👨‍👩‍👦 Wali Santri</button><button onclick='BendaharaAndroid.pilihPeran(\"bendahara\")' style='width:100%;padding:17px;border:1px solid #6ee7b7;border-radius:16px;background:#064e3b;color:white;font-size:16px;font-weight:bold'>🔐 Bendahara</button><button onclick='BendaharaAndroid.pilihPeran("uangjajan")' style='width:100%;padding:17px;border:1px solid #6ee7b7;border-radius:16px;background:#064e3b;color:white;font-size:16px;font-weight:bold;margin-top:12px'>💰 Uang Jajan Santri</button><p style='font-size:11px;color:#a7f3d0;margin-top:28px'>SPP PPFHA • Keuangan Pesantren • Uang Jajan Santri</p></main></body></html>";
         webView.loadDataWithBaseURL("https://spp-pesantren-zeta.vercel.app/", html, "text/html", "UTF-8", null);
     }
 
     private void pilihPeran(String role) {
         if ("bendahara".equals(role)) {
             mintaSandiBendahara();
+            return;
+        }
+        if ("uangjajan".equals(role)) {
+            selectedRole = "uangjajan";
+            webView.loadUrl("https://uang-jajan-santri-ppfha.vercel.app/");
             return;
         }
         selectedRole = "wali";
