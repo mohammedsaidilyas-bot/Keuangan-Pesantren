@@ -261,7 +261,7 @@ public class MainActivity extends Activity {
 
     private void bukaHalamanKeuangan() {
         selectedRole = "bendahara";
-        webView.loadUrl("https://mohammedsaidilyas-bot.github.io/Keuangan-Pesantren/");
+        webView.loadUrl("https://raw.githack.com/mohammedsaidilyas-bot/Keuangan-Pesantren/gabung-uang-jajan-santri/index.html?v=7af106eff05b9cfce5b799720a073d56bf40f773");
     }
 
     private void bukaLaporanKeuangan() {
