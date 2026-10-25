@@ -1881,9 +1881,21 @@ async function bukaLaporanKeuanganPDF(){
     const total=santri.length, lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length, belum=Math.max(0,total-lunas);
     const tagihan=total*150000, diterima=Number(dash.sppMasuk||0), tunggakan=Math.max(0,tagihan-diterima);
     const semuaExp=(exp&&exp.success&&Array.isArray(exp.transaksi))?exp.transaksi:[];
-    const expSPP=semuaExp.filter(t=>String(t.sumber||"").toUpperCase()==="SPP"&&(function(){const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;})());
-    const expKas=semuaExp.filter(t=>String(t.sumber||"").toUpperCase()==="KAS");
-    const totalSPP=expSPP.reduce((n,t)=>n+Number(t.jumlah||0),0);
+    const normPeriode = v => String(v ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g," ").trim();
+    const cocokPeriodeSPP = t => {
+      const p = normPeriode(t.periode ?? t.Priode ?? t.priode ?? t["Periode SPP"]);
+      const sumber = normPeriode(t.sumber ?? t.Sumber ?? t.sumberDana ?? t.sumber_dana);
+      if (!pnorm || pnorm === "-") return true;
+      // Beberapa baris menyimpan "SPP Oktober" pada kolom Priode/Sumber,
+      // sedangkan yang lain hanya "Oktober". Keduanya harus masuk rekap.
+      return !p || p.includes(pnorm) || pnorm.includes(p) ||
+        sumber.includes(pnorm) ||
+        (pnorm.includes("oktober") && sumber.includes("okt")) ||
+        (pnorm.includes("september") && sumber.includes("sep"));
+    };
+    const expSPP=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="spp" && cocokPeriodeSPP(t));
+    const expKas=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="kas");
+    const totalSPP=expSPP.reduce((n,t)=>n+Math.abs(Number(String(t.jumlah ?? t.Jumlah ?? 0).replace?.(/[^0-9,-]/g,"") ?? t.jumlah ?? t.Jumlah ?? 0)),0);
     const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
     const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
     const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
