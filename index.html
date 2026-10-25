@@ -852,7 +852,7 @@
       }
       return undefined;
     };
-    const norm = v => String(v ?? "").toLowerCase().replace(/\\s+/g, " ").trim();
+    const norm = v => String(v ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
     const money = v => {
       if (typeof v === "number") return Math.abs(v);
       const n = Number(String(v ?? "").replace(/[^0-9,-]/g, "").replace(/,/g, ""));
@@ -913,9 +913,15 @@
         })
         .filter(t => {
           const p = norm(val(t, ["periode", "Priode", "priode", "Periode SPP"]));
-          // Kolom periode boleh berisi "SPP Oktober" atau hanya "Oktober".
-          return !p || !periodeAktif || p.includes(periodeAktif) || periodeAktif.includes(p) ||
-            norm(val(t, ["sumber", "Sumber"])).includes(periodeAktif);
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          // Periode dapat tersimpan di kolom Priode atau menyatu dengan Sumber (mis. "SPP Oktober").
+          // Jangan buang transaksi SPP hanya karena format/perbedaan penulisan periodenya.
+          if (!periodeAktif) return true;
+          const periodeCocok = p && (p.includes(periodeAktif) || periodeAktif.includes(p));
+          const sumberCocok = sumber.includes(periodeAktif) ||
+            (periodeAktif.includes("oktober") && sumber.includes("okt")) ||
+            (periodeAktif.includes("september") && sumber.includes("sep"));
+          return !p && !sumberCocok ? true : Boolean(periodeCocok || sumberCocok);
         })
         .reduce((sum, t) => sum + money(val(t, ["jumlah", "Jumlah", "nominal", "Nominal", "total", "Total"])), 0);
 
@@ -932,8 +938,12 @@
         })() &&
         (() => {
           const p = norm(val(t, ["periode", "Priode", "priode", "Periode SPP"]));
-          return !p || !periodeAktif || p.includes(periodeAktif) || periodeAktif.includes(p) ||
-            norm(val(t, ["sumber", "Sumber"])).includes(periodeAktif);
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          if (!periodeAktif) return true;
+          return !p || p.includes(periodeAktif) || periodeAktif.includes(p) ||
+            sumber.includes(periodeAktif) ||
+            (periodeAktif.includes("oktober") && sumber.includes("okt")) ||
+            (periodeAktif.includes("september") && sumber.includes("sep"));
         })()
       );
       const pengeluaranSPP = adaTransaksiSPP ? pengeluaranSPPTransaksi :
