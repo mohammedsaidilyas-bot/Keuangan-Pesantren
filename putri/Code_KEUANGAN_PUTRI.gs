@@ -39,7 +39,9 @@ function keuanganPutriSummary_(){
  const pengeluaranSPP=expenses.filter(r=>String(r[5]||'').trim()===period).reduce((n,r)=>n+keuanganPutriNum_(r[3]),0);
  const totalKasMasuk=kas.filter(r=>String(r[2]).toUpperCase()==='PEMASUKAN').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
  const totalKasKeluar=kas.filter(r=>String(r[2]).toUpperCase()==='PENGELUARAN').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
- const transferTotal=transfer.filter(r=>String(r[6]).toUpperCase()==='SELESAI').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
+ const transferSelesai=transfer.filter(r=>String(r[6]).toUpperCase()==='SELESAI');
+ const transferTotal=transferSelesai.reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
+ const transferPeriode=transferSelesai.filter(r=>String(r[5]||'').trim()===period).reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
  const santriSh=keuanganPutriDb_().getSheetByName('Uang Jajan Santri PPFHA');
  const statusSh=keuanganPutriDb_().getSheetByName('StatusSPP');
  const studentRows=santriSh&&santriSh.getLastRow()>1?santriSh.getDataRange().getDisplayValues().slice(1).filter(r=>r[0]&&String(r[7]||'Aktif').toLowerCase()!=='nonaktif'):[];
@@ -47,7 +49,7 @@ function keuanganPutriSummary_(){
  const statusByNis={};statusRows.forEach(r=>{if(r[0])statusByNis[String(r[0]).trim()]=r;});
  const belum=monthIndex<0?0:studentRows.filter(r=>!String((statusByNis[String(r[0]).trim()]||[])[3+monthIndex]||'BELUM').toUpperCase().includes('LUNAS')).length;
  const lunas=studentRows.filter(r=>monthIndex>=0&&String((statusByNis[String(r[0]).trim()]||[])[3+monthIndex]||'').toUpperCase().includes('LUNAS')).length;
- return {periode:period,sppMasuk,pengeluaranSPP,lunas,belumBayar:belum,sisaSPP:sppMasuk-pengeluaranSPP-transferTotal,saldoKas:totalKasMasuk-totalKasKeluar+transferTotal,totalKasMasuk,totalKasKeluar,transferSPP:transferTotal,belum};
+ return {periode:period,sppMasuk,pengeluaranSPP,lunas,belumBayar:belum,sisaSPP:sppMasuk-pengeluaranSPP-transferPeriode,saldoKas:totalKasMasuk-totalKasKeluar+transferTotal,totalKasMasuk,totalKasKeluar,transferSPP:transferTotal,belum};
 }
 function keuanganPutriExpenseRows_(){return keuanganPutriRows_('PengeluaranSPP').filter(r=>String(r[7]||'AKTIF').toUpperCase()!=='BATAL').map(r=>({id:r[0],tanggal:r[1],keterangan:r[2],jumlah:keuanganPutriNum_(r[3]),sumber:r[4],periode:r[5],catatan:r[6],status:r[7]}));}
 function keuanganPutriGet_(action){
