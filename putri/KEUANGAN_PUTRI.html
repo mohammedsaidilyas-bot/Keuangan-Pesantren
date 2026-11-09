@@ -666,6 +666,8 @@
   const API_URL = "ISI_URL_APPS_SCRIPT_KEUANGAN_PUTRI_DI_SINI";
 
 
+  function keuanganPutriPinParam() { const pin = prompt("Masukkan sandi bendahara PUTRI:"); return pin ? "&pin=" + encodeURIComponent(pin) : null; }
+
   function rupiah(angka) {
 
     return new Intl.NumberFormat("id-ID", {
@@ -1306,8 +1308,9 @@ function bukaFormPengeluaran() {
     tombol.textContent = "Menyimpan...";
 
     try {
+      const pinParam = keuanganPutriPinParam(); if (!pinParam) return;
       const url = API_URL +
-        "?action=catatPengeluaran" +
+        "?action=catatPengeluaran" + pinParam +
         "&tanggal=" + encodeURIComponent(tanggal) +
         "&keterangan=" + encodeURIComponent(keterangan) +
         "&jumlah=" + encodeURIComponent(jumlah) +
@@ -1367,9 +1370,10 @@ function bukaFormPengeluaran() {
 
   try {
 
+    const pinParam = keuanganPutriPinParam(); if (!pinParam) return;
     const url =
       API_URL +
-      "?action=catatPemasukanKas" +
+      "?action=catatPemasukanKas" + pinParam +
       "&tanggal=" + encodeURIComponent(tanggal) +
       "&keterangan=" + encodeURIComponent(keterangan) +
       "&jumlah=" + encodeURIComponent(jumlah) +
@@ -1806,8 +1810,9 @@ function renderLaporanPengeluaran(){
 
       if (!yakin) return;
 
+      const pinParam = keuanganPutriPinParam(); if (!pinParam) return;
       const response = await fetch(
-        API_URL + "?action=pindahkanSisaSPPKeKas&_=" + Date.now(),
+        API_URL + "?action=pindahkanSisaSPPKeKas" + pinParam + "&_=" + Date.now(),
         { cache: "no-store" }
       );
 
