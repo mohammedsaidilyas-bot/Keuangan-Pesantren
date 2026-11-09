@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Keuangan Pesantren Putri</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f3f6f9;
+      color: #1f2937;
+      padding-bottom: 30px;
+    }
+
+    .header {
+      background: #0f766e;
+      color: white;
+      padding: 22px 18px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      padding: 18px;
+    }
+
+    /* Tampilan dashboard modern ala tablet */
+    .app-shell{display:flex;min-height:calc(100vh - 102px)}
+    .sidebar{width:230px;flex:none;background:#fff;border-right:1px solid #e5e7eb;padding:18px 12px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:calc(100vh - 102px);align-self:flex-start;overflow-y:auto;}
+    .side-item{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:13px;color:#334155;font-weight:600;font-size:14px;cursor:pointer;transition:.15s;}
+    .side-item:hover{background:#f0fdfa;color:#0f766e}.side-item.active{background:#e6fffb;color:#0f766e}.side-icon{width:28px;text-align:center;font-size:19px}.side-spacer{flex:1}.side-logout{color:#dc2626;background:#fff1f2}.side-logout:hover{background:#ffe4e6;color:#b91c1c}
+    .main-area{flex:1;min-width:0}.dashboard-progress{background:#fff;border-radius:18px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.07);margin-top:16px}.progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:800}.progress-track{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:12px}.progress-fill{height:100%;background:#0f766e;border-radius:999px;transition:width .3s}.progress-note{font-size:12px;color:#64748b;margin-top:8px}
+    .periode {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+    }
+
+    .periode-title {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 5px;
+    }
+
+    .periode-value {
+      font-size: 21px;
+      font-weight: bold;
+      color: #0f766e;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 17px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+    }
+
+    .card-title {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 9px;
+    }
+
+    .card-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .green {
+      color: #059669;
+    }
+
+    .red {
+      color: #dc2626;
+    }
+
+    .blue {
+      color: #2563eb;
+    }
+
+    .orange {
+      color: #d97706;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .menu {
+      background: white;
+      border-radius: 17px;
+      padding: 17px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .menu-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #e6fffb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+    }
+
+    .menu-title {
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .menu-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 3px;
+    }
+
+    .arrow {
+      font-size: 20px;
+      color: #9ca3af;
+    }
+
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      padding: 0;
+    }
+    .form-card {
+      width: 100%;
+      max-width: 520px;
+      background: white;
+      border-radius: 22px 22px 0 0;
+      padding: 20px;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.18);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .form-title { font-size: 20px; font-weight: bold; }
+    .form-subtitle { font-size: 12px; color: #6b7280; margin-top: 4px; }
+    .close-btn {
+      border: none; background: #f3f4f6; width: 38px; height: 38px;
+      border-radius: 50%; font-size: 24px; color: #6b7280;
+    }
+    .form-card label {
+      display: block; font-size: 13px; font-weight: bold; margin: 12px 0 6px;
+    }
+    .form-card input, .form-card select, .form-card textarea {
+      width: 100%; border: 1px solid #d1d5db; border-radius: 11px;
+      padding: 12px; font-size: 14px; background: white;
+    }
+    .form-card textarea { resize: vertical; }
+    .save-btn {
+      width: 100%; border: none; border-radius: 12px; padding: 14px;
+      margin-top: 15px; background: #0f766e; color: white;
+      font-size: 15px; font-weight: bold;
+    }
+    .save-btn:disabled { opacity: 0.6; }
+    .form-message {
+      display: none; margin-top: 12px; padding: 10px;
+      border-radius: 10px; font-size: 13px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 25px;
+      color: #6b7280;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .santri-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+    .santri-search{flex:1;min-width:220px;border:1px solid #d1d5db;border-radius:12px;padding:12px 14px;font-size:14px}
+    .santri-filter{border:1px solid #d1d5db;border-radius:12px;padding:12px;background:white;font-size:14px}
+    .santri-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .santri-summary-card{border-radius:14px;padding:13px;background:#f8fafc}
+    .santri-summary-number{font-size:22px;font-weight:800;margin-top:3px}
+    .santri-table-wrap{overflow-x:auto;border:1px solid #e5e7eb;border-radius:14px}
+    .santri-table{width:100%;border-collapse:collapse;min-width:620px;font-size:14px}
+    .santri-table th{background:#f0fdfa;color:#115e59;padding:12px;text-align:left}
+    .santri-table td{padding:11px 12px;border-top:1px solid #f1f5f9}
+    .status-badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}
+    .status-lunas{background:#dcfce7;color:#166534}
+    .status-belum{background:#fee2e2;color:#991b1b}
+    .santri-empty{text-align:center;padding:25px;color:#6b7280}
+
+    @media (max-width: 450px) {
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .card-value {
+        font-size: 17px;
+      }
+    }
+  
+
+    @media (min-width:1100px){.cards{grid-template-columns:repeat(4,1fr)}.cards .card:nth-child(5),.cards .card:nth-child(6){grid-column:span 2}}
+    /* Dashboard final: sederhana, padat, dan satu layar di tablet */
+    .dashboard-final-grid{display:grid;grid-template-columns:1.05fr 1.25fr;gap:10px;margin-top:10px}
+    .dashboard-final-grid .panel{background:#fff;border-radius:15px;padding:11px 14px;box-shadow:0 3px 10px rgba(15,23,42,.06);min-width:0;overflow:hidden}
+    .compact-panel{min-height:112px}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}.panel-title{font-size:13px;font-weight:800;color:#1f2937}.panel-sub{font-size:10px;color:#64748b;margin-top:2px}.panel-icon{font-size:19px}.action-chip{border:0;background:#f0fdfa;color:#0f766e;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700}
+    .compact-money{font-size:20px;font-weight:900;color:#0f766e;line-height:1.1;margin:2px 0 7px}.compact-row{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#64748b}.compact-row strong{color:#334155}.compact-progress{height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin-top:7px}.compact-progress>div{height:100%;background:#0f766e;border-radius:99px}
+    .expense-list{display:grid;grid-template-columns:1fr 1fr;column-gap:14px;row-gap:3px}.expense-item{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:10px}.expense-item .expense-main{min-width:0}.expense-item .expense-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-item .expense-meta{font-size:9px;color:#94a3b8;margin-top:1px}.expense-item .expense-amount{font-weight:800;color:#dc2626;white-space:nowrap}
+    .compare-chart{display:flex;align-items:end;justify-content:center;gap:34px;height:65px;padding:2px 0 0}.compare-col{height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:3px;font-size:9px;color:#64748b}.compare-col strong{font-size:10px;color:#334155}.compare-bar{width:34px;max-height:36px;min-height:6px;border-radius:7px 7px 2px 2px}.income-bar{background:#0f766e}.expense-bar{background:#f59e0b}
+    .expense-bars{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}.expense-bar-row{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:5px;font-size:9px}.expense-bar-row .bar-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.expense-bar-track{height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden}.expense-bar-fill{height:100%;background:#f59e0b;border-radius:99px}.expense-bar-value{font-weight:700;color:#475569;white-space:nowrap}.empty-state{padding:7px 0;color:#94a3b8;font-size:10px}
+    @media (min-width:700px){
+      body{overflow:hidden}.header{padding:16px 32px}.header h1{font-size:26px;margin-bottom:2px}.header p{font-size:13px}
+      .app-shell{height:calc(100vh - 96px);min-height:0}.sidebar{height:calc(100vh - 96px);min-height:0;padding:12px}.side-item{padding:9px 12px;font-size:13px}.main-area{height:calc(100vh - 96px);overflow:hidden}.main-area>.container{height:100%;padding:10px 20px;overflow:hidden}
+      .periode{padding:9px 14px;margin-bottom:7px;border-radius:13px}.periode-title{font-size:10px}.periode-value{font-size:19px}
+      #statusPeriodeBox{padding:8px 12px!important;margin-bottom:7px!important;border-radius:12px!important}#statusPeriodeTitle{font-size:12px!important}#statusPeriodeDesc{font-size:10px!important;margin-top:2px!important}
+      .cards{gap:8px}.card{padding:10px 12px;border-radius:14px}.card-title{font-size:10px;margin-bottom:3px}.card-value{font-size:18px}.stat-icon{font-size:15px!important}
+      .dashboard-progress{margin-top:7px;padding:8px 12px;border-radius:13px}.progress-head{font-size:11px}.progress-track{height:6px;margin-top:5px}.progress-note{font-size:9px;margin-top:3px}
+      .dashboard-final-grid{grid-template-columns:1.05fr 1.25fr;gap:9px;margin-top:8px}.dashboard-final-grid .panel{min-height:103px;padding:9px 12px}.panel-title{font-size:12px}.panel-sub{font-size:9px}
+    }
+    @media (min-width:1100px){.cards{grid-template-columns:repeat(3,1fr)}.cards .card{min-height:86px}.dashboard-final-grid{grid-template-columns:1fr 1fr}}
+    @media (min-width:700px){.legacy-menu-section{display:none!important}.dashboard-final-grid{margin-top:16px}.main-area>.container{padding-top:18px}}
+    @media (min-width:700px){.main-area>.container{max-width:none;width:100%;padding-left:24px;padding-right:24px}.app-shell{align-items:flex-start}.sidebar{min-height:calc(100vh - 102px)}}
+    @media (max-width: 699px){.sidebar{display:none}.main-area{width:100%}}
+    @media (min-width: 700px) {
+      .header { padding: 28px 32px; }
+      .header h1 { font-size: 28px; }
+      .header p { font-size: 16px; }
+      .container { max-width: 1050px; padding: 24px 28px; }
+      .cards { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .card { padding: 20px; }
+      .card-title { font-size: 14px; }
+      .card-value { font-size: 22px; }
+      .periode { padding: 20px; }
+      .periode-value { font-size: 24px; }
+      .menu { padding: 20px; }
+      .menu-title { font-size: 17px; }
+      .menu-desc { font-size: 13px; }
+      .form-card { max-width: 650px; border-radius: 22px; margin-bottom: 24px; }
+      .overlay { align-items: center; padding: 24px; }
+    }
+    .header-controls{display:flex;align-items:center;gap:8px;margin-left:auto}.header-reload{border:0;background:rgba(255,255,255,.96);color:#0f766e;border-radius:10px;padding:7px 10px;font-weight:800;font-size:10px;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer}.header-period{min-width:150px;background:rgba(255,255,255,.98);color:#0f766e;border-radius:12px;padding:7px 12px;box-shadow:0 3px 10px rgba(0,0,0,.08)}.header-period-label{font-size:9px;color:#64748b;line-height:1.1}.header-period-value{font-size:16px;font-weight:900;line-height:1.2;margin-top:2px}
+    /* Mobile dashboard: ringkas seperti aplikasi HP contoh */
+    @media(max-width:699px){
+      .dashboard-final-grid{display:none!important}
+      .dashboard-progress{margin-top:8px!important;padding:10px 12px!important;border-radius:13px!important}
+      .progress-head{font-size:12px!important}
+      .progress-track{height:7px!important;margin-top:6px!important}
+      .progress-note{font-size:9px!important;margin-top:4px!important}
+      .cards{grid-template-columns:1fr 1fr!important;gap:8px!important}
+      .card{padding:11px!important;border-radius:13px!important}
+      .card-title{font-size:10px!important;margin-bottom:4px!important}
+      .card-value{font-size:16px!important}
+    }
+    @media(max-width:699px){.header{padding:12px 14px!important}.header>div:first-child{gap:8px!important}.header svg{width:42px!important;height:42px!important}.header h1{font-size:19px!important}.header p{font-size:9px!important}.header-controls{gap:5px}.header-reload{font-size:8px;padding:6px 7px}.header-period{min-width:94px;padding:5px 7px}.header-period-label{font-size:7px}.header-period-value{font-size:12px}}
+    /* FINAL TABLET COMPACT LAYOUT - satu layar seperti dashboard referensi */
+    @media (min-width:700px){
+      body{overflow:hidden!important}
+      .header{height:96px;box-sizing:border-box;padding:12px 28px!important}.header h1{font-size:27px!important}.header p{font-size:14px!important}
+      .app-shell{height:calc(100vh - 96px)!important}.sidebar{height:calc(100vh - 96px)!important;width:270px;box-sizing:border-box;padding:10px 12px!important}.side-item{padding:8px 11px!important;font-size:13px!important;margin-bottom:2px}
+      .main-area{height:calc(100vh - 96px)!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch}.main-area>.container,.container{min-height:100%;height:auto;max-width:none!important;width:100%!important;box-sizing:border-box;padding:10px 18px 24px!important;overflow:visible!important}
+      .periode{height:62px;box-sizing:border-box;padding:9px 14px!important;margin:0 0 7px!important;border-radius:14px!important}.periode-title{font-size:10px!important}.periode-value{font-size:21px!important}
+      #statusPeriodeBox{padding:8px 12px!important;margin:0 0 7px!important;border-radius:12px!important;min-height:50px;box-sizing:border-box}#statusPeriodeTitle{font-size:12px!important}#statusPeriodeDesc{font-size:10px!important;margin-top:2px!important}
+      .cards{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;margin:0!important}.cards .card{min-height:78px!important;height:78px!important;box-sizing:border-box;padding:9px 11px!important;border-radius:14px!important}.cards .card:nth-child(5),.cards .card:nth-child(6){grid-column:span 2}.card-title{font-size:10px!important;margin-bottom:3px!important}.card-value{font-size:18px!important;line-height:1.1!important}.stat-icon{font-size:15px!important}
+      .dashboard-progress{height:47px;box-sizing:border-box;margin:7px 0 0!important;padding:7px 12px!important;border-radius:12px!important}.progress-head{font-size:11px!important}.progress-track{height:6px!important;margin-top:4px!important}.progress-note{font-size:9px!important;margin-top:2px!important}
+      .dashboard-final-grid{grid-template-columns:1.05fr 1.25fr!important;grid-template-rows:1fr 1fr;gap:8px!important;margin-top:8px!important;height:250px}.dashboard-final-grid .panel{min-height:0!important;height:auto!important;padding:9px 11px!important;border-radius:13px!important}.panel-title{font-size:12px!important}.panel-sub{font-size:9px!important}.compact-money{font-size:18px!important}.expense-list{grid-template-columns:1fr 1fr!important}.expense-item{padding:3px 0!important;font-size:9px!important}.expense-item .expense-meta{font-size:8px!important}.compare-chart{height:55px!important}.expense-bars{gap:4px 8px!important}
+    }
+
+    /* RESPONSIVE HP: jangan pakai layout tablet/sidebar di layar ponsel */
+    @media (max-width: 900px){
+      body{overflow:auto!important;padding-bottom:12px!important}
+      .header{height:auto!important;min-height:68px!important;padding:10px 12px!important;border-radius:0 0 16px 16px!important}
+      .header>div:first-child{gap:8px!important;align-items:center!important}
+      .header img{width:42px!important;height:42px!important}
+      .header h1{font-size:18px!important;line-height:1.1!important;margin-bottom:2px!important}
+      .header p{font-size:9px!important;line-height:1.15!important}
+      .header-controls{gap:5px!important}
+      .header-reload{font-size:8px!important;padding:6px 7px!important;border-radius:8px!important;white-space:nowrap}
+      .header-period{min-width:86px!important;padding:5px 7px!important;border-radius:9px!important}
+      .header-period-label{font-size:7px!important}
+      .header-period-value{font-size:11px!important}
+      .app-shell{display:block!important;min-height:0!important;height:auto!important}
+      .sidebar{display:none!important}
+      .main-area{height:auto!important;min-height:0!important;overflow:visible!important}
+      .main-area>.container,.container{width:100%!important;max-width:none!important;min-height:0!important;height:auto!important;padding:9px 10px 18px!important;overflow:visible!important}
+      .periode{display:none!important}
+      #statusPeriodeBox{padding:8px 10px!important;margin:0 0 7px!important;border-radius:10px!important;min-height:0!important}
+      #statusPeriodeTitle{font-size:11px!important}
+      #statusPeriodeDesc{font-size:9px!important;line-height:1.3!important;margin-top:2px!important}
+      .cards{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+      .cards .card,.cards .card:nth-child(5),.cards .card:nth-child(6){grid-column:auto!important;min-height:68px!important;height:68px!important;padding:8px 9px!important;border-radius:11px!important}
+      .card-title{font-size:9px!important;margin-bottom:2px!important}
+      .card-value{font-size:16px!important;line-height:1.05!important}
+      .stat-icon{font-size:13px!important}
+      .dashboard-progress{height:auto!important;min-height:43px!important;margin:6px 0 0!important;padding:6px 9px!important;border-radius:10px!important}
+      .progress-head{font-size:10px!important}
+      .progress-track{height:5px!important;margin-top:4px!important}
+      .progress-note{font-size:8px!important;margin-top:2px!important}
+      .dashboard-final-grid{grid-template-columns:1fr 1fr!important;grid-template-rows:auto auto!important;height:auto!important;gap:6px!important;margin-top:6px!important}
+      .dashboard-final-grid .panel{min-height:88px!important;height:auto!important;padding:8px 9px!important;border-radius:11px!important}
+      .panel-title{font-size:10px!important}
+      .panel-sub{font-size:8px!important}
+      .compact-money{font-size:16px!important;margin:2px 0 5px!important}
+      .compact-row{font-size:8px!important}
+      .compact-progress{height:5px!important;margin-top:5px!important}
+      .expense-item{padding:3px 0!important;font-size:8px!important}
+      .expense-item .expense-meta{font-size:7px!important}
+      .expense-item .expense-amount{font-size:8px!important}
+      .compare-chart{height:48px!important;gap:20px!important}
+      .compare-bar{width:26px!important;max-height:28px!important}
+      .expense-bars{gap:3px 7px!important}
+      .expense-bar-row{grid-template-columns:48px 1fr auto!important;font-size:7px!important}
+      .expense-bar-track{height:5px!important}
+      .expense-bar-value{font-size:7px!important}
+    }
+
+    /* Navigasi HP: tetap di bawah layar, seperti aplikasi native */
+    .mobile-bottom-nav{display:none}
+    @media(max-width:699px){
+      .sidebar{display:none!important}
+      .mobile-bottom-nav{
+        position:fixed;
+        left:0;
+        right:0;
+        bottom:0;
+        height:64px;
+        z-index:9998;
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        background:rgba(255,255,255,.98);
+        border-top:1px solid #e2e8f0;
+        box-shadow:0 -4px 18px rgba(15,23,42,.10);
+        padding:5px 4px calc(5px + env(safe-area-inset-bottom));
+        box-sizing:border-box;
+      }
+      .mobile-nav-item{
+        border:0;
+        background:transparent;
+        color:#64748b;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap:3px;
+        border-radius:10px;
+        font:inherit;
+        cursor:pointer;
+      }
+      .mobile-nav-item span{font-size:21px;line-height:20px;font-weight:700}
+      .mobile-nav-item small{font-size:9px;font-weight:700;line-height:12px}
+      .mobile-nav-item.active,
+      .mobile-nav-item:active{color:#0f766e;background:#ecfdf5}
+      body{padding-bottom:70px!important}
+      .main-area{width:100%!important}
+      .container{padding-bottom:8px!important}
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <img class="pondok-logo" src="data:image/png;base64,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" alt="Logo Pondok" style="width:58px;height:58px;flex:none;display:block;object-fit:contain;">
+      <div>
+        <h1>Keuangan Pesantren</h1>
+        <p>Pondok Pesantren Fathul Huda Al Qorrobiyah</p>
+      </div>
+      <div class="header-controls">
+        <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
+        <div class="header-period"><div class="header-period-label">📅 Periode SPP</div><div class="header-period-value" id="periodeHeader">Memuat...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="side-item active"><span class="side-icon">🏠</span><span>Dashboard</span></div>
+      <div class="side-item" onclick="bukaPemasukanKas()"><span class="side-icon">💰</span><span>Pemasukan Kas</span></div>
+      <div class="side-item" onclick="window.bukaRekapKas()"><span class="side-icon">💰</span><span>Rekap Kas Pondok</span></div>
+      <div class="side-item" onclick="bukaFormPengeluaran()"><span class="side-icon">🛒</span><span>Pengeluaran</span></div>
+      <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">👥</span><span>Pembayaran SPP</span></div>
+      <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">📄</span><span>Data Santri</span></div>
+      <div class="side-item" onclick="bukaLaporanKeuanganPDF()"><span class="side-icon">📄</span><span>Laporan Keuangan</span></div>
+      <div class="side-item" onclick="bukaLaporanPengeluaran()"><span class="side-icon">📋</span><span>Laporan Pengeluaran</span></div>
+      <div class="side-item" onclick="pindahkanSisaSPPKeKas()"><span class="side-icon">◔</span><span>Rekap Periode</span></div>
+      <div class="side-item"><span class="side-icon">⚙️</span><span>Pengaturan</span></div>
+      <div class="side-spacer"></div>
+
+    </aside>
+    <main class="main-area">
+  <div class="container">
+
+    <div class="periode" style="display:none"><div class="periode-title">Periode SPP</div><div class="periode-value" id="periode">Memuat...</div></div>
+
+    <div id="loading" class="loading">
+      Memuat data keuangan...
+    </div>
+
+    <div id="statusPeriodeBox" style="display:none;margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#fffbeb;border:1px solid #fde68a;">
+      <div id="statusPeriodeTitle" style="font-weight:800;color:#92400e;font-size:15px;"></div>
+      <div id="statusPeriodeDesc" style="margin-top:5px;color:#78350f;font-size:13px;line-height:1.5;"></div>
+    </div>
+
+    <div class="cards">
+
+      <div class="card stat-card">
+        <div class="stat-icon">💳</div><div class="card-title">Dana SPP</div>
+        <div class="card-value green" id="sppMasuk">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-icon">🏦</div><div class="card-title">Kas Pondok</div>
+        <div class="card-value blue" id="kas">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-icon">✓</div><div class="card-title">SPP Diterima</div>
+        <div class="card-value green" id="lunas">
+          0 Santri
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-icon">⏳</div><div class="card-title">Belum Bayar</div>
+        <div class="card-value red" id="belumBayar">
+          0 Santri
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-icon">📤</div><div class="card-title">Pengeluaran SPP</div>
+        <div class="card-value orange" id="pengeluaranSPP">
+          Rp0
+        </div>
+      </div>
+
+      <div class="card stat-card">
+        <div class="stat-icon">💰</div><div class="card-title">Sisa SPP</div>
+        <div class="card-value green" id="sisaSPP">
+          Rp0
+        </div>
+      </div>
+
+    </div>
+
+    <nav class="mobile-bottom-nav" aria-label="Navigasi utama HP">
+      <button class="mobile-nav-item active" onclick="loadDashboard()"><span>⌂</span><small>Beranda</small></button>
+      <button class="mobile-nav-item" onclick="bukaDaftarSantri()"><span>♟</span><small>Santri</small></button>
+      <button class="mobile-nav-item" onclick="bukaMenuTransaksiHP()"><span>☷</span><small>Transaksi</small></button>
+      <button class="mobile-nav-item" onclick="bukaLaporanPengeluaran()"><span>▤</span><small>Laporan</small></button>
+      <button class="mobile-nav-item" onclick="bukaPengaturanHP()"><span>⚙</span><small>Pengaturan</small></button>
+    </nav>
+
+    <div id="error" class="error"></div>
+
+    <div class="dashboard-progress">
+      <div class="progress-head"><span>Progres Pembayaran SPP</span><span id="progressPersen">0%</span></div>
+      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div id="progressNote" class="progress-note">Memuat progres pembayaran...</div>
+    </div>
+
+    <div class="dashboard-final-grid">
+      <div class="panel compact-panel">
+        <div class="panel-head"><div><div class="panel-title">Pemasukan SPP</div><div class="panel-sub">Periode <span id="incomePeriod">-</span></div></div><span class="panel-icon">📥</span></div>
+        <div class="compact-money" id="dashboardIncomeValue">Rp0</div>
+        <div class="compact-row"><span>Santri sudah bayar</span><strong id="dashboardIncomeCount">0 Santri</strong></div>
+        <div class="compact-progress"><div id="incomeFill" style="width:0%"></div></div>
+      </div>
+      <div class="panel compact-panel">
+        <div class="panel-head"><div><div class="panel-title">Pengeluaran Terakhir</div><div class="panel-sub">Transaksi tercatat</div></div><button class="action-chip" onclick="bukaLaporanPengeluaran()">Lihat semua</button></div>
+        <div id="dashboardExpenseList" class="expense-list"><div class="empty-state">Memuat...</div></div>
+      </div>
+      <div class="panel compact-panel">
+        <div class="panel-head"><div><div class="panel-title">Grafik Pemasukan vs Pengeluaran</div><div class="panel-sub">Periode aktif</div></div><span class="panel-icon">📊</span></div>
+        <div class="compare-chart"><div class="compare-col"><div id="incomeBar" class="compare-bar income-bar" style="height:8px"></div><span>Pemasukan</span><strong id="incomeBarValue">Rp0</strong></div><div class="compare-col"><div id="expenseBar" class="compare-bar expense-bar" style="height:8px"></div><span>Pengeluaran</span><strong id="expenseBarValue">Rp0</strong></div></div>
+      </div>
+      <div class="panel compact-panel">
+        <div class="panel-head"><div><div class="panel-title">Rekap Sumber Pengeluaran</div><div class="panel-sub">Berdasarkan transaksi nyata</div></div><span class="panel-icon">🥧</span></div>
+        <div id="dashboardExpenseBars" class="expense-bars"><div class="empty-state">Memuat...</div></div>
+      </div>
+    </div>
+
+    <div class="section legacy-menu-section">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div>
+          <div class="section-title" style="margin-bottom:3px;">Menu Keuangan</div>
+          <div style="font-size:12px;color:#64748b;">Pilih fitur yang ingin digunakan</div>
+        </div>
+      </div>
+
+      <div class="menu-group-label">SPP & Santri</div>
+
+      <div class="menu" onclick="bukaLaporanSPP()" style="cursor:pointer;">
+        <div class="menu-left"><div class="icon">📊</div><div>
+          <div class="menu-title">Laporan SPP per Periode</div>
+          <div class="menu-desc">Rekap pemasukan, pembayaran, dan sisa SPP</div>
+        </div></div><div class="arrow">›</div>
+      </div>
+
+      <div class="menu" onclick="bukaDaftarSantri()" style="cursor:pointer;">
+        <div class="menu-left"><div class="icon">👨‍🎓</div><div>
+          <div class="menu-title">Daftar Santri & Status SPP</div>
+          <div class="menu-desc">Lihat santri yang sudah dan belum bayar</div>
+        </div></div><div class="arrow">›</div>
+      </div>
+
+      <div class="menu" onclick="window.bukaRekapKas()" style="cursor:pointer;">
+        <div class="menu-left"><div class="icon">💰</div><div>
+          <div class="menu-title">Rekap Kas Pondok</div>
+          <div class="menu-desc">Lihat pemasukan, pengeluaran, dan saldo Kas</div>
+        </div></div><div class="arrow">›</div>
+      </div>
+
+      <div class="menu" onclick="bukaPemasukanKas()" style="cursor:pointer;">
+  <div class="menu-left">
+    <div class="icon">💰</div>
+    <div>
+      <div class="menu-title">
+        Pemasukan Kas
+      </div>
+      <div class="menu-desc">
+        Catat pemasukan dana Kas Pondok
+      </div>
+    </div>
+  </div>
+  <div class="arrow">></div>
+      </div>
+      <div class="menu" onclick="bukaForm()">
+        <div class="menu-left">
+          <div class="icon">💰</div>
+
+          <div>
+            <div class="menu-title">
+              Catat Pengeluaran
+            </div>
+
+            <div class="menu-desc">
+              Catat pengeluaran SPP atau Kas
+            </div>
+          </div>
+        </div>
+
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="menu" onclick="bukaPengeluaranTerbaru()" style="cursor:pointer;">
+        <div class="menu-left">
+          <div class="icon">📋</div>
+
+          <div>
+            <div class="menu-title">
+              Pengeluaran Terbaru
+            </div>
+
+            <div class="menu-desc">
+              Lihat riwayat transaksi
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="menu-group-label">Laporan & Periode</div>
+
+<div class="menu" onclick="bukaLaporanPengeluaran()" style="cursor:pointer;">
+  <div class="menu-left"><div class="icon">📑</div><div>
+    <div class="menu-title">Laporan Pengeluaran</div>
+    <div class="menu-desc">Lihat dan rekap seluruh pengeluaran SPP & Kas</div>
+  </div></div><div class="arrow">›</div>
+</div>
+<div class="menu" onclick="pindahkanSisaSPPKeKas()" style="cursor:pointer;">
+  <div class="menu-left">
+    <div class="icon">🏦</div>
+
+    <div>
+      <div class="menu-title">
+        Pindahkan Sisa SPP ke Kas
+      </div>
+
+      <div class="menu-desc">
+        Pindahkan sisa SPP setelah periode selesai
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">›</div>
+</div>
+        
+
+    </div>
+
+  </div>
+    </main>
+  </div>
+    <div class="footer-note">Keuangan Pesantren<br>Pondok Pesantren Fathul Huda Al Qorrobiyah</div>
+
+<script>
+
+  /*
+   * NANTI KITA ISI DENGAN URL WEB APP APPS SCRIPT
+   *
+   * Jangan diubah dulu.
+   */
+  const API_URL = "ISI_URL_APPS_SCRIPT_KEUANGAN_PUTRI_DI_SINI";
+
+
+  function rupiah(angka) {
+
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0
+    }).format(Number(angka) || 0);
+
+  }
+
+
+  async function loadDashboard() {
+
+    try {
+
+      const response = await fetch(
+        API_URL + "?action=getDashboardKeuangan"
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+
+        throw new Error(
+          data.message || "Gagal mengambil data"
+        );
+
+      }
+
+      window.dashboardKeuangan = data;
+      document.getElementById("periode").textContent =
+        data.periode || "-";
+      if(document.getElementById("periodeHeader")){
+        document.getElementById("periodeHeader").textContent = data.periode || "-";
+      }
+      loadDashboardRecent();
+
+      document.getElementById("sppMasuk").textContent =
+        rupiah(data.sppMasuk);
+
+      document.getElementById("lunas").textContent =
+        (data.lunas || 0) + " Santri";
+
+      document.getElementById("belumBayar").textContent =
+        (data.belumBayar || 0) + " Santri";
+
+      const totalSantri = Number(data.lunas || 0) + Number(data.belumBayar || 0);
+      const persen = totalSantri ? (Number(data.lunas || 0) / totalSantri * 100) : 0;
+      const persenBulat = Math.round(persen * 10) / 10;
+      const progressEl = document.getElementById("progressFill");
+      const progressPct = document.getElementById("progressPersen");
+      const progressNote = document.getElementById("progressNote");
+      if(progressEl) progressEl.style.width = Math.min(100, persen) + "%";
+      if(progressPct) progressPct.textContent = persenBulat + "%";
+      if(progressNote) progressNote.textContent = (data.lunas || 0) + " dari " + totalSantri + " santri sudah membayar";
+      const ovPaid=document.getElementById("overviewPaid"), ovFill=document.getElementById("overviewPaidFill"), ovNote=document.getElementById("overviewNote");
+      if(ovPaid) ovPaid.textContent=persenBulat+"%"; if(ovFill) ovFill.style.width=Math.min(100,persen)+"%";
+      if(ovNote) ovNote.textContent=(data.lunas||0)+" santri sudah membayar dan "+(data.belumBayar||0)+" santri belum bayar pada periode "+(data.periode||"saat ini")+".";
+      const incomePeriod=document.getElementById("incomePeriod"); if(incomePeriod) incomePeriod.textContent=data.periode||"-";
+      // Pemasukan SPP harus mengikuti pembayaran SPP periode aktif (bukan transaksi pengeluaran).
+      const dashboardIncomeValue=document.getElementById("dashboardIncomeValue");
+      if(dashboardIncomeValue) dashboardIncomeValue.textContent=rupiah(data.sppMasuk||0);
+      const dashboardIncomeCount=document.getElementById("dashboardIncomeCount");
+      if(dashboardIncomeCount) dashboardIncomeCount.textContent=(data.lunas||0)+" Santri";
+      const incomeFill=document.getElementById("incomeFill"); if(incomeFill) incomeFill.style.width=Math.min(100,persen)+"%";
+      const incomeBarValue=document.getElementById("incomeBarValue"); if(incomeBarValue) incomeBarValue.textContent=rupiah(data.sppMasuk);
+      const expenseBarValue=document.getElementById("expenseBarValue"); if(expenseBarValue) expenseBarValue.textContent=rupiah(data.pengeluaranSPP||0);
+      const incomeBar=document.getElementById("incomeBar"), expenseBar=document.getElementById("expenseBar");
+      const maxBar=Math.max(Number(data.sppMasuk||0),Number(data.pengeluaranSPP||0),1);
+      if(incomeBar) incomeBar.style.height=Math.max(8,Math.round(Number(data.sppMasuk||0)/maxBar*36))+"px";
+      if(expenseBar) expenseBar.style.height=Math.max(8,Math.round(Number(data.pengeluaranSPP||0)/maxBar*36))+"px";
+
+      // Status periode SPP untuk membantu bendahara menentukan kapan
+      // sisa SPP sudah boleh dipindahkan ke Kas.
+      const belumPeriode = Number(data.belumBayar || 0);
+      const periodeBox = document.getElementById("statusPeriodeBox");
+      const periodeTitle = document.getElementById("statusPeriodeTitle");
+      const periodeDesc = document.getElementById("statusPeriodeDesc");
+
+      periodeBox.style.display = "block";
+      if (belumPeriode === 0) {
+        periodeBox.style.background = "#ecfdf5";
+        periodeBox.style.borderColor = "#a7f3d0";
+        periodeTitle.style.color = "#047857";
+        periodeDesc.style.color = "#065f46";
+        periodeTitle.textContent = "✓ Periode SPP sudah selesai";
+        periodeDesc.textContent =
+          "Semua santri sudah lunas. Sisa dana SPP periode ini siap dipindahkan ke Kas Pondok.";
+      } else {
+        periodeBox.style.background = "#fffbeb";
+        periodeBox.style.borderColor = "#fde68a";
+        periodeTitle.style.color = "#92400e";
+        periodeDesc.style.color = "#78350f";
+        periodeTitle.textContent = "⏳ Periode SPP masih berjalan";
+        periodeDesc.textContent =
+          "Masih ada " + belumPeriode + " santri yang belum bayar. Sisa dana yang sudah diterima tetap tercatat sebagai SPP periode ini.";
+      }
+
+      document.getElementById("loading").style.display =
+        "none";
+
+      /*
+       * Pengeluaran dan sisa akan kita sambungkan
+       * setelah fitur transaksi keuangan dibuat.
+       */
+
+      loadRingkasan();
+      loadKasPondok();
+
+    } catch (error) {
+
+      document.getElementById("loading").style.display =
+        "none";
+
+      const errorBox =
+        document.getElementById("error");
+
+      errorBox.style.display = "block";
+
+      errorBox.textContent =
+        "Data belum dapat dimuat. Dashboard akan kita sambungkan setelah URL Apps Script dimasukkan.";
+
+    }
+
+  }
+
+
+  async function loadKasPondok() {
+    try {
+      const response = await fetch(
+        API_URL + "?action=getKasPondok&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+
+      console.log("Data Kas Pondok:", data);
+
+      if (data && data.success) {
+        let saldoKas = Number(data.saldoKas || 0);
+
+        // Backend lama belum memasukkan transaksi Transfer SPP -> Kas.
+        // Tambahkan transfer yang tercatat di sheet keuangan ke tampilan Kas.
+        try {
+          const txResponse = await fetch(
+            API_URL + "?action=getTransferSPP&_=" + Date.now(),
+            { cache: "no-store" }
+          );
+          const txData = await txResponse.json();
+          const transaksi = (txData && txData.success && Array.isArray(txData.transaksi))
+            ? txData.transaksi : [];
+
+          const transferSPP = transaksi
+            .filter(t => String(t.jenis || "").trim().toLowerCase() === "transfer")
+            .filter(t => String(t.keterangan || "").trim().toLowerCase().indexOf("sisa spp periode ") === 0)
+            .reduce((n,t) => n + Number(t.jumlah || 0), 0);
+
+          saldoKas += transferSPP;
+        } catch (e) {
+          console.log("Gagal membaca transfer SPP ke Kas:", e);
+        }
+
+        document.getElementById("kas").textContent = rupiah(saldoKas);
+      }
+    } catch (error) {
+      console.log("Gagal mengambil Kas Pondok:", error);
+    }
+  }
+
+  async function loadRingkasan() {
+    const elPengeluaran = document.getElementById("pengeluaranSPP");
+    const elSisa = document.getElementById("sisaSPP");
+    const expenseBarValue = document.getElementById("expenseBarValue");
+    const incomeBarValue = document.getElementById("incomeBarValue");
+
+    // Ambil nilai tanpa bergantung pada huruf besar/kecil nama kolom dari Apps Script.
+    const val = (obj, names) => {
+      if (!obj || typeof obj !== "object") return undefined;
+      for (const name of names) {
+        if (obj[name] !== undefined && obj[name] !== null && obj[name] !== "") return obj[name];
+      }
+      const wanted = names.map(n => n.toLowerCase());
+      for (const [key, value] of Object.entries(obj)) {
+        if (wanted.includes(String(key).toLowerCase()) && value !== undefined && value !== null && value !== "") return value;
+      }
+      return undefined;
+    };
+    const norm = v => String(v ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+    const money = v => {
+      if (typeof v === "number") return Math.abs(v);
+      const n = Number(String(v ?? "").replace(/[^0-9,-]/g, "").replace(/,/g, ""));
+      return Number.isFinite(n) ? Math.abs(n) : 0;
+    };
+    const unwrap = obj => {
+      if (!obj || typeof obj !== "object") return obj;
+      for (const key of ["data", "ringkasan", "hasil", "summary", "result"]) {
+        if (obj[key] && typeof obj[key] === "object") return { ...obj, ...obj[key] };
+      }
+      return obj;
+    };
+    try {
+      const periodeAktif = norm(
+        window.dashboardKeuangan?.periode ||
+        document.getElementById("periode")?.textContent || ""
+      );
+      const sppMasuk = money(window.dashboardKeuangan?.sppMasuk || 0);
+
+      const [ringResponse, txResponse] = await Promise.all([
+        fetch(API_URL + "?action=getRingkasanKeuangan&_=" + Date.now(), { cache: "no-store" }),
+        fetch(API_URL + "?action=getPengeluaranTerbaru&_=" + Date.now(), { cache: "no-store" })
+      ]);
+      if (!ringResponse.ok) throw new Error("Ringkasan HTTP " + ringResponse.status);
+      if (!txResponse.ok) throw new Error("Transaksi HTTP " + txResponse.status);
+      const ringData = await ringResponse.json();
+      const txData = await txResponse.json();
+      const ring = unwrap(ringData);
+
+      // Ringkasan agregat adalah sumber utama karena membaca seluruh sheet.
+      let totalBackend = null;
+      const aggregate = val(ring, [
+        "pengeluaranSPP", "totalPengeluaranSPP", "totalPengeluaranSpp",
+        "pengeluaranSpp", "pengeluaran_spp", "total_pengeluaran_spp"
+      ]);
+      if (aggregate !== undefined && Number.isFinite(money(aggregate))) totalBackend = money(aggregate);
+
+      // Fallback: jumlahkan transaksi yang benar-benar dikembalikan Apps Script.
+      // Cocokkan variasi kolom (Jenis/jenis, Sumber/sumber, Jumlah/jumlah) dan
+      // sumber seperti "SPP Oktober", bukan hanya nilai persis "SPP".
+      let transaksi = [];
+      const cariArray = (obj, depth = 0) => {
+        if (!obj || typeof obj !== "object" || depth > 4) return [];
+        if (Array.isArray(obj)) {
+          if (obj.some(x => x && typeof x === "object" && val(x, ["jenis", "Jenis", "tipe", "type"]) !== undefined)) return obj;
+          for (const x of obj) { const found = cariArray(x, depth + 1); if (found.length) return found; }
+        } else {
+          for (const x of Object.values(obj)) { const found = cariArray(x, depth + 1); if (found.length) return found; }
+        }
+        return [];
+      };
+      transaksi = cariArray(txData);
+      const pengeluaranSPPTransaksi = transaksi
+        .filter(t => norm(val(t, ["jenis", "Jenis", "tipe", "type"])) === "pengeluaran")
+        .filter(t => {
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          return sumber === "spp" || sumber.startsWith("spp ") || sumber.includes("dana spp");
+        })
+        .filter(t => {
+          const p = norm(val(t, ["periode", "Priode", "priode", "Periode SPP"]));
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          // Periode dapat tersimpan di kolom Priode atau menyatu dengan Sumber (mis. "SPP Oktober").
+          // Jangan buang transaksi SPP hanya karena format/perbedaan penulisan periodenya.
+          if (!periodeAktif) return true;
+          const periodeCocok = p && (p.includes(periodeAktif) || periodeAktif.includes(p));
+          const sumberCocok = sumber.includes(periodeAktif) ||
+            (periodeAktif.includes("oktober") && sumber.includes("okt")) ||
+            (periodeAktif.includes("september") && sumber.includes("sep"));
+          return !p && !sumberCocok ? true : Boolean(periodeCocok || sumberCocok);
+        })
+        .reduce((sum, t) => sum + money(val(t, ["jumlah", "Jumlah", "nominal", "Nominal", "total", "Total"])), 0);
+
+      // Utamakan penjumlahan transaksi rinci dari sheet keuangan. Agregat
+      // lama getRingkasanKeuangan bisa tidak sinkron (contoh: Rp288.000
+      // padahal baris SPP Oktober pada sheet berjumlah Rp669.000).
+      // Gunakan agregat hanya jika endpoint transaksi tidak menyediakan
+      // satu pun transaksi SPP untuk periode aktif.
+      const adaTransaksiSPP = transaksi.some(t =>
+        norm(val(t, ["jenis", "Jenis", "tipe", "type"])) === "pengeluaran" &&
+        (() => {
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          return sumber === "spp" || sumber.startsWith("spp ") || sumber.includes("dana spp");
+        })() &&
+        (() => {
+          const p = norm(val(t, ["periode", "Priode", "priode", "Periode SPP"]));
+          const sumber = norm(val(t, ["sumber", "Sumber", "sumberDana", "sumber_dana"]));
+          if (!periodeAktif) return true;
+          return !p || p.includes(periodeAktif) || periodeAktif.includes(p) ||
+            sumber.includes(periodeAktif) ||
+            (periodeAktif.includes("oktober") && sumber.includes("okt")) ||
+            (periodeAktif.includes("september") && sumber.includes("sep"));
+        })()
+      );
+      const pengeluaranSPP = adaTransaksiSPP ? pengeluaranSPPTransaksi :
+        (totalBackend !== null ? totalBackend : pengeluaranSPPTransaksi);
+
+      let sisaBackend = null;
+      const sisa = val(ring, ["sisaSPP", "saldoSPP", "sisa_spp", "saldo_spp"]);
+      if (sisa !== undefined && Number.isFinite(money(sisa))) sisaBackend = money(sisa);
+
+      let transferSPP = 0;
+      try {
+        const trResponse = await fetch(API_URL + "?action=getTransferSPP&_=" + Date.now(), { cache: "no-store" });
+        const trData = await trResponse.json();
+        const transfers = cariArray(trData);
+        transferSPP = transfers
+          .filter(t => norm(val(t, ["jenis", "Jenis", "tipe", "type"])) === "transfer")
+          .filter(t => {
+            const p = norm(val(t, ["periode", "Priode", "priode"]));
+            return !p || !periodeAktif || p.includes(periodeAktif) || periodeAktif.includes(p);
+          })
+          .reduce((sum, t) => sum + money(val(t, ["jumlah", "Jumlah", "nominal", "Nominal"])), 0);
+      } catch (e) {
+        console.warn("Transfer SPP belum terbaca:", e);
+      }
+
+      // Hitung saldo dari angka transaksi yang sama dengan kartu pengeluaran,
+      // agar saldo tidak memakai agregat backend yang sudah tidak sinkron.
+      const sisaSPP = Math.max(0, sppMasuk - pengeluaranSPP - transferSPP);
+
+      window.pengeluaranSPPDashboard = pengeluaranSPP;
+      if (elPengeluaran) elPengeluaran.textContent = rupiah(pengeluaranSPP);
+      if (elSisa) elSisa.textContent = rupiah(sisaSPP);
+      if (expenseBarValue) expenseBarValue.textContent = rupiah(pengeluaranSPP);
+      if (incomeBarValue) incomeBarValue.textContent = rupiah(sppMasuk);
+      const expenseBar = document.getElementById("expenseBar");
+      const incomeBar = document.getElementById("incomeBar");
+      const maxBar = Math.max(sppMasuk, pengeluaranSPP, 1);
+      if (expenseBar) expenseBar.style.height = Math.max(8, Math.round(pengeluaranSPP / maxBar * 36)) + "px";
+      if (incomeBar) incomeBar.style.height = Math.max(8, Math.round(sppMasuk / maxBar * 36)) + "px";
+
+      console.log("Pengeluaran SPP dashboard:", {
+        sumber: totalBackend !== null ? "getRingkasanKeuangan" : "getPengeluaranTerbaru",
+        pengeluaranSPP, jumlahTransaksiTerbaca: transaksi.length, ringkasan: ringData
+      });
+    } catch (error) {
+      console.error("Gagal membaca pengeluaran SPP dari Google Sheets:", error);
+      if (elPengeluaran) elPengeluaran.textContent = "Gagal memuat";
+    }
+  }
+
+function bukaFormPengeluaran() {
+    const old = document.getElementById("modalCatatPengeluaran");
+    if (old) old.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "modalCatatPengeluaran";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;";
+    modal.innerHTML = '<div style="background:#fff;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><div style="font-size:20px;font-weight:800">🛒 Catat Pengeluaran</div><div style="font-size:12px;color:#64748b;margin-top:4px">Catat pengeluaran dana SPP atau Kas</div></div><button onclick="document.getElementById(\'modalCatatPengeluaran\').remove()" style="border:0;background:#f1f5f9;width:36px;height:36px;border-radius:50%;font-size:22px">×</button></div>' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Tanggal</label><input type="date" id="inputTanggal" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Sumber Dana</label><select id="inputSumber" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px"><option value="SPP">SPP</option><option value="Kas">Kas</option></select>' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Keterangan</label><input type="text" id="inputKeterangan" placeholder="Contoh: Belanja dapur" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Jumlah (Rp)</label><input type="number" id="inputJumlah" min="1" inputmode="numeric" placeholder="Contoh: 50000" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px">' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Periode SPP (uang ini dibebankan ke periode ini)</label><select id="inputPeriode" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px"><option value="Januari">Januari</option><option value="Februari">Februari</option><option value="Maret">Maret</option><option value="April">April</option><option value="Mei">Mei</option><option value="Juni">Juni</option><option value="Juli">Juli</option><option value="Agustus">Agustus</option><option value="September">September</option><option value="Oktober">Oktober</option><option value="November">November</option><option value="Desember">Desember</option></select>' +
+      '<label style="display:block;font-weight:700;margin:10px 0 6px">Catatan</label><textarea id="inputCatatan" rows="3" placeholder="Catatan tambahan (opsional)" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;resize:vertical"></textarea>' +
+      '<div id="formMessage" style="display:none;padding:10px;border-radius:10px;margin-top:12px;font-size:13px"></div>' +
+      '<button id="btnSimpanPengeluaran" class="save-btn" onclick="simpanPengeluaran()" style="width:100%;margin-top:14px;border:0;border-radius:12px;padding:14px;background:#0f766e;color:#fff;font-size:15px;font-weight:800">Simpan Pengeluaran</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    document.getElementById("inputTanggal").value = new Date().toISOString().slice(0,10);
+    const p = document.getElementById("periode");
+    const periodeAktif = p ? p.textContent.trim() : "Oktober";
+    const opsi = Array.from(document.getElementById("inputPeriode").options);
+    const cocok = opsi.find(o => o.value.toLowerCase() === periodeAktif.toLowerCase());
+    document.getElementById("inputPeriode").value = cocok ? cocok.value : "Oktober";
+  }
+
+  function bukaForm() {
+    // Kompatibilitas menu transaksi HP: gunakan form pengeluaran yang sama.
+    bukaFormPengeluaran();
+  }
+
+  async function bukaRekapKas(){
+  const modal=document.createElement("div");
+  modal.id="modalRekapKas";
+  modal.innerHTML=`
+    <div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999">
+      <div style="width:100%;max-width:1000px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div>
+            <div style="font-size:22px;font-weight:800;color:#172554">💰 Rekap Kas Pondok</div>
+            <div id="rekapKasSub" style="color:#64748b;font-size:13px;margin-top:4px">Memuat rekap Kas...</div>
+          </div>
+          <button onclick="document.getElementById('modalRekapKas').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px;cursor:pointer">×</button>
+        </div>
+        <div id="rekapKasLoading" class="loading">Memuat rekap Kas...</div>
+        <div id="rekapKasIsi" style="display:none"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  try{
+    const [kasResponse, transferResponse] = await Promise.all([
+      fetch(API_URL+"?action=getKasPondok&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getTransferSPP&_="+Date.now(),{cache:"no-store"})
+    ]);
+
+    const data=await kasResponse.json();
+    const transferData=await transferResponse.json();
+
+    if(!data.success) throw new Error(data.message||"Gagal mengambil saldo Kas");
+
+    const saldoBackend=Number(data.saldoKas||0);
+    const pemasukan=Number(data.pemasukanKas||0);
+    const pengeluaran=Number(data.pengeluaranKas||0);
+
+    const transferList=(transferData && transferData.success && Array.isArray(transferData.transaksi))
+      ? transferData.transaksi : [];
+
+    const sisaSPP=transferList.reduce((total,t)=>{
+      return total + Number(t.jumlah||0);
+    },0);
+
+    // saldoBackend sudah memuat saldo Kas setelah pemasukan/pengeluaran Kas,
+    // tetapi belum memasukkan transfer SPP→Kas.
+    // Hitung Saldo Awal agar rincian dan saldo akhir konsisten.
+    const saldoAwal = saldoBackend - pemasukan + pengeluaran;
+
+    // Saldo akhir = saldo awal + pemasukan + transfer SPP→Kas - pengeluaran.
+    // Ini sama dengan saldoBackend + transfer SPP→Kas, tanpa menghitung pemasukan
+    // dan pengeluaran dua kali.
+    const saldoTampil = saldoAwal + pemasukan + sisaSPP - pengeluaran;
+
+    document.getElementById("rekapKasLoading").style.display="none";
+    document.getElementById("rekapKasSub").textContent="Rekap saldo Kas Pondok saat ini";
+
+    const isi=document.getElementById("rekapKasIsi");
+    isi.style.display="block";
+    isi.innerHTML=`
+      <div class="cards" style="margin-bottom:16px">
+        <div class="card"><div class="card-title">Saldo Awal Kas</div><div class="card-value blue">${rupiah(saldoAwal)}</div></div>
+        <div class="card"><div class="card-title">Pemasukan Kas</div><div class="card-value green">${rupiah(pemasukan)}</div></div>
+        <div class="card"><div class="card-title">Sisa SPP → Kas</div><div class="card-value green">${rupiah(sisaSPP)}</div></div>
+        <div class="card"><div class="card-title">Pengeluaran Kas</div><div class="card-value red">${rupiah(pengeluaran)}</div></div>
+        <div class="card" style="grid-column:1/-1;background:#eff6ff"><div class="card-title">Saldo Kas Pondok</div><div class="card-value blue" style="font-size:28px">${rupiah(saldoTampil)}</div></div>
+      </div>
+      <div style="background:#f8fafc;border-radius:16px;padding:16px">
+        <div style="font-weight:800;color:#172554;margin-bottom:8px">Rumus Saldo</div>
+        <div style="color:#475569;font-size:14px;line-height:1.7">Saldo Awal + Pemasukan Kas + Sisa SPP ke Kas − Pengeluaran Kas</div>
+      </div>`;
+  }catch(error){
+    document.getElementById("rekapKasLoading").textContent="Rekap Kas belum dapat dimuat.";
+    console.error(error);
+  }
+}
+
+  window.bukaRekapKas = bukaRekapKas;
+
+  function bukaPemasukanKas() {
+
+  const modal = document.createElement("div");
+
+  modal.id = "modalPemasukanKas";
+
+  modal.innerHTML = `
+    <div style="
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:20px;
+    ">
+
+      <div style="
+        background:white;
+        width:100%;
+        max-width:450px;
+        border-radius:20px;
+        padding:24px;
+        box-shadow:0 20px 60px rgba(0,0,0,0.25);
+      ">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          margin-bottom:20px;
+        ">
+
+          <div>
+            <div style="
+              font-size:20px;
+              font-weight:700;
+              color:#1f2937;
+            ">
+              💰 Pemasukan Kas
+            </div>
+
+            <div style="
+              font-size:13px;
+              color:#6b7280;
+              margin-top:4px;
+            ">
+              Catat pemasukan dana Kas Pondok
+            </div>
+          </div>
+
+          <button
+            onclick="document.getElementById('modalPemasukanKas').remove()"
+            style="
+              border:none;
+              background:#f3f4f6;
+              width:36px;
+              height:36px;
+              border-radius:50%;
+              font-size:20px;
+              cursor:pointer;
+            "
+          >
+            ×
+          </button>
+
+        </div>
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Tanggal
+        </label>
+
+        <input
+          type="date"
+          id="tanggalPemasukanKas"
+          value="${new Date().toISOString().slice(0,10)}"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Keterangan
+        </label>
+
+        <input
+          type="text"
+          id="keteranganPemasukanKas"
+          placeholder="Contoh: Sumbangan wali santri"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Jumlah
+        </label>
+
+        <input
+          type="number"
+          id="jumlahPemasukanKas"
+          placeholder="Masukkan jumlah"
+          min="1"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:16px;
+          "
+        >
+
+        <label style="display:block;margin-bottom:6px;font-weight:600;">
+          Catatan
+        </label>
+
+        <textarea
+          id="catatanPemasukanKas"
+          placeholder="Catatan tambahan (opsional)"
+          rows="3"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            margin-bottom:20px;
+            resize:none;
+          "
+        ></textarea>
+
+        <div
+          id="pesanPemasukanKas"
+          style="
+            display:none;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            font-size:13px;
+          "
+        ></div>
+
+        <button
+          onclick="simpanPemasukanKas()"
+          style="
+            width:100%;
+            border:none;
+            background:#2563eb;
+            color:white;
+            padding:13px;
+            border-radius:10px;
+            font-size:15px;
+            font-weight:600;
+            cursor:pointer;
+          "
+        >
+          Simpan Pemasukan
+        </button>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  }
+
+  function tutupForm() {
+    document.getElementById("formOverlay").style.display = "none";
+  }
+
+  async function simpanPengeluaran() {
+    const tombol = document.querySelector(".save-btn");
+    const message = document.getElementById("formMessage");
+    const tanggal = document.getElementById("inputTanggal").value;
+    const sumber = document.getElementById("inputSumber").value;
+    const keterangan = document.getElementById("inputKeterangan").value.trim();
+    const jumlah = document.getElementById("inputJumlah").value;
+    const periode = document.getElementById("inputPeriode").value.trim();
+    const catatan = document.getElementById("inputCatatan").value.trim();
+
+    if (!tanggal || !keterangan || !jumlah || Number(jumlah) <= 0) {
+      message.style.display = "block";
+      message.style.background = "#fee2e2";
+      message.style.color = "#991b1b";
+      message.textContent = "Tanggal, keterangan, dan jumlah wajib diisi.";
+      return;
+    }
+
+    tombol.disabled = true;
+    tombol.textContent = "Menyimpan...";
+
+    try {
+      const url = API_URL +
+        "?action=catatPengeluaran" +
+        "&tanggal=" + encodeURIComponent(tanggal) +
+        "&keterangan=" + encodeURIComponent(keterangan) +
+        "&jumlah=" + encodeURIComponent(jumlah) +
+        "&sumber=" + encodeURIComponent(sumber) +
+        "&periode=" + encodeURIComponent(periode) +
+        "&catatan=" + encodeURIComponent(catatan);
+
+      const response = await fetch(url);
+      const data = await response.json();
+      message.style.display = "block";
+
+      if (!data.success) {
+        message.style.background = "#fee2e2";
+        message.style.color = "#991b1b";
+        message.textContent = data.message || "Gagal menyimpan pengeluaran.";
+        return;
+      }
+
+      message.style.background = "#dcfce7";
+      message.style.color = "#166534";
+      message.textContent = "Pengeluaran berhasil dicatat.";
+      document.getElementById("inputKeterangan").value = "";
+      document.getElementById("inputJumlah").value = "";
+      document.getElementById("inputCatatan").value = "";
+
+      setTimeout(function() {
+        const modal = document.getElementById("modalCatatPengeluaran");
+        if (modal) modal.remove();
+        loadDashboard();
+      }, 700);
+    } catch (error) {
+      message.style.display = "block";
+      message.style.background = "#fee2e2";
+      message.style.color = "#991b1b";
+      message.textContent = "Terjadi kesalahan saat menyimpan.";
+    } finally {
+      tombol.disabled = false;
+      tombol.textContent = "Simpan Pengeluaran";
+    }
+  }
+  async function simpanPemasukanKas() {
+
+  const tanggal = document.getElementById("tanggalPemasukanKas").value;
+  const keterangan = document.getElementById("keteranganPemasukanKas").value.trim();
+  const jumlah = document.getElementById("jumlahPemasukanKas").value;
+  const catatan = document.getElementById("catatanPemasukanKas").value.trim();
+
+  const pesan = document.getElementById("pesanPemasukanKas");
+
+  if (!tanggal || !keterangan || !jumlah || Number(jumlah) <= 0) {
+    pesan.style.display = "block";
+    pesan.style.background = "#fee2e2";
+    pesan.style.color = "#991b1b";
+    pesan.textContent = "Tanggal, keterangan, dan jumlah wajib diisi.";
+    return;
+  }
+
+  try {
+
+    const url =
+      API_URL +
+      "?action=catatPemasukanKas" +
+      "&tanggal=" + encodeURIComponent(tanggal) +
+      "&keterangan=" + encodeURIComponent(keterangan) +
+      "&jumlah=" + encodeURIComponent(jumlah) +
+      "&catatan=" + encodeURIComponent(catatan);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    pesan.style.display = "block";
+
+    if (!data.success) {
+      pesan.style.background = "#fee2e2";
+      pesan.style.color = "#991b1b";
+      pesan.textContent =
+        data.message || "Gagal menyimpan pemasukan.";
+      return;
+    }
+
+    pesan.style.background = "#dcfce7";
+    pesan.style.color = "#166534";
+    pesan.textContent = "Pemasukan Kas berhasil dicatat.";
+
+    document.getElementById("keteranganPemasukanKas").value = "";
+    document.getElementById("jumlahPemasukanKas").value = "";
+    document.getElementById("catatanPemasukanKas").value = "";
+
+    setTimeout(function() {
+      document.getElementById("modalPemasukanKas").remove();
+      loadDashboard();
+    }, 800);
+
+  } catch (error) {
+
+    pesan.style.display = "block";
+    pesan.style.background = "#fee2e2";
+    pesan.style.color = "#991b1b";
+    pesan.textContent =
+      "Terjadi kesalahan saat menyimpan.";
+
+    console.error(error);
+  }
+  }
+
+async function bukaLaporanSPP(){
+  const modal=document.createElement("div"); modal.id="modalLaporanSPP";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999">
+  <div style="width:100%;max-width:1000px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div><div style="font-size:22px;font-weight:800;color:#172554">📊 Laporan SPP per Periode</div><div id="laporanSPPPeriode" style="color:#64748b;font-size:13px;margin-top:4px">Memuat...</div></div>
+      <button onclick="document.getElementById('modalLaporanSPP').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button>
+    </div>
+    <div id="laporanSPPLoading" class="loading">Memuat laporan SPP...</div>
+    <div id="laporanSPPIsi" style="display:none"></div>
+  </div></div>`;
+  document.body.appendChild(modal);
+  try{
+    const [dashRes, ringRes, statusRes]=await Promise.all([
+      fetch(API_URL+"?action=getDashboardKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getRingkasanKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"})
+    ]);
+    const dash=await dashRes.json(), ring=await ringRes.json(), stat=await statusRes.json();
+    if(!dash.success) throw new Error(dash.message||"Gagal mengambil dashboard");
+    const santri=(stat.data||[]).filter(function(s){
+      const nis=String(s.nis||"").trim();
+      const nama=String(s.nama||"").trim();
+      const kelas=String(s.kelas||"").trim();
+      return (nis!=="" && nis!=="-") || (nama!=="" && nama!=="-") || (kelas!=="" && kelas!=="-");
+    });
+    const total=santri.length;
+    const lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
+    const belum=total-lunas;
+    const tagihan=total*150000;
+    const diterima=Number(dash.sppMasuk||0);
+    const pengeluaran=Number(ring.pengeluaranSPP||0);
+    const sisa=Number(ring.sisaSPP ?? (diterima-pengeluaran));
+    const persen=total?Math.round(lunas/total*100):0;
+    document.getElementById("laporanSPPPeriode").textContent="Periode SPP: "+(dash.periode||stat.periode||"-");
+    document.getElementById("laporanSPPLoading").style.display="none";
+    const isi=document.getElementById("laporanSPPIsi"); isi.style.display="block";
+    isi.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div class="card"><div class="card-title">Total Tagihan</div><div class="card-value blue">${rupiah(tagihan)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${total} santri × Rp150.000</div></div>
+        <div class="card"><div class="card-title">SPP Diterima</div><div class="card-value green">${rupiah(diterima)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${lunas} santri lunas</div></div>
+        <div class="card"><div class="card-title">Belum Terbayar</div><div class="card-value red">${rupiah(Math.max(0,tagihan-diterima))}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${belum} santri</div></div>
+        <div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value orange">${rupiah(pengeluaran)}</div></div>
+        <div class="card"><div class="card-title">Sisa SPP</div><div class="card-value green">${rupiah(sisa)}</div></div>
+        <div class="card"><div class="card-title">Persentase Lunas</div><div class="card-value blue">${persen}%</div><div style="font-size:12px;color:#64748b;margin-top:5px">${lunas} dari ${total} santri</div></div>
+      </div>
+      <div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:14px">
+        <div style="font-weight:800;color:#172554;margin-bottom:8px">Ringkasan Periode</div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb"><span>Total santri</span><strong>${total}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #e5e7eb"><span>LUNAS</span><strong style="color:#059669">${lunas}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0"><span>BELUM BAYAR</span><strong style="color:#dc2626">${belum}</strong></div>
+      </div>`;
+  }catch(e){document.getElementById("laporanSPPLoading").textContent="Laporan SPP belum dapat dimuat.";console.error(e)}
+}
+
+async function bukaDaftarSantri(){
+  const modal=document.createElement("div"); modal.id="modalDaftarSantri";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999">
+  <div style="width:100%;max-width:1050px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div><div style="font-size:22px;font-weight:800;color:#172554">👨‍🎓 Daftar Santri & Status SPP</div><div id="santriPeriodeModal" style="color:#64748b;font-size:13px;margin-top:4px">Memuat status SPP...</div></div>
+    <button onclick="document.getElementById('modalDaftarSantri').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button>
+  </div>
+  <div class="santri-summary">
+    <div class="santri-summary-card"><div style="font-size:12px;color:#64748b">Sudah Bayar</div><div id="santriLunasCount" class="santri-summary-number" style="color:#059669">0</div></div>
+    <div class="santri-summary-card"><div style="font-size:12px;color:#64748b">Belum Bayar</div><div id="santriBelumCount" class="santri-summary-number" style="color:#dc2626">0</div></div>
+  </div>
+  <div class="santri-toolbar"><input id="santriSearch" class="santri-search" type="search" placeholder="Cari nama atau NIS..." oninput="renderDaftarSantri()"><select id="santriFilter" class="santri-filter" onchange="renderDaftarSantri()"><option value="SEMUA">Semua Santri</option><option value="LUNAS">LUNAS</option><option value="BELUM BAYAR">BELUM BAYAR</option></select></div>
+  <div id="santriLoading" class="loading">Memuat daftar santri...</div><div id="santriTableArea" style="display:none"></div>
+  </div></div>`;
+  document.body.appendChild(modal);
+  try{
+    const response=await fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"});
+    const data=await response.json();
+    if(!data.success) throw new Error(data.message||"Gagal mengambil status SPP");
+    window.dataDaftarSantri=data.data||[];
+    document.getElementById("santriPeriodeModal").textContent="Periode SPP: "+(data.periode||document.getElementById("periode").textContent||"-");
+    document.getElementById("santriLoading").style.display="none"; document.getElementById("santriTableArea").style.display="block"; renderDaftarSantri();
+  }catch(error){document.getElementById("santriLoading").textContent="Daftar santri belum dapat dimuat.";console.error(error)}
+}
+function renderDaftarSantri(){
+  const data=(window.dataDaftarSantri||[]).filter(function(s){
+    const nis=String(s.nis||"").trim();
+    const nama=String(s.nama||"").trim();
+    const kelas=String(s.kelas||"").trim();
+    return (nis !== "" && nis !== "-") || (nama !== "" && nama !== "-") || (kelas !== "" && kelas !== "-");
+  }), search=(document.getElementById("santriSearch")?.value||"").toLowerCase().trim(), filter=document.getElementById("santriFilter")?.value||"SEMUA";
+  const filtered=data.filter(s=>{const status=String(s.status||"").toUpperCase(), teks=(String(s.nis||"")+" "+String(s.nama||"")+" "+String(s.kelas||"")).toLowerCase(); return (!search||teks.includes(search))&&(filter==="SEMUA"||(filter==="LUNAS"&&status==="LUNAS")||(filter==="BELUM BAYAR"&&status!=="LUNAS"))});
+  const lunas=data.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length;
+  document.getElementById("santriLunasCount").textContent=lunas+" Santri"; document.getElementById("santriBelumCount").textContent=(data.length-lunas)+" Santri";
+  let rows=""; filtered.forEach((s,i)=>{const ok=String(s.status||"").toUpperCase()==="LUNAS"; rows+=`<tr><td>${i+1}</td><td><strong>${s.nis||"-"}</strong></td><td>${s.nama||"-"}</td><td>${s.kelas||"-"}</td><td><span class="status-badge ${ok?"status-lunas":"status-belum"}">${ok?"LUNAS":"BELUM BAYAR"}</span></td></tr>`});
+  document.getElementById("santriTableArea").innerHTML=filtered.length?`<div class="santri-table-wrap"><table class="santri-table"><thead><tr><th>No</th><th>NIS</th><th>Nama Santri</th><th>Kelas</th><th>Status SPP</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:10px;color:#64748b;font-size:12px">Menampilkan ${filtered.length} dari ${data.length} santri.</div>`:'<div class="santri-empty">Santri yang dicari tidak ditemukan.</div>';
+}
+
+async function bukaPengeluaranTerbaru() {
+  try {
+    const response = await fetch(
+      API_URL + "?action=getPengeluaranTerbaru"
+    );
+
+    const data = await response.json();
+
+    if (!data.success) {
+      alert("Gagal mengambil data pengeluaran");
+      return;
+    }
+
+    const transaksi = data.transaksi || [];
+
+    if (transaksi.length === 0) {
+      alert("Belum ada pengeluaran");
+      return;
+    }
+
+    let total = 0;
+
+    let rows = "";
+
+    transaksi.forEach(function(t, index) {
+      const jumlah = Number(t.jumlah || 0);
+      total += jumlah;
+
+      rows += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${t.tanggal || "-"}</td>
+          <td>${t.keterangan || "Pengeluaran"}</td>
+          <td>
+            <span style="
+              background:${String(t.sumber || "").toUpperCase() === "SPP" ? "#d1fae5" : "#dbeafe"};
+              color:${String(t.sumber || "").toUpperCase() === "SPP" ? "#047857" : "#2563eb"};
+              padding:5px 10px;
+              border-radius:8px;
+              font-size:13px;
+              font-weight:600;
+            ">
+              ${t.sumber || "-"}
+            </span>
+          </td>
+          <td style="
+            text-align:right;
+            color:#dc2626;
+            font-weight:700;
+          ">
+            ${rupiah(jumlah)}
+          </td>
+        </tr>
+      `;
+    });
+
+    const modal = document.createElement("div");
+
+    modal.id = "modalPengeluaranTerbaru";
+
+    modal.innerHTML = `
+      <div style="
+        position:fixed;
+        inset:0;
+        background:rgba(15,23,42,.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        z-index:9999;
+      ">
+
+        <div style="
+          width:100%;
+          max-width:900px;
+          max-height:90vh;
+          overflow:auto;
+          background:white;
+          border-radius:24px;
+          box-shadow:0 20px 60px rgba(0,0,0,.25);
+          padding:24px;
+        ">
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+          ">
+
+            <div>
+              <div style="
+                font-size:24px;
+                font-weight:700;
+                color:#172554;
+              ">
+                📋 Pengeluaran Terbaru
+              </div>
+
+              <div style="
+                color:#64748b;
+                margin-top:5px;
+                font-size:14px;
+              ">
+                Riwayat transaksi pengeluaran dana pondok
+              </div>
+            </div>
+
+            <button
+              onclick="document.getElementById('modalPengeluaranTerbaru').remove()"
+              style="
+                border:0;
+                background:#f1f5f9;
+                width:42px;
+                height:42px;
+                border-radius:50%;
+                font-size:22px;
+                cursor:pointer;
+              "
+            >
+              ×
+            </button>
+
+          </div>
+
+          <div style="
+            overflow-x:auto;
+            border:1px solid #e2e8f0;
+            border-radius:15px;
+          ">
+
+            <table style="
+              width:100%;
+              border-collapse:collapse;
+              min-width:650px;
+              font-size:14px;
+            ">
+
+              <thead>
+                <tr style="
+                  background:#fff7ed;
+                  color:#92400e;
+                ">
+                  <th style="padding:12px;text-align:left;">No</th>
+                  <th style="padding:12px;text-align:left;">Tanggal</th>
+                  <th style="padding:12px;text-align:left;">Keterangan</th>
+                  <th style="padding:12px;text-align:left;">Sumber</th>
+                  <th style="padding:12px;text-align:right;">Jumlah</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                ${rows}
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <div style="
+            margin-top:18px;
+            padding:18px;
+            background:#f8fafc;
+            border-radius:16px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+          ">
+
+            <div>
+              <div style="
+                font-weight:700;
+                color:#172554;
+                font-size:17px;
+              ">
+                Total Pengeluaran
+              </div>
+
+              <div style="
+                color:#64748b;
+                font-size:13px;
+                margin-top:4px;
+              ">
+                ${transaksi.length} transaksi
+              </div>
+            </div>
+
+            <div style="
+              color:#dc2626;
+              font-size:22px;
+              font-weight:800;
+            ">
+              ${rupiah(total)}
+            </div>
+
+          </div>
+
+          <div style="
+            display:flex;
+            justify-content:flex-end;
+            margin-top:18px;
+          ">
+
+            <button
+              onclick="document.getElementById('modalPengeluaranTerbaru').remove()"
+              style="
+                border:0;
+                background:#2563eb;
+                color:white;
+                padding:12px 25px;
+                border-radius:12px;
+                font-size:15px;
+                font-weight:600;
+                cursor:pointer;
+              "
+            >
+              Tutup
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+  } catch (error) {
+    alert("Gagal mengambil data pengeluaran");
+    console.error(error);
+  }
+}
+async function bukaLaporanPengeluaran(){
+  const modal=document.createElement("div"); modal.id="modalLaporanPengeluaran";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:18px;z-index:9999"><div style="width:100%;max-width:1050px;max-height:92vh;overflow:auto;background:white;border-radius:24px;padding:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><div style="font-size:22px;font-weight:800;color:#172554">📑 Laporan Pengeluaran</div><div style="color:#64748b;font-size:13px;margin-top:4px">Rekap seluruh pengeluaran dana pondok</div></div><button onclick="document.getElementById('modalLaporanPengeluaran').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"><select id="laporanPengeluaranFilter" onchange="renderLaporanPengeluaran()" style="flex:1;min-width:180px;border:1px solid #d1d5db;border-radius:12px;padding:12px;background:white"><option value="SEMUA">Semua Pengeluaran</option><option value="SPP">Pengeluaran SPP</option><option value="KAS">Pengeluaran Kas</option></select><input id="laporanPengeluaranCari" oninput="renderLaporanPengeluaran()" type="search" placeholder="Cari keterangan..." style="flex:2;min-width:220px;border:1px solid #d1d5db;border-radius:12px;padding:12px"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center"><div style="font-size:13px;font-weight:700;color:#475569">Filter tanggal:</div><input id="laporanPengeluaranMulai" onchange="renderLaporanPengeluaran()" type="date" style="flex:1;min-width:180px;border:1px solid #d1d5db;border-radius:12px;padding:12px;background:white"><span style="color:#64748b">s/d</span><input id="laporanPengeluaranSampai" onchange="renderLaporanPengeluaran()" type="date" style="flex:1;min-width:180px;border:1px solid #d1d5db;border-radius:12px;padding:12px;background:white"><button onclick="resetFilterLaporanPengeluaran()" style="border:0;background:#f1f5f9;color:#334155;padding:12px 15px;border-radius:12px;font-weight:700">Reset</button></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 16px"><button onclick="setPeriodeLaporanPengeluaran('bulan')" style="border:0;background:#ecfdf5;color:#047857;padding:9px 13px;border-radius:10px;font-weight:700">Bulan Ini</button><button onclick="setPeriodeLaporanPengeluaran('bulanLalu')" style="border:0;background:#eff6ff;color:#1d4ed8;padding:9px 13px;border-radius:10px;font-weight:700">Bulan Lalu</button><button onclick="setPeriodeLaporanPengeluaran('tahun')" style="border:0;background:#fef3c7;color:#92400e;padding:9px 13px;border-radius:10px;font-weight:700">Tahun Ini</button></div>
+    <div id="laporanPengeluaranLoading" class="loading">Memuat laporan pengeluaran...</div><div id="laporanPengeluaranIsi" style="display:none"></div></div></div>`;
+  document.body.appendChild(modal);
+  try{ const response=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"}); const data=await response.json(); if(!data.success) throw new Error(data.message||"Gagal mengambil pengeluaran"); window.dataLaporanPengeluaran=data.transaksi||[]; document.getElementById("laporanPengeluaranLoading").style.display="none"; document.getElementById("laporanPengeluaranIsi").style.display="block"; renderLaporanPengeluaran(); }
+  catch(e){ document.getElementById("laporanPengeluaranLoading").textContent="Laporan pengeluaran belum dapat dimuat."; console.error(e); }
+}
+function setPeriodeLaporanPengeluaran(mode){
+  const now=new Date(); let mulai,sampai;
+  if(mode==="bulan"){ mulai=new Date(now.getFullYear(),now.getMonth(),1); sampai=new Date(now.getFullYear(),now.getMonth()+1,0); }
+  else if(mode==="bulanLalu"){ mulai=new Date(now.getFullYear(),now.getMonth()-1,1); sampai=new Date(now.getFullYear(),now.getMonth(),0); }
+  else { mulai=new Date(now.getFullYear(),0,1); sampai=new Date(now.getFullYear(),11,31); }
+  const fmt=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  document.getElementById("laporanPengeluaranMulai").value=fmt(mulai);
+  document.getElementById("laporanPengeluaranSampai").value=fmt(sampai);
+  renderLaporanPengeluaran();
+}
+function resetFilterLaporanPengeluaran(){ document.getElementById("laporanPengeluaranFilter").value="SEMUA"; document.getElementById("laporanPengeluaranCari").value=""; document.getElementById("laporanPengeluaranMulai").value=""; document.getElementById("laporanPengeluaranSampai").value=""; renderLaporanPengeluaran(); }
+function renderLaporanPengeluaran(){
+  const all=window.dataLaporanPengeluaran||[]; const filter=(document.getElementById("laporanPengeluaranFilter")?.value||"SEMUA").toUpperCase(); const cari=(document.getElementById("laporanPengeluaranCari")?.value||"").toLowerCase().trim(); const mulai=document.getElementById("laporanPengeluaranMulai")?.value||""; const sampai=document.getElementById("laporanPengeluaranSampai")?.value||"";
+  const tanggalTidakValid=mulai&&sampai&&mulai>sampai;
+  const data=tanggalTidakValid?[]:all.filter(t=>{const sumber=String(t.sumber||"").toUpperCase(); const teks=(String(t.tanggal||"")+" "+String(t.keterangan||"")+" "+String(t.catatan||"")).toLowerCase(); const tanggal=String(t.tanggal||"").trim(); const tanggalOk=(!mulai||tanggal>=mulai)&&(!sampai||tanggal<=sampai); return (filter==="SEMUA"||sumber===filter)&&(!cari||teks.includes(cari))&&tanggalOk;});
+  const total=data.reduce((n,t)=>n+Number(t.jumlah||0),0); const totalSPP=data.filter(t=>String(t.sumber||"").toUpperCase()==="SPP").reduce((n,t)=>n+Number(t.jumlah||0),0); const totalKas=data.filter(t=>String(t.sumber||"").toUpperCase()==="KAS").reduce((n,t)=>n+Number(t.jumlah||0),0);
+  let rows=""; data.forEach((t,i)=>{ rows+=`<tr><td style="padding:11px 12px;border-top:1px solid #f1f5f9">${i+1}</td><td style="padding:11px 12px;border-top:1px solid #f1f5f9">${t.tanggal||"-"}</td><td style="padding:11px 12px;border-top:1px solid #f1f5f9"><strong>${t.keterangan||"Pengeluaran"}</strong>${t.catatan?'<div style="font-size:12px;color:#64748b;margin-top:3px">'+t.catatan+"</div>":""}</td><td style="padding:11px 12px;border-top:1px solid #f1f5f9"><span style="padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700;background:${String(t.sumber||"").toUpperCase()==="SPP"?"#dcfce7":"#dbeafe"};color:${String(t.sumber||"").toUpperCase()==="SPP"?"#166534":"#1d4ed8"}">${t.sumber||"-"}</span></td><td style="padding:11px 12px;border-top:1px solid #f1f5f9;text-align:right;color:#dc2626;font-weight:800">${rupiah(t.jumlah)}</td></tr>`; });
+  const periodeInfo=tanggalTidakValid?"⚠️ Tanggal mulai tidak boleh lebih besar dari tanggal sampai":((mulai||sampai)?("Periode: "+(mulai?mulai.split("-").reverse().join("/"):"awal")+(sampai?" s/d "+sampai.split("-").reverse().join("/"):"")):"Semua periode");
+  document.getElementById("laporanPengeluaranIsi").innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div class="card"><div class="card-title">Total Terpilih</div><div class="card-value red">${rupiah(total)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${data.length} transaksi</div></div><div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value orange">${rupiah(totalSPP)}</div></div><div class="card"><div class="card-title">Pengeluaran Kas</div><div class="card-value blue">${rupiah(totalKas)}</div></div></div><div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:15px"><table style="width:100%;border-collapse:collapse;min-width:700px;font-size:14px"><thead><tr style="background:#fff7ed;color:#92400e"><th style="padding:12px;text-align:left">No</th><th style="padding:12px;text-align:left">Tanggal</th><th style="padding:12px;text-align:left">Keterangan</th><th style="padding:12px;text-align:left">Sumber</th><th style="padding:12px;text-align:right">Jumlah</th></tr></thead><tbody>${rows||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#64748b">Tidak ada pengeluaran yang sesuai.</td></tr>'}</tbody></table></div>`;
+}
+
+  async function pindahkanSisaSPPKeKas() {
+    try {
+      // Cek kondisi terbaru sebelum meminta pemindahan.
+      const cek = await fetch(
+        API_URL + "?action=getDashboardKeuangan&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+      const status = await cek.json();
+
+      if (!status.success) {
+        alert(status.message || "Gagal memeriksa status periode SPP.");
+        return;
+      }
+
+      const belum = Number(status.belumBayar || 0);
+      const periode = status.periode || "periode SPP saat ini";
+
+      if (belum > 0) {
+        alert(
+          "Periode SPP " + periode + " belum selesai.\\n\\n" +
+          "Masih ada " + belum + " santri yang belum bayar.\\n\\n" +
+          "Sisa SPP belum boleh dipindahkan ke Kas."
+        );
+        return;
+      }
+
+      const yakin = confirm(
+        "Semua santri pada periode " + periode +
+        " sudah lunas.\\n\\n" +
+        "Pindahkan sisa SPP periode ini ke Kas Pondok sekarang?"
+      );
+
+      if (!yakin) return;
+
+      const response = await fetch(
+        API_URL + "?action=pindahkanSisaSPPKeKas&_=" + Date.now(),
+        { cache: "no-store" }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message || "Sisa SPP berhasil dipindahkan ke Kas Pondok.");
+        loadDashboard();
+      } else {
+        alert(data.message || "Gagal memindahkan sisa SPP.");
+      }
+
+    } catch (error) {
+      alert("Terjadi kesalahan saat menghubungi server.");
+      console.error(error);
+    }
+  }
+  
+  async function loadDashboardRecent(){
+    const list=document.getElementById("dashboardExpenseList");
+    const bars=document.getElementById("dashboardExpenseBars");
+    try{
+      const response=await fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"});
+      const data=await response.json();
+      const tx=data.transaksi||[];
+      const recent=tx.slice(0,4);
+      const renderRow=t=>'<div class="expense-item"><div class="expense-main"><div class="expense-name">'+(t.keterangan||"Pengeluaran")+'</div><div class="expense-meta">'+(t.tanggal||"-")+' • '+(t.sumber||"-")+'</div></div><div class="expense-amount">-'+rupiah(t.jumlah)+'</div></div>';
+      if(list) list.innerHTML=recent.length?recent.map(renderRow).join(""):'<div class="empty-state">Belum ada transaksi.</div>';
+      const groups={}; tx.forEach(t=>{const k=t.keterangan||"Lain-lain";groups[k]=(groups[k]||0)+Number(t.jumlah||0);});
+      const entries=Object.entries(groups).sort((a,b)=>b[1]-a[1]).slice(0,4); const max=entries.length?entries[0][1]:0;
+      if(bars) bars.innerHTML=entries.length?entries.map(([name,val])=>'<div class="expense-bar-row"><div class="bar-label" title="'+name+'">'+name+'</div><div class="expense-bar-track"><div class="expense-bar-fill" style="width:'+(max?Math.max(5,val/max*100):0)+'%"></div></div><div class="expense-bar-value">'+rupiah(val)+'</div></div>').join(""):'<div class="empty-state">Belum ada data.</div>';
+    }catch(e){
+      if(list) list.innerHTML='<div class="empty-state">Pengeluaran belum dapat dimuat.</div>';
+      if(bars) bars.innerHTML='<div class="empty-state">Rekap belum dapat dimuat.</div>';
+      console.error(e);
+    }
+  }
+
+  async function muatUlangData(){
+    const btn=document.querySelector('button[onclick="muatUlangData()"]');
+    if(btn){btn.disabled=true;btn.textContent="⟳ Memuat...";}
+    try{
+      await Promise.all([loadDashboard(),loadKasPondok(),loadDashboardRecent()]);
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent="↻ Muat Ulang Data";}
+    }
+  }
+
+  loadDashboard();
+  loadKasPondok();
+
+</script>
+
+<script>
+async function bukaLaporanKeuanganPDF(){
+  const modal=document.createElement("div"); modal.id="modalLaporanKeuanganPDF";
+  modal.innerHTML='<div style="position:fixed;inset:0;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9999"><div style="width:100%;max-width:1100px;max-height:94vh;overflow:auto;background:white;border-radius:24px;padding:22px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div><div style="font-size:22px;font-weight:800;color:#172554">📄 Laporan Keuangan Pesantren</div><div id="laporanKeuanganSub" style="color:#64748b;font-size:13px;margin-top:4px">Laporan pertanggungjawaban rinci</div></div><button onclick="document.getElementById(\'modalLaporanKeuanganPDF\').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button></div><div id="laporanKeuanganLoading" class="loading">Mengambil data terbaru...</div><div id="laporanKeuanganIsi" style="display:none"></div></div></div>';
+  document.body.appendChild(modal);
+  try{
+    // Hitung ulang transaksi SPP sebelum laporan dibuka agar tidak memakai ringkasan lama.
+    if (typeof loadRingkasan === "function") await loadRingkasan();
+    const hasil=await Promise.all([
+      fetch(API_URL+"?action=getDashboardKeuangan&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getStatusPembayaran&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getPengeluaranTerbaru&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getKasPondok&_="+Date.now(),{cache:"no-store"}),
+      fetch(API_URL+"?action=getTransferSPP&_="+Date.now(),{cache:"no-store"})
+    ]);
+    const dash=await hasil[0].json(), stat=await hasil[1].json(), exp=await hasil[2].json(), kas=await hasil[3].json(), tr=await hasil[4].json();
+    if(!dash.success) throw new Error(dash.message||"Gagal mengambil dashboard");
+    const periode=String(dash.periode||stat.periode||"-"), pnorm=normalisasiPeriodeLaporan(periode);
+    const santri=(stat.data||[]).filter(s=>["nis","nama","kelas"].some(k=>String(s[k]||"").trim()&&String(s[k]||"").trim()!=="-"));
+    const total=santri.length, lunas=santri.filter(s=>String(s.status||"").toUpperCase()==="LUNAS").length, belum=Math.max(0,total-lunas);
+    const tagihan=total*150000, diterima=Number(dash.sppMasuk||0), tunggakan=Math.max(0,tagihan-diterima);
+    const semuaExp=(exp&&exp.success&&Array.isArray(exp.transaksi))?exp.transaksi:[];
+    const normPeriode = v => String(v ?? "").normalize("NFKC").toLowerCase().replace(/\s+/g," ").trim();
+    const cocokPeriodeSPP = t => {
+      const p = normPeriode(t.periode ?? t.Priode ?? t.priode ?? t["Periode SPP"]);
+      const sumber = normPeriode(t.sumber ?? t.Sumber ?? t.sumberDana ?? t.sumber_dana);
+      if (!pnorm || pnorm === "-") return true;
+      // Beberapa baris menyimpan "SPP Oktober" pada kolom Priode/Sumber,
+      // sedangkan yang lain hanya "Oktober". Keduanya harus masuk rekap.
+      return !p || p.includes(pnorm) || pnorm.includes(p) ||
+        sumber.includes(pnorm) ||
+        (pnorm.includes("oktober") && sumber.includes("okt")) ||
+        (pnorm.includes("september") && sumber.includes("sep"));
+    };
+    const expSPP=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="spp" && cocokPeriodeSPP(t));
+    const expKas=semuaExp.filter(t=>normPeriode(t.sumber ?? t.Sumber)==="kas");
+    // Ringkasan laporan harus sama dengan kartu dashboard yang sudah menghitung
+    // seluruh transaksi SPP dari sumber yang benar, bukan hanya daftar transaksi terbaru.
+    const totalSPPCatatan = expSPP.reduce((n,t)=>n+Math.abs(Number(String(t.jumlah ?? t.Jumlah ?? 0).replace(/[^0-9,-]/g,"").replace(/,/g,"") || 0)),0);
+    // Ambil angka yang benar-benar tampil pada kartu dashboard (sudah dihitung
+    // dari transaksi detail). Ini menghindari nilai agregat lama 288000 dari API.
+    const parseRupiah = v => {
+      if (typeof v === "number") return Math.abs(v);
+      const digits = String(v ?? "").replace(/[^0-9]/g, "");
+      return digits ? Number(digits) : 0;
+    };
+    const angkaVariabelDashboard = parseRupiah(window.pengeluaranSPPDashboard);
+    const angkaKartuDashboard = parseRupiah(document.getElementById("pengeluaranSPP")?.textContent);
+    // Prioritas wajib: angka hasil pembacaan transaksi Sheets yang dihitung loadRingkasan().
+    // Jangan pernah menimpa dengan getDashboardKeuangan yang masih mengembalikan Rp288.000.
+    const totalSPP = angkaVariabelDashboard > 0
+      ? angkaVariabelDashboard
+      : (angkaKartuDashboard > 0
+      ? angkaKartuDashboard
+      : totalSPPCatatan);
+    const transfers=(tr&&tr.success&&Array.isArray(tr.transaksi))?tr.transaksi:[];
+    const trPeriode=transfers.filter(t=>{const p=normalisasiPeriodeLaporan(t.periode??t.Priode??t.priode);return !p||p===pnorm;});
+    const totalTransfer=trPeriode.reduce((n,t)=>n+Number(t.jumlah||0),0);
+    const sisaSebelum=Math.max(0,diterima-totalSPP), sisaAkhir=Math.max(0,diterima-totalSPP-totalTransfer);
+    // saldoKas dari backend sudah mencakup pemasukan/pengeluaran kas reguler.
+    // Pisahkan saldo awal agar pemasukan tidak dihitung dua kali pada laporan.
+    const saldoBackend=Number(kas.saldoKas||0), pemasukanKas=Number(kas.pemasukanKas||0), pengeluaranKas=Number(kas.pengeluaranKas||0);
+    const saldoAwal=saldoBackend-pemasukanKas+pengeluaranKas;
+    const saldoAkhir=saldoAwal+pemasukanKas+totalTransfer-pengeluaranKas;
+    const tgl=new Date().toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
+    window.__laporanKeuanganData={periode,santri,expSPP,expKas,trPeriode,total,lunas,belum,tagihan,diterima,tunggakan,totalSPP,totalTransfer,sisaSebelum,sisaAkhir,saldoAwal,pemasukanKas,pengeluaranKas,saldoAkhir,tgl};
+    const isi=document.getElementById("laporanKeuanganIsi");
+    document.getElementById("laporanKeuanganLoading").style.display="none"; document.getElementById("laporanKeuanganSub").textContent="Periode "+periode+" • dibuat "+tgl; isi.style.display="block";
+    isi.innerHTML='<div style="background:#f8fafc;border-radius:16px;padding:16px;margin-bottom:14px"><b style="color:#172554">Ringkasan lengkap siap dibuat</b><div style="color:#64748b;font-size:13px;margin-top:5px">Laporan mencakup SPP, status seluruh santri, pengeluaran SPP, transfer SPP ke Kas, rekap Kas, dan rincian pengeluaran Kas.</div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"><div class="card"><div class="card-title">SPP Diterima</div><div class="card-value green">'+rupiah(diterima)+'</div></div><div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value red">'+rupiah(totalSPP)+'</div></div><div class="card"><div class="card-title">Sisa SPP</div><div class="card-value blue">'+rupiah(sisaAkhir)+'</div></div><div class="card"><div class="card-title">Saldo Kas</div><div class="card-value blue">'+rupiah(saldoAkhir)+'</div></div></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button onclick="simpanLaporanKeuanganKeHP()" style="flex:1;min-width:220px;border:0;background:#0f766e;color:white;padding:14px;border-radius:12px;font-weight:800;font-size:15px">🖨️ Cetak</button><button onclick="simpanLaporanKeuanganKeHP()" style="flex:1;min-width:220px;border:0;background:#0f766e;color:white;padding:14px;border-radius:12px;font-weight:800;font-size:15px">📄 Simpan PDF</button><button onclick="document.getElementById(\'modalLaporanKeuanganPDF\').remove()" style="border:0;background:#f1f5f9;color:#334155;padding:14px 20px;border-radius:12px;font-weight:800">Tutup</button></div><div style="margin-top:12px;font-size:12px;color:#64748b">PDF akan otomatis disimpan ke <b>Download/Bendahara</b> di HP.</div>';
+  }catch(e){document.getElementById("laporanKeuanganLoading").textContent="Laporan belum dapat dimuat: "+(e.message||"kesalahan sistem");console.error(e)}
+}
+function simpanLaporanKeuanganKeHP(){
+  const d=window.__laporanKeuanganData;
+  if(!d){alert("Data laporan belum siap.");return;}
+  tampilkanPreviewLaporanKeuangan();
+}
+function tampilkanPreviewLaporanKeuangan(){
+  const d=window.__laporanKeuanganData;
+  if(!d){alert("Data laporan belum siap.");return;}
+  const html=cetakLaporanKeuangan(true);
+  const modal=document.createElement("div");
+  modal.id="previewLaporanKeuangan";
+  modal.style.cssText="position:fixed;inset:0;background:#111827;z-index:100000;display:flex;flex-direction:column;";
+  modal.innerHTML='<div style="height:58px;flex:none;background:white;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.18)"><div><b style="font-size:15px;color:#172554">👁️ Pratinjau Laporan</b><div style="font-size:10px;color:#64748b">Periksa isi laporan sebelum disimpan sebagai PDF</div></div><button onclick="document.getElementById(\'previewLaporanKeuangan\').remove()" style="border:0;background:#f1f5f9;color:#334155;border-radius:10px;padding:9px 12px;font-weight:800">Tutup</button></div><div style="flex:1;min-height:0;background:#d1d5db;padding:10px;overflow:auto"><iframe id="iframePreviewLaporan" style="display:block;width:100%;height:100%;min-height:700px;border:0;background:white;box-shadow:0 2px 12px rgba(0,0,0,.18)" title="Pratinjau laporan"></iframe></div><div style="flex:none;background:white;padding:10px;display:flex;gap:8px;box-shadow:0 -2px 10px rgba(0,0,0,.18)"><button onclick="simpanPreviewLaporanKePDF()" style="flex:1;border:0;background:#0f766e;color:white;border-radius:11px;padding:12px;font-weight:800">📄 Simpan PDF</button></div>';
+  document.body.appendChild(modal);
+  const frame=document.getElementById("iframePreviewLaporan");
+  if(frame){
+    frame.srcdoc=html;
+    frame.onload=function(){
+      try{
+        const doc=frame.contentDocument;
+        const body=doc&&doc.body;
+        if(body) body.style.background="#e5e7eb";
+      }catch(e){}
+    };
+  }
+}
+function simpanPreviewLaporanKePDF(){
+  const d=window.__laporanKeuanganData;
+  if(!d){alert("Data laporan belum siap.");return;}
+  const html=cetakLaporanKeuangan(true);
+  const nama="Laporan-Keuangan-"+String(d.periode||"Laporan").replace(/[^a-zA-Z0-9_-]/g,"-")+".pdf";
+  if(window.BendaharaAndroid && window.BendaharaAndroid.saveLaporanPDF){
+    window.BendaharaAndroid.saveLaporanPDF(html,nama);
+  }else{
+    const w=window.open("","_blank");
+    if(!w){alert("Tidak dapat membuka halaman cetak.");return;}
+    w.document.write(html);
+    w.document.close();
+    w.addEventListener("afterprint",function(){
+      try{w.close();}catch(e){}
+      const m=document.getElementById("previewLaporanKeuangan");
+      if(m)m.remove();
+      if(typeof loadDashboard==="function")loadDashboard();
+    });
+    w.focus();
+    setTimeout(function(){
+      try{w.print();}catch(e){
+        try{w.close();}catch(_){}
+        const m=document.getElementById("previewLaporanKeuangan");
+        if(m)m.remove();
+        if(typeof loadDashboard==="function")loadDashboard();
+      }
+    },500);
+  }
+}
+function normalisasiPeriodeLaporan(v){return String(v||"").toLowerCase().replace(/\s+/g," ").trim();}
+function tanggalLaporan(v){if(!v)return "-";const d=new Date(v);return isNaN(d.getTime())?String(v):d.toLocaleDateString("id-ID");}
+function bagikanLaporanPDF(){
+  const d=window.__laporanKeuanganData;
+  if(!d){alert("Data laporan belum siap.");return;}
+  const pesan="Assalamu'alaikum.\n\nBerikut laporan keuangan Pondok Pesantren Fathul Huda Al Qorrobiyah periode "+d.periode+".";
+  const pdfHtml=cetakLaporanKeuangan(true);
+  if(window.BendaharaAndroid && window.BendaharaAndroid.shareLaporanPDF){
+    window.BendaharaAndroid.shareLaporanPDF(pdfHtml,"Laporan-Keuangan-"+String(d.periode||"").replace(/[^a-zA-Z0-9_-]/g,"-")+".pdf",pesan);
+    return;
+  }
+  alert("Simpan laporan sebagai PDF terlebih dahulu, lalu bagikan file PDF yang tersimpan.");
+}
+function cetakLaporanKeuangan(returnOnly){
+  const d=window.__laporanKeuanganData; if(!d)return;
+  const rows=function(arr,kas){return arr.length?arr.map(function(t,i){return "<tr><td>"+(i+1)+"</td><td>"+tanggalLaporan(t.tanggal)+"</td><td>"+(t.keterangan||"-")+"</td><td>"+rupiah(t.jumlah)+"</td><td>"+(kas?"Kas":(t.periode||d.periode||"-"))+"</td><td>"+(t.catatan||"-")+"</td></tr>"}).join(""):"<tr><td colspan=\"6\">Tidak ada transaksi.</td></tr>"};
+  const santriRows=d.santri.map(function(s,i){return "<tr><td>"+(i+1)+"</td><td>"+(s.nis||"-")+"</td><td>"+(s.nama||"-")+"</td><td>"+(s.kelas||"-")+"</td><td>"+(String(s.status||"").toUpperCase()==="LUNAS"?"LUNAS":"BELUM BAYAR")+"</td></tr>"}).join("");
+  const transferRows=d.trPeriode.length?d.trPeriode.map(function(t,i){return "<tr><td>"+(i+1)+"</td><td>"+tanggalLaporan(t.tanggal)+"</td><td>"+(t.keterangan||"-")+"</td><td>"+rupiah(t.jumlah)+"</td><td>"+(t.periode||d.periode||"-")+"</td><td>"+(t.catatan||"-")+"</td></tr>"}).join(""):"<tr><td colspan=\"6\">Belum ada transfer SPP ke Kas.</td></tr>";
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Keuangan Pesantren</title><style>@page{size:A4 portrait;margin:10mm}html,body{width:auto!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important}body{font-family:Arial,sans-serif;color:#1f2937;font-size:9.5px;line-height:1.25;background:#fff}.page{width:100%;min-height:0}h1{text-align:center;color:#0f766e;font-size:20px;margin:0 0 4px}h2{text-align:center;color:#172554;font-size:13px;margin:0 0 4px}p.sub{text-align:center;color:#64748b;margin:0 0 12px}.sec{font-size:12px;font-weight:800;color:#0f766e;background:#ecfdf5;padding:6px;margin-top:10px;border-left:4px solid #0f766e;break-after:auto;page-break-after:auto}table{width:100%;border-collapse:collapse;margin-top:6px;margin-bottom:8px;break-inside:auto;page-break-inside:auto}tbody{break-inside:auto;page-break-inside:auto}thead{display:table-header-group}tr{break-inside:auto;page-break-inside:auto}th{background:#0f766e;color:#fff;text-align:left}th,td{border:1px solid #dbe3ea;padding:4px;vertical-align:top}tr:nth-child(even){background:#f8fafc}.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.box{border:1px solid #dbe3ea;border-radius:6px;padding:6px;break-inside:avoid}.box b{display:block;color:#64748b;font-size:9px}.box strong{font-size:13px;color:#172554}.sign{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:30px;break-inside:avoid}.line{margin:28px 35px 0;border-top:1px solid #334155;padding-top:4px}.note{line-height:1.45} @media print{html,body{width:auto!important;height:auto!important;min-height:0!important;overflow:visible!important}body{zoom:1}.page{height:auto!important;min-height:0!important;overflow:visible!important}.sec,table,.box,.sign{max-width:100%}} </style></head><body>'+
+  '<div class="page"><h1>LAPORAN KEUANGAN PESANTREN</h1><h2>Pondok Pesantren Fathul Huda Al Qorrobiyah</h2><p class="sub">Periode SPP: '+d.periode+' • Tanggal laporan: '+d.tgl+'</p>'+
+  '<div class="sec">A. RINGKASAN KEUANGAN</div><div class="grid"><div class="box"><b>SPP Diterima</b><strong>'+rupiah(d.diterima)+'</strong></div><div class="box"><b>Pengeluaran SPP</b><strong>'+rupiah(d.totalSPP)+'</strong></div><div class="box"><b>Sisa SPP Sebelum Transfer</b><strong>'+rupiah(d.sisaSebelum)+'</strong></div><div class="box"><b>Transfer SPP → Kas</b><strong>'+rupiah(d.totalTransfer)+'</strong></div><div class="box"><b>Sisa SPP Setelah Transfer</b><strong>'+rupiah(d.sisaAkhir)+'</strong></div><div class="box"><b>Saldo Kas Akhir</b><strong>'+rupiah(d.saldoAkhir)+'</strong></div></div>'+
+  '<div class="sec">B. STATUS PEMBAYARAN SPP</div><table><tr><th>Uraian</th><th>Jumlah</th></tr><tr><td>Total santri</td><td>'+d.total+'</td></tr><tr><td>Sudah LUNAS</td><td>'+d.lunas+'</td></tr><tr><td>Belum bayar</td><td>'+d.belum+'</td></tr><tr><td>Total tagihan SPP</td><td>'+rupiah(d.tagihan)+'</td></tr><tr><td>SPP benar-benar diterima</td><td>'+rupiah(d.diterima)+'</td></tr><tr><td>Tunggakan</td><td>'+rupiah(d.tunggakan)+'</td></tr></table>'+
+  '<div class="sec">C. RINCIAN SANTRI</div><table><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Status</th></tr>'+santriRows+'</table>'+
+  '<div class="sec">D. RINCIAN PENGELUARAN SPP</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Periode</th><th>Catatan</th></tr>'+rows(d.expSPP,false)+'</table>'+
+  '<div class="sec">E. TRANSFER SPP → KAS</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Periode</th><th>Catatan</th></tr>'+transferRows+'</table>'+
+  '<div class="sec">F. REKAP KAS PONDOK</div><table><tr><th>Komponen</th><th>Jumlah</th></tr><tr><td>Saldo awal Kas</td><td>'+rupiah(d.saldoAwal)+'</td></tr><tr><td>Pemasukan Kas</td><td>'+rupiah(d.pemasukanKas)+'</td></tr><tr><td>Transfer SPP → Kas</td><td>'+rupiah(d.totalTransfer)+'</td></tr><tr><td>Pengeluaran Kas</td><td>'+rupiah(d.pengeluaranKas)+'</td></tr><tr><td><b>Saldo akhir Kas</b></td><td><b>'+rupiah(d.saldoAkhir)+'</b></td></tr></table>'+
+  '<div class="sec">G. RINCIAN PENGELUARAN KAS</div><table><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Jumlah</th><th>Sumber</th><th>Catatan</th></tr>'+rows(d.expKas,true)+'</table>'+
+  '<div class="sec">H. CATATAN PERTANGGUNGJAWABAN</div><p class="note">Laporan ini dibuat berdasarkan data yang tersimpan pada sistem saat laporan dibuat. Dana SPP yang diterima adalah pembayaran yang benar-benar telah tercatat. Tunggakan merupakan kewajiban santri dan bukan uang kas. Sisa SPP dihitung dari penerimaan SPP dikurangi pengeluaran SPP dan transfer SPP ke Kas. Transfer SPP ke Kas merupakan perpindahan dana dan tidak dihitung sebagai pemasukan SPP baru.</p><div class="sign"><div>Bendahara<div class="line">____________________</div></div><div>Mengetahui, Pimpinan<div class="line">____________________</div></div></div></body></html>';
+  if(returnOnly) return html;
+  const w=window.open("","_blank"); if(!w){alert("Jendela cetak diblokir. Izinkan pop-up untuk aplikasi Bendahara.");return;} w.document.open();w.document.write(html);w.document.close();w.focus();setTimeout(function(){w.print();},500);
+}
+function bukaMenuTransaksiHP(){
+  const modal=document.createElement("div");
+  modal.id="modalMenuTransaksiHP";
+  modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:9999;display:flex;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 35px rgba(0,0,0,.18)">
+      <div style="font-size:18px;font-weight:800;color:#172554;margin-bottom:12px">Transaksi</div>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaPemasukanKas()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#ecfdf5;color:#047857;font-weight:800;margin-bottom:8px">💰 Pemasukan Kas</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaForm()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#fff7ed;color:#c2410c;font-weight:800;margin-bottom:8px">🛒 Catat Pengeluaran</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaLaporanKeuanganPDF()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#ecfeff;color:#0f766e;font-weight:800;margin-bottom:8px">📄 Laporan Keuangan PDF</button>
+      <button onclick="document.getElementById('modalMenuTransaksiHP').remove();bukaLaporanPengeluaran()" style="width:100%;padding:14px;border:0;border-radius:12px;background:#f8fafc;color:#334155;font-weight:800">📋 Pengeluaran Terbaru</button>
+    </div></div>`;
+  document.body.appendChild(modal);
+}
+function bukaPengaturanHP(){
+  alert('Pengaturan aplikasi akan disiapkan pada tahap berikutnya.');
+}
+</script>
+</body>
+  </html>
