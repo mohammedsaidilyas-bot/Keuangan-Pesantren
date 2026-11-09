@@ -40,10 +40,13 @@ function keuanganPutriSummary_(){
  const totalKasMasuk=kas.filter(r=>String(r[2]).toUpperCase()==='PEMASUKAN').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
  const totalKasKeluar=kas.filter(r=>String(r[2]).toUpperCase()==='PENGELUARAN').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
  const transferTotal=transfer.filter(r=>String(r[6]).toUpperCase()==='SELESAI').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
- const santriSh=keuanganPutriDb_().getSheetByName('Santri');
- const studentRows=santriSh&&santriSh.getLastRow()>1?santriSh.getDataRange().getDisplayValues().slice(1).filter(r=>r[0]&&String(r[6]||'Aktif').toLowerCase()!=='nonaktif'):[];
- const belum=monthIndex<0?0:studentRows.filter(r=>!String(r[7+monthIndex]||'BELUM').toUpperCase().includes('LUNAS')).length;
- const lunas=studentRows.filter(r=>monthIndex>=0&&String(r[7+monthIndex]||'').toUpperCase().includes('LUNAS')).length;
+ const santriSh=keuanganPutriDb_().getSheetByName('Uang Jajan Santri PPFHA');
+ const statusSh=keuanganPutriDb_().getSheetByName('StatusSPP');
+ const studentRows=santriSh&&santriSh.getLastRow()>1?santriSh.getDataRange().getDisplayValues().slice(1).filter(r=>r[0]&&String(r[7]||'Aktif').toLowerCase()!=='nonaktif'):[];
+ const statusRows=statusSh&&statusSh.getLastRow()>1?statusSh.getDataRange().getDisplayValues().slice(1):[];
+ const statusByNis={};statusRows.forEach(r=>{if(r[0])statusByNis[String(r[0]).trim()]=r;});
+ const belum=monthIndex<0?0:studentRows.filter(r=>!String((statusByNis[String(r[0]).trim()]||[])[3+monthIndex]||'BELUM').toUpperCase().includes('LUNAS')).length;
+ const lunas=studentRows.filter(r=>monthIndex>=0&&String((statusByNis[String(r[0]).trim()]||[])[3+monthIndex]||'').toUpperCase().includes('LUNAS')).length;
  return {periode:period,sppMasuk,pengeluaranSPP,lunas,belumBayar:belum,sisaSPP:sppMasuk-pengeluaranSPP-transferTotal,saldoKas:totalKasMasuk-totalKasKeluar+transferTotal,totalKasMasuk,totalKasKeluar,transferSPP:transferTotal,belum};
 }
 function keuanganPutriExpenseRows_(){return keuanganPutriRows_('PengeluaranSPP').filter(r=>String(r[7]||'AKTIF').toUpperCase()!=='BATAL').map(r=>({id:r[0],tanggal:r[1],keterangan:r[2],jumlah:keuanganPutriNum_(r[3]),sumber:r[4],periode:r[5],catatan:r[6],status:r[7]}));}
@@ -55,10 +58,11 @@ function keuanganPutriGet_(action){
  if(action==='getRingkasanKeuangan')return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
  if(action==='getPengeluaranTerbaru')return {success:true,transaksi:keuanganPutriExpenseRows_().reverse().slice(0,100),pengeluaran:keuanganPutriExpenseRows_().reverse().slice(0,100),totalPengeluaranSPP:s.pengeluaranSPP};
  if(action==='getStatusPembayaran'){
-  const sh=keuanganPutriDb_().getSheetByName('Santri');if(!sh)return {success:true,totalSantri:0,lunas:0,belum:0,items:[]};
+  const sh=keuanganPutriDb_().getSheetByName('Uang Jajan Santri PPFHA'),statusSh=keuanganPutriDb_().getSheetByName('StatusSPP');if(!sh)return {success:true,totalSantri:0,lunas:0,belum:0,items:[]};
   const rows=sh.getDataRange().getDisplayValues().slice(1).filter(r=>r[0]);
+  const statusRows=statusSh&&statusSh.getLastRow()>1?statusSh.getDataRange().getDisplayValues().slice(1):[],map={};statusRows.forEach(r=>{if(r[0])map[String(r[0]).trim()]=r;});
   const ix=KEUANGAN_PUTRI_MONTHS.indexOf(String(s.periode).split(' ')[0]);
-  const items=rows.map(r=>({nis:r[0],nama:r[1],status:ix>=0?String(r[7+ix]||'BELUM'):'BELUM'}));
+  const items=rows.map(r=>({nis:r[0],nama:r[1],status:ix>=0?String((map[String(r[0]).trim()]||[])[3+ix]||'BELUM'):'BELUM'}));
   return {success:true,totalSantri:items.length,lunas:items.filter(x=>x.status.toUpperCase().includes('LUNAS')).length,belum:items.filter(x=>!x.status.toUpperCase().includes('LUNAS')).length,items};
  }
  throw Error('Aksi tidak dikenal: '+action);
