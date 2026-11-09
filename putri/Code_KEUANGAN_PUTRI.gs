@@ -66,6 +66,12 @@ function keuanganPutriGet_(action){
 function keuanganPutriPin_(p){const saved=PropertiesService.getScriptProperties().getProperty('KEUANGAN_PUTRI_PIN');if(!saved||String(p||'')!==saved)throw Error('Sandi bendahara PUTRI salah.');}
 function keuanganPutriWrite_(p){
  const action=String(p.action||'');keuanganPutriPin_(p.pin);
+ if(action==='pindahkanSisaSPPKeKas'){
+  const s=keuanganPutriSummary_();if(s.belumBayar>0)throw Error('Masih ada santri yang belum lunas; transfer ditolak.');
+  if(s.sisaSPP<=0)throw Error('Tidak ada sisa SPP yang dapat dipindahkan.');
+  const transferId=Utilities.getUuid();keuanganPutriSheet_('TransferSPPKeKas').appendRow([transferId,new Date(),'TRANSFER','Sisa SPP periode '+s.periode,s.sisaSPP,s.periode,'SELESAI']);
+  return {success:true,message:'Sisa SPP PUTRI berhasil dipindahkan ke Kas Pondok.',jumlah:s.sisaSPP};
+ }
  const amount=keuanganPutriNum_(p.jumlah);if(!Number.isSafeInteger(amount)||amount<=0)throw Error('Jumlah harus berupa angka positif.');
  const tanggal=p.tanggal?new Date(p.tanggal):new Date();if(isNaN(tanggal.getTime()))throw Error('Tanggal tidak valid.');
  const keterangan=String(p.keterangan||'').trim();if(!keterangan||keterangan.length>500)throw Error('Keterangan wajib diisi (maksimal 500 karakter).');
@@ -77,12 +83,6 @@ function keuanganPutriWrite_(p){
  if(action==='catatPemasukanKas'){
   keuanganPutriSheet_('KasPondok').appendRow([id,tanggal,'PEMASUKAN',keterangan,amount,String(p.catatan||''),String(p.petugas||'Bendahara PUTRI')]);
   return {success:true,message:'Pemasukan kas PUTRI berhasil dicatat.',id};
- }
- if(action==='pindahkanSisaSPPKeKas'){
-  const s=keuanganPutriSummary_();if(s.belum>0)throw Error('Masih ada santri yang belum lunas; transfer ditolak.');
-  if(s.sisaSPP<=0)throw Error('Tidak ada sisa SPP yang dapat dipindahkan.');
-  keuanganPutriSheet_('TransferSPPKeKas').appendRow([id,new Date(),'TRANSFER','Sisa SPP periode '+s.periode,s.sisaSPP,s.periode,'SELESAI']);
-  return {success:true,message:'Sisa SPP PUTRI berhasil dipindahkan ke Kas Pondok.',jumlah:s.sisaSPP};
  }
  throw Error('Aksi tulis tidak dikenal.');
 }
