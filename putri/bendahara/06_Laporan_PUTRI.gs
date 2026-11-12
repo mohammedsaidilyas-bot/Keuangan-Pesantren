@@ -11,7 +11,7 @@ function keuanganPutriPeriod_(){
 }
 
 function keuanganPutriPeriodLabel_(period){
-  const m=String(period||'').match(/^(\\d{4})-(\\d{2})$/);
+  const m=String(period||'').match(/^(\d{4})-(\d{2})$/);
   return m ? KEUANGAN_PUTRI_MONTHS[Number(m[2])-1]+' '+m[1] : String(period||'');
 }
 
@@ -54,15 +54,15 @@ function laporanPutriPeriodFromValue_(value){
     return Utilities.formatDate(value,'Asia/Jakarta','yyyy-MM');
   }
   const raw=String(value==null?'':value).trim();
-  let m=raw.match(/^(\\d{4})-(\\d{1,2})$/);
+  let m=raw.match(/^(\d{4})-(\d{1,2})$/);
   if(m) return m[1]+'-'+String(Number(m[2])).padStart(2,'0');
-  m=raw.match(/^(\\d{1,2})[\\/-](\\d{4})$/);
+  m=raw.match(/^(\d{1,2})[\/-](\d{4})$/);
   if(m) return m[2]+'-'+String(Number(m[1])).padStart(2,'0');
   const months=KEUANGAN_PUTRI_MONTHS.map(x=>x.toLowerCase());
-  const parts=raw.split(/\\s+/);
+  const parts=raw.split(/\s+/);
   const ix=months.indexOf(String(parts[0]||'').toLowerCase());
   if(ix>=0){
-    const year=/^\\d{4}$/.test(parts[1]||'')?parts[1]:keuanganPutriPeriod_().slice(0,4);
+    const year=/^\d{4}$/.test(parts[1]||'')?parts[1]:keuanganPutriPeriod_().slice(0,4);
     return year+'-'+String(ix+1).padStart(2,'0');
   }
   return '';
