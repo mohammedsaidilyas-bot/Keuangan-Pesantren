@@ -622,6 +622,16 @@
           </div>
         </div>
       </div>
+      <div class="menu" onclick="bukaRiwayatPembayaranSPP()" style="cursor:pointer;">
+        <div class="menu-left">
+          <div class="icon">🧾</div>
+          <div>
+            <div class="menu-title">Riwayat Pembayaran SPP</div>
+            <div class="menu-desc">Lihat seluruh pembayaran, periode, dan status verifikasi</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+      </div>
       <div class="menu-group-label">Laporan & Periode</div>
 
 <div class="menu" onclick="bukaLaporanPengeluaran()" style="cursor:pointer;">
@@ -1849,6 +1859,78 @@ function renderLaporanPengeluaran(){
       if(bars) bars.innerHTML='<div class="empty-state">Rekap belum dapat dimuat.</div>';
       console.error(e);
     }
+  }
+
+  async function bukaRiwayatPembayaranSPP(){
+    const old=document.getElementById("modalRiwayatPembayaranSPP");
+    if(old) old.remove();
+    const modal=document.createElement("div");
+    modal.id="modalRiwayatPembayaranSPP";
+    modal.innerHTML=`
+      <div style="position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:100000;display:flex;align-items:center;justify-content:center;padding:14px">
+        <div style="width:100%;max-width:1050px;max-height:94vh;overflow:auto;background:#fff;border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px">
+            <div><div style="font-size:21px;font-weight:800;color:#172554">🧾 Riwayat Pembayaran SPP</div><div id="riwayatSPPInfo" style="font-size:13px;color:#64748b;margin-top:4px">Memuat riwayat pembayaran...</div></div>
+            <button onclick="document.getElementById('modalRiwayatPembayaranSPP').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px;flex:none">×</button>
+          </div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px">
+            <input id="riwayatSPPCari" type="search" placeholder="Cari nama, NIS, atau periode..." oninput="renderRiwayatPembayaranSPP()" style="flex:1;min-width:220px;padding:11px 13px;border:1px solid #dbe3ea;border-radius:11px">
+            <select id="riwayatSPPFilter" onchange="renderRiwayatPembayaranSPP()" style="padding:11px 13px;border:1px solid #dbe3ea;border-radius:11px;background:white"><option value="SEMUA">Semua status</option><option value="LUNAS">Lunas</option><option value="PENDING">Pending</option><option value="DITOLAK">Ditolak</option></select>
+            <button onclick="muatRiwayatPembayaranSPP()" style="border:0;background:#0f766e;color:white;padding:11px 14px;border-radius:11px;font-weight:700">↻ Muat ulang</button>
+          </div>
+          <div id="riwayatSPPLoading" style="padding:25px;text-align:center;color:#64748b">Mengambil data pembayaran...</div>
+          <div id="riwayatSPPIsi" style="display:none"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    await muatRiwayatPembayaranSPP();
+  }
+
+  function escapeRiwayatSPP(value){
+    return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});
+  }
+
+  async function muatRiwayatPembayaranSPP(){
+    const loading=document.getElementById("riwayatSPPLoading");
+    const isi=document.getElementById("riwayatSPPIsi");
+    if(!loading||!isi) return;
+    loading.style.display="block"; loading.textContent="Mengambil data pembayaran...";
+    isi.style.display="none";
+    try{
+      const response=await fetch(API_URL+"?action=getRiwayatPembayaran&_="+Date.now(),{cache:"no-store"});
+      const data=await response.json();
+      if(!data.success) throw new Error(data.message||"Gagal mengambil riwayat pembayaran");
+      window.dataRiwayatPembayaranSPP=Array.isArray(data.transaksi)?data.transaksi:[];
+      loading.style.display="none"; isi.style.display="block";
+      document.getElementById("riwayatSPPInfo").textContent=(data.total||0)+" transaksi pembayaran tercatat";
+      renderRiwayatPembayaranSPP();
+    }catch(error){
+      loading.textContent="Riwayat pembayaran belum dapat dimuat: "+(error.message||"kesalahan koneksi");
+      console.error(error);
+    }
+  }
+
+  function renderRiwayatPembayaranSPP(){
+    const isi=document.getElementById("riwayatSPPIsi");
+    if(!isi) return;
+    const all=window.dataRiwayatPembayaranSPP||[];
+    const cari=(document.getElementById("riwayatSPPCari")?.value||"").toLowerCase().trim();
+    const filter=(document.getElementById("riwayatSPPFilter")?.value||"SEMUA").toUpperCase();
+    const rows=all.filter(t=>{
+      const status=String(t.status||"").toUpperCase();
+      const text=[t.nis,t.nama,t.kelas,t.periode,t.metode,t.idPembayaran].join(" ").toLowerCase();
+      return (!cari||text.includes(cari))&&(filter==="SEMUA"||status===filter);
+    });
+    const total=rows.filter(t=>String(t.status||"").toUpperCase()==="LUNAS").reduce((n,t)=>n+Number(t.nominal||0),0);
+    const tanggal=v=>{if(!v)return "-";const d=new Date(v);return isNaN(d.getTime())?escapeRiwayatSPP(v):d.toLocaleString("id-ID",{dateStyle:"medium",timeStyle:"short"});};
+    const statusBadge=s=>{
+      const v=String(s||"Belum diketahui"),u=v.toUpperCase();
+      const bg=u==="LUNAS"?"#dcfce7":u==="PENDING"?"#fef3c7":u==="DITOLAK"?"#fee2e2":"#f1f5f9";
+      const color=u==="LUNAS"?"#166534":u==="PENDING"?"#92400e":u==="DITOLAK"?"#991b1b":"#475569";
+      return '<span style="display:inline-block;padding:5px 9px;border-radius:99px;background:'+bg+';color:'+color+';font-size:12px;font-weight:800">'+escapeRiwayatSPP(v)+'</span>';
+    };
+    const cards=rows.map(t=>'<div style="border:1px solid #e2e8f0;border-radius:14px;padding:13px;margin-bottom:9px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start"><div><div style="font-weight:800;color:#172554">'+escapeRiwayatSPP(t.nama||"-")+'</div><div style="font-size:12px;color:#64748b;margin-top:3px">NIS '+escapeRiwayatSPP(t.nis||"-")+' • Kelas '+escapeRiwayatSPP(t.kelas||"-")+'</div><div style="font-size:13px;color:#475569;margin-top:8px">Periode: <b>'+escapeRiwayatSPP(t.periode||"-")+'</b></div><div style="font-size:12px;color:#64748b;margin-top:3px">Diajukan: '+tanggal(t.tanggalAjukan)+'</div><div style="font-size:12px;color:#64748b;margin-top:2px">Diverifikasi: '+tanggal(t.tanggalVerifikasi)+'</div><div style="font-size:12px;color:#64748b;margin-top:2px">Metode: '+escapeRiwayatSPP(t.metode||"-")+'</div>'+(t.diverifikasiOleh?'<div style="font-size:12px;color:#64748b;margin-top:2px">Verifikator: '+escapeRiwayatSPP(t.diverifikasiOleh)+'</div>':'')+'</div><div style="text-align:right;white-space:nowrap">'+statusBadge(t.status)+'<div style="font-weight:900;color:#0f766e;margin-top:9px">'+rupiah(t.nominal)+'</div></div></div>').join("");
+    isi.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:13px"><div style="flex:1;min-width:140px;background:#f0fdfa;border-radius:12px;padding:12px"><div style="font-size:12px;color:#64748b">Transaksi ditemukan</div><strong style="font-size:20px;color:#0f766e">'+rows.length+'</strong></div><div style="flex:1;min-width:140px;background:#f0fdf4;border-radius:12px;padding:12px"><div style="font-size:12px;color:#64748b">Total pembayaran lunas</div><strong style="font-size:20px;color:#166534">'+rupiah(total)+'</strong></div></div>'+(cards||'<div style="padding:25px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:12px">Tidak ada riwayat yang sesuai.</div>');
   }
 
   async function muatUlangData(){
