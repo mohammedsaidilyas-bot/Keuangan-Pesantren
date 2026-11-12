@@ -50,14 +50,26 @@ function laporanPutriNum_(value){
 }
 
 function laporanPutriPeriodFromValue_(value){
+  // Google Sheets may return the periode cell as a Date object.
   if(value instanceof Date && !isNaN(value.getTime())){
     return Utilities.formatDate(value,'Asia/Jakarta','yyyy-MM');
   }
   const raw=String(value==null?'':value).trim();
-  let m=raw.match(/^(\d{4})-(\d{1,2})$/);
+  if(!raw) return '';
+
+  // Accept yyyy-MM, yyyy-M, MM/yyyy, and MM-yyyy.
+  let m=raw.match(/^(\d{4})[-/](\d{1,2})$/);
   if(m) return m[1]+'-'+String(Number(m[2])).padStart(2,'0');
-  m=raw.match(/^(\d{1,2})[\/-](\d{4})$/);
+  m=raw.match(/^(\d{1,2})[-/](\d{4})$/);
   if(m) return m[2]+'-'+String(Number(m[1])).padStart(2,'0');
+
+  // Accept date strings such as "Sun Nov 01 2026 00:00:00 GMT+0700".
+  const parsed=new Date(raw);
+  if(!isNaN(parsed.getTime())){
+    return Utilities.formatDate(parsed,'Asia/Jakarta','yyyy-MM');
+  }
+
+  // Accept Indonesian month labels, e.g. "November 2026".
   const months=KEUANGAN_PUTRI_MONTHS.map(x=>x.toLowerCase());
   const parts=raw.split(/\s+/);
   const ix=months.indexOf(String(parts[0]||'').toLowerCase());
