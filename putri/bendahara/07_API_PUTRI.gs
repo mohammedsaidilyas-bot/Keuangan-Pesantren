@@ -1,33 +1,72 @@
 function keuanganPutriGet_(action){
   const s=keuanganPutriSummary_();
   if(action==='getDashboardKeuangan') return {success:true,...s};
-  if(action==='getKasPondok') return {
-    success:true,
-    saldoKas:s.totalKasMasuk-s.totalKasKeluar,
-    transaksi:keuanganPutriRows_('KasPondok').map(r=>({
-      id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:r[2],
-      keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),catatan:r[5]
-    }))
-  };
-  if(action==='getTransferSPP') return {
-    success:true,
-    transaksi:keuanganPutriRows_('TransferSPPKeKas').map(r=>({
-      id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:'transfer',
-      keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),periode:r[5],status:r[6]
-    }))
-  };
-  if(action==='getRingkasanKeuangan') return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
-  if(action==='getPengeluaranTerbaru'){
-    const list=keuanganPutriExpenseList_().reverse();
-    return {success:true,transaksi:list.slice(0,200),pengeluaran:list.slice(0,200),totalPengeluaranSPP:s.pengeluaranSPP};
+
+  if(action==='getKasPondok'){
+    const rows=keuanganPutriRows_('KasPondok');
+    const pemasukanKas=rows.filter(r=>String(r[2]||'').toUpperCase()==='PEMASUKAN')
+      .reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
+    const pengeluaranKas=rows.filter(r=>String(r[2]||'').toUpperCase()==='PENGELUARAN')
+      .reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
+    return {
+      success:true,
+      saldoKas:pemasukanKas-pengeluaranKas,
+      pemasukanKas,
+      pengeluaranKas,
+      transaksi:rows.map(r=>({
+        id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:r[2],
+        keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),catatan:r[5]
+      }))
+    };
   }
+
+  if(action==='getTransferSPP'){
+    return {
+      success:true,
+      transaksi:keuanganPutriRows_('TransferSPPKeKas').map(r=>({
+        id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:'transfer',
+        keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),periode:r[5],status:r[6]
+      }))
+    };
+  }
+
+  if(action==='getRingkasanKeuangan') return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
+
+  if(action==='getPengeluaranTerbaru'){
+    const list=keuanganPutriExpenseList_().reverse().map(t=>({
+      ...t,
+      jenis:'pengeluaran',
+      tipe:'pengeluaran',
+      nominal:t.jumlah
+    }));
+    return {
+      success:true,
+      transaksi:list.slice(0,200),
+      pengeluaran:list.slice(0,200),
+      data:list.slice(0,200),
+      totalPengeluaranSPP:s.pengeluaranSPP
+    };
+  }
+
   if(action==='getStatusPembayaran'){
     const students=keuanganPutriActiveStudents_();
     const paid=keuanganPutriPayments_().filter(p=>keuanganPutriIsPaid_(p)&&keuanganPutriPaymentPeriod_(p)===s.periodeKode);
     const paidNis=new Set(paid.map(p=>String(p.nis||'').trim()));
     const items=students.map(st=>({nis:st.nis,nama:st.nama,status:paidNis.has(st.nis)?'Lunas':'Belum Lunas'}));
-    return {success:true,totalSantri:items.length,lunas:items.filter(x=>x.status==='Lunas').length,belum:items.filter(x=>x.status!=='Lunas').length,items};
+    const lunas=items.filter(x=>x.status==='Lunas').length;
+    const belum=items.length-lunas;
+    return {
+      success:true,
+      periode:s.periode,
+      periodeKode:s.periodeKode,
+      totalSantri:items.length,
+      lunas,
+      belum,
+      items,
+      data:items
+    };
   }
+
   if(action==='getRiwayatPembayaran'){
     const transaksi=keuanganPutriPayments_().map(p=>({
       idPembayaran:String(p.idPembayaran||''),
