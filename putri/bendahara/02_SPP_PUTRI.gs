@@ -23,9 +23,21 @@ function keuanganPutriPayments_(){
 function keuanganPutriIsPaid_(p){ return String(p.status||'').trim().toLowerCase()==='lunas'; }
 
 function keuanganPutriPaymentPeriod_(p){
-  const raw=String(p.periode||'').trim();
-  if(/^\d{4}-\d{2}$/.test(raw)) return raw;
-  const match=raw.match(/^(\d{1,2})[/-](\d{4})$/);
+  const value=p.periode;
+  // Kolom periode di Google Sheets dapat terbaca sebagai Date object.
+  if(value instanceof Date && !isNaN(value.getTime())){
+    return Utilities.formatDate(value,'Asia/Jakarta','yyyy-MM');
+  }
+  const raw=String(value==null?'':value).trim();
+  if(!raw) return '';
+  let match=raw.match(/^(\d{4})[-/](\d{1,2})$/);
+  if(match) return match[1]+'-'+String(Number(match[2])).padStart(2,'0');
+  match=raw.match(/^(\d{1,2})[-/](\d{4})$/);
   if(match) return match[2]+'-'+String(Number(match[1])).padStart(2,'0');
+  // Cadangan jika nilai tanggal diterima sebagai teks, bukan Date object.
+  const parsed=new Date(raw);
+  if(!isNaN(parsed.getTime())){
+    return Utilities.formatDate(parsed,'Asia/Jakarta','yyyy-MM');
+  }
   return '';
 }
