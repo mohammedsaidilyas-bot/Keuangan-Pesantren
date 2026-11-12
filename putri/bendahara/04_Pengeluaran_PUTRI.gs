@@ -1,9 +1,9 @@
 function keuanganPutriExpensePeriod_(value){
   const raw=String(value||'').trim();
-  if(/^\\d{4}-\\d{2}$/.test(raw)) return raw;
-  const parts=raw.split(/\\s+/), month=KEUANGAN_PUTRI_MONTHS.findIndex(m=>m.toLowerCase()===String(parts[0]||'').toLowerCase());
+  if(/^\d{4}-\d{2}$/.test(raw)) return raw;
+  const parts=raw.split(/\s+/), month=KEUANGAN_PUTRI_MONTHS.findIndex(m=>m.toLowerCase()===String(parts[0]||'').toLowerCase());
   if(month<0) return '';
-  const year=parts[1]&&/^\\d{4}$/.test(parts[1])?parts[1]:String(keuanganPutriPeriod_()).slice(0,4);
+  const year=parts[1]&&/^\d{4}$/.test(parts[1])?parts[1]:String(keuanganPutriPeriod_()).slice(0,4);
   return year+'-'+String(month+1).padStart(2,'0');
 }
 
