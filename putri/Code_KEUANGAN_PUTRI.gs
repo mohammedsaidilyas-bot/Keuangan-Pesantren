@@ -80,6 +80,14 @@ function keuanganPutriPayments_(){
   });
 }
 function keuanganPutriIsPaid_(p){ return String(p.status||'').trim().toLowerCase()==='lunas'; }
+function keuanganPutriExpensePeriod_(value){
+  const raw=String(value||'').trim();
+  if(/^\\d{4}-\\d{2}$/.test(raw)) return raw;
+  const parts=raw.split(/\\s+/), month=KEUANGAN_PUTRI_MONTHS.findIndex(m=>m.toLowerCase()===String(parts[0]||'').toLowerCase());
+  if(month<0) return '';
+  const year=parts[1]&&/^\\d{4}$/.test(parts[1])?parts[1]:String(keuanganPutriPeriod_()).slice(0,4);
+  return year+'-'+String(month+1).padStart(2,'0');
+}
 function keuanganPutriPaymentPeriod_(p){
   const raw=String(p.periode||'').trim();
   if(/^\d{4}-\d{2}$/.test(raw)) return raw;
@@ -93,7 +101,7 @@ function keuanganPutriSummary_(){
   const paidNis=new Set(paid.map(p=>String(p.nis||'').trim()).filter(Boolean));
   const sppMasuk=paid.reduce((n,p)=>n+keuanganPutriNum_(p.nominal),0);
   const expenses=keuanganPutriRows_('PengeluaranSPP').filter(r=>String(r[7]||'AKTIF').toUpperCase()!=='BATAL');
-  const pengeluaranSPP=expenses.filter(r=>String(r[5]||'').trim()===period).reduce((n,r)=>n+keuanganPutriNum_(r[3]),0);
+  const pengeluaranSPP=expenses.filter(r=>keuanganPutriExpensePeriod_(r[5])===period).reduce((n,r)=>n+keuanganPutriNum_(r[3]),0);
   const kas=keuanganPutriRows_('KasPondok');
   const transfer=keuanganPutriRows_('TransferSPPKeKas').filter(r=>String(r[6]||'').toUpperCase()==='SELESAI');
   const totalKasMasuk=kas.filter(r=>String(r[2]).toUpperCase()==='PEMASUKAN').reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
@@ -155,7 +163,7 @@ function keuanganPutriWrite_(p){
     if(sumber==='KAS'){
       keuanganPutriSheet_('KasPondok').appendRow([id,tanggal,'PENGELUARAN',keterangan,amount,String(p.catatan||''),'Bendahara PUTRI']);
     } else {
-      keuanganPutriSheet_('PengeluaranSPP').appendRow([id,tanggal,keterangan,amount,'SPP',String(p.periode||keuanganPutriPeriod_()),String(p.catatan||''),'AKTIF']);
+      keuanganPutriSheet_('PengeluaranSPP').appendRow([id,tanggal,keterangan,amount,'SPP',keuanganPutriExpensePeriod_(p.periode||keuanganPutriPeriod_()),String(p.catatan||''),'AKTIF']);
     }
     return {success:true,message:'Pengeluaran PUTRI berhasil dicatat.',id};
   }
