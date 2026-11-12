@@ -107,12 +107,36 @@ function laporanPutriPaidPayments_(){
   }).filter(p=>p.status==='lunas');
 }
 
+/**
+ * Tagihan adalah sumber status lunas per santri/periode.
+ * Satu pembayaran dapat mencakup beberapa bulan; sheet pembayaran
+ * menyimpan periode gabungan, sedangkan setiap baris tagihan menyimpan
+ * satu periode dan status yang diperbarui saat verifikasi.
+ */
+function laporanPutriPaidBills_(period){
+  const data=laporanPutriHeaderMap_('SPP_PUTRI_Tagihan');
+  if(!data.headers.length) return [];
+  return data.rows.map(row=>{
+    const o={}; data.headers.forEach((h,i)=>o[h]=row[i]);
+    return {
+      nis:String(laporanPutriPick_(o,['nis','nomor induk','nomor induk santri'])||'').replace(/\\D/g,''),
+      nama:String(laporanPutriPick_(o,['nama','nama santri'])||''),
+      kelas:String(laporanPutriPick_(o,['kelas','rombel'])||''),
+      status:String(laporanPutriPick_(o,['status'])||'').trim().toLowerCase(),
+      periode:laporanPutriPeriodFromValue_(laporanPutriPick_(o,['periode','period'])),
+      nominal:laporanPutriNum_(laporanPutriPick_(o,['nominal','jumlah','jumlah bayar','jumlah pembayaran','total']))
+    };
+  }).filter(b=>b.status==='lunas' && b.nis && (!period || b.periode===period));
+}
+
 function keuanganPutriSummary_(){
   const period=keuanganPutriPeriod_();
   const students=laporanPutriActiveStudents_();
-  const payments=laporanPutriPaidPayments_().filter(p=>p.periode===period);
-  const paidNis=new Set(payments.map(p=>p.nis).filter(Boolean));
-  const sppMasuk=payments.reduce((sum,p)=>sum+p.nominal,0);
+  const paidBills=laporanPutriPaidBills_(period);
+  const paidNis=new Set(paidBills.map(b=>b.nis));
+  // Jumlahkan tagihan lunas satu per satu agar pembayaran multi-bulan
+  // tidak hilang akibat kolom periode gabungan pada sheet Pembayaran.
+  const sppMasuk=paidBills.reduce((sum,b)=>sum+b.nominal,0);
 
   const expenseRows=laporanPutriRows_('PengeluaranSPP')
     .filter(r=>String(r[7]||'AKTIF').toUpperCase()!=='BATAL');
