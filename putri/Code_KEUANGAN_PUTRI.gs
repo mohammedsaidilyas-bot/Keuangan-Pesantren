@@ -109,7 +109,7 @@ function keuanganPutriExpenseList_(){
 function keuanganPutriGet_(action){
   const s=keuanganPutriSummary_();
   if(action==='getDashboardKeuangan') return {success:true,...s};
-  if(action==='getKasPondok') return {success:true,saldoKas:s.saldoKas,transaksi:keuanganPutriRows_('KasPondok').map(r=>({id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:r[2],keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),catatan:r[5]}))};
+  if(action==='getKasPondok') return {success:true,saldoKas:s.totalKasMasuk-s.totalKasKeluar,transaksi:keuanganPutriRows_('KasPondok').map(r=>({id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:r[2],keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),catatan:r[5]}))};
   if(action==='getTransferSPP') return {success:true,transaksi:keuanganPutriRows_('TransferSPPKeKas').map(r=>({id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:'transfer',keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),periode:r[5],status:r[6]}))};
   if(action==='getRingkasanKeuangan') return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
   if(action==='getPengeluaranTerbaru'){
