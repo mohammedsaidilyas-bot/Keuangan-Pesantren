@@ -16,12 +16,21 @@ function keuanganPutriPindahkanSisaSPPKeKas_(p){
     sh.appendRow(row);
     SpreadsheetApp.flush();
 
-    // Verifikasi tulis-baca sebelum mengembalikan status berhasil.
+    // Verifikasi berdasarkan ID unik, bukan mengasumsikan appendRow selalu berada di baris terakhir.
+    // Ini lebih aman jika sheet memiliki baris lain/format tambahan.
     const last=sh.getLastRow();
-    const saved=sh.getRange(last,1,1,7).getValues()[0];
-    if(String(saved[0])!==id || keuanganPutriNum_(saved[4])!==keuanganPutriNum_(again.sisaSPP) ||
-       String(saved[5])!==String(again.periodeKode) || String(saved[6]).toUpperCase()!=='SELESAI') {
-      throw new Error('Transaksi belum dapat diverifikasi di tab TransferSPPKeKas. Tidak mengulangi pemindahan; periksa spreadsheet.');
+    if(last<2) throw new Error('Baris transfer belum ditemukan setelah disimpan. Periksa tab TransferSPPKeKas.');
+    const rowsAfterWrite=sh.getRange(2,1,last-1,7).getValues();
+    const saved=rowsAfterWrite.find(r=>String(r[0])===id);
+    if(!saved) {
+      throw new Error('ID transaksi '+id+' belum ditemukan di kolom A tab TransferSPPKeKas. Periksa spreadsheet; jangan ulangi sebelum memastikan data.');
+    }
+    const amountSaved=keuanganPutriNum_(saved[4]);
+    const periodSaved=String(saved[5]||'').trim();
+    const statusSaved=String(saved[6]||'').trim().toUpperCase();
+    if(amountSaved!==keuanganPutriNum_(again.sisaSPP) ||
+       periodSaved!==String(again.periodeKode) || statusSaved!=='SELESAI') {
+      throw new Error('Transaksi ditemukan, tetapi nilainya tidak cocok. Tersimpan: Rp'+amountSaved+'; periode '+periodSaved+'; status '+statusSaved+'. Jangan ulangi transaksi.');
     }
     return {success:true,message:'Sisa SPP PUTRI berhasil dipindahkan ke Kas Pondok.',jumlah:again.sisaSPP,periode:again.periode,id:id};
   } finally { lock.releaseLock(); }
