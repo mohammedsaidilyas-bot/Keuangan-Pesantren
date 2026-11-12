@@ -28,6 +28,23 @@ function keuanganPutriGet_(action){
     const items=students.map(st=>({nis:st.nis,nama:st.nama,status:paidNis.has(st.nis)?'Lunas':'Belum Lunas'}));
     return {success:true,totalSantri:items.length,lunas:items.filter(x=>x.status==='Lunas').length,belum:items.filter(x=>x.status!=='Lunas').length,items};
   }
+  if(action==='getRiwayatPembayaran'){
+    const transaksi=keuanganPutriPayments_().map(p=>({
+      idPembayaran:String(p.idPembayaran||''),
+      tanggalAjukan:keuanganPutriDateText_(p.tanggalAjukan),
+      tanggalVerifikasi:keuanganPutriDateText_(p.tanggalVerifikasi),
+      nis:String(p.nis||''),
+      nama:String(p.nama||''),
+      kelas:String(p.kelas||''),
+      periode:keuanganPutriDateText_(p.periode),
+      nominal:keuanganPutriNum_(p.nominal),
+      metode:String(p.metode||''),
+      status:String(p.status||''),
+      catatan:String(p.catatan||''),
+      diverifikasiOleh:String(p.diverifikasiOleh||'')
+    })).sort((a,b)=>String(b.tanggalVerifikasi||b.tanggalAjukan).localeCompare(String(a.tanggalVerifikasi||a.tanggalAjukan)));
+    return {success:true,total:transaksi.length,transaksi};
+  }
   throw new Error('Aksi tidak dikenal: '+action);
 }
 
