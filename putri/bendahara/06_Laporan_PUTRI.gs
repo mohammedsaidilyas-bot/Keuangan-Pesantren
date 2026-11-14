@@ -113,6 +113,32 @@ function laporanPutriPaidPayments_(){
  * menyimpan periode gabungan, sedangkan setiap baris tagihan menyimpan
  * satu periode dan status yang diperbarui saat verifikasi.
  */
+function laporanPutriStudentDetails_(){
+  const data=laporanPutriHeaderMap_('database putri');
+  const map={};
+  if(!data.headers.length) return map;
+  const findHeader=(candidates)=>{
+    for(const candidate of candidates){
+      const exact=data.headers.indexOf(laporanPutriNorm_(candidate));
+      if(exact>=0) return exact;
+    }
+    return -1;
+  };
+  const nisIx=findHeader(['nis','nomor induk','nomor induk santri']);
+  const namaIx=findHeader(['nama','nama santri','nama lengkap']);
+  const kelasIx=findHeader(['kelas','rombel','kelas santri','nama kelas','tingkat kelas','tingkatan','jenjang']);
+  data.rows.forEach(row=>{
+    if(nisIx<0) return;
+    const nis=String(row[nisIx]||'').replace(/\\D/g,'');
+    if(!nis) return;
+    map[nis]={
+      nama:namaIx>=0?String(row[namaIx]||'').trim():'',
+      kelas:kelasIx>=0?String(row[kelasIx]||'').trim():''
+    };
+  });
+  return map;
+}
+
 function laporanPutriPaidBills_(period){
   const data=laporanPutriHeaderMap_('SPP_PUTRI_Tagihan');
   if(!data.headers.length) return [];
