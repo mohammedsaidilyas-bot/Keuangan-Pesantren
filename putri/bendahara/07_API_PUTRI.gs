@@ -52,9 +52,17 @@ function keuanganPutriGet_(action){
     const students=keuanganPutriActiveStudents_();
     // Ambil status dari tagihan per periode, bukan periode gabungan di sheet Pembayaran.
     const paidNis=new Set(laporanPutriPaidBills_(s.periodeKode).map(x=>String(x.nis||'').replace(/\\D/g,'')));
+    // Lengkapi data dari master database PUTRI, termasuk kolom Kelas (kolom C).
+    const detailByNis=laporanPutriStudentDetails_();
     const items=students.map(st=>{
       const nis=String(st.nis||'').replace(/\\D/g,'');
-      return {nis:st.nis,nama:st.nama,status:paidNis.has(nis)?'Lunas':'Belum Lunas'};
+      const detail=detailByNis[nis]||{};
+      return {
+        nis:st.nis,
+        nama:st.nama||detail.nama||'',
+        kelas:detail.kelas||st.kelas||'',
+        status:paidNis.has(nis)?'Lunas':'Belum Lunas'
+      };
     });
     const lunas=items.filter(x=>x.status==='Lunas').length;
     const belum=items.length-lunas;
