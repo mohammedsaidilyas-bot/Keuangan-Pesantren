@@ -156,7 +156,7 @@ function keuanganPutriSummary_(){
     .filter(r=>String(r[6]||'').toUpperCase()==='SELESAI');
   const transferTotal=transferRows.reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
   const transferPeriode=transferRows
-    .filter(r=>String(r[5]||'')===period)
+    .filter(r=>laporanPutriPeriodFromValue_(r[5])===period)
     .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
 
   const sisaSPP=sppMasuk-pengeluaranSPP-transferPeriode;
