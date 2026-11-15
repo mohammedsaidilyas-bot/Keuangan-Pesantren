@@ -5,7 +5,9 @@
  * Membaca database PUTRI yang sama; tidak mengubah data santri/pembayaran.
  */
 
-function keuanganPutriPeriod_(){
+function keuanganPutriPeriod_(requested){
+  const requestedText=String(requested||'').trim();
+  if(/^\\d{4}-\\d{2}$/.test(requestedText)) return requestedText;
   const manual=PropertiesService.getScriptProperties().getProperty('KEUANGAN_PUTRI_PERIODE');
   return manual || Utilities.formatDate(new Date(),'Asia/Jakarta','yyyy-MM');
 }
@@ -155,8 +157,8 @@ function laporanPutriPaidBills_(period){
   }).filter(b=>b.status==='lunas' && b.nis && (!period || b.periode===period));
 }
 
-function keuanganPutriSummary_(){
-  const period=keuanganPutriPeriod_();
+function keuanganPutriSummary_(requestedPeriod){
+  const period=keuanganPutriPeriod_(requestedPeriod);
   const students=laporanPutriActiveStudents_();
   const paidBills=laporanPutriPaidBills_(period);
   const paidNis=new Set(paidBills.map(b=>b.nis));
