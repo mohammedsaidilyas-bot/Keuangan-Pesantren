@@ -1,5 +1,5 @@
-function keuanganPutriGet_(action){
-  const s=keuanganPutriSummary_();
+function keuanganPutriGet_(action,requestedPeriod){
+  const s=keuanganPutriSummary_(requestedPeriod);
   if(action==='getDashboardKeuangan') return {success:true,...s};
 
   if(action==='getKasPondok'){
@@ -110,7 +110,7 @@ function doGet(e){
   try{
     const p=e&&e.parameter||{}, action=String(p.action||'getDashboardKeuangan');
     const result=['catatPengeluaran','catatPemasukanKas','pindahkanSisaSPPKeKas'].includes(action)
-      ?keuanganPutriWrite_(p):keuanganPutriGet_(action);
+      ?keuanganPutriWrite_(p):keuanganPutriGet_(action,p.periode);
     return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
   }catch(err){
     return ContentService.createTextOutput(JSON.stringify({success:false,message:err.message})).setMimeType(ContentService.MimeType.JSON);
