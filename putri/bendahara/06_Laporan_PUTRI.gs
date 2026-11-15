@@ -7,7 +7,7 @@
 
 function keuanganPutriPeriod_(requested){
   const requestedText=String(requested||'').trim();
-  if(/^\\d{4}-\\d{2}$/.test(requestedText)) return requestedText;
+  if(/^\d{4}-\d{2}$/.test(requestedText)) return requestedText;
   const manual=PropertiesService.getScriptProperties().getProperty('KEUANGAN_PUTRI_PERIODE');
   return manual || Utilities.formatDate(new Date(),'Asia/Jakarta','yyyy-MM');
 }
