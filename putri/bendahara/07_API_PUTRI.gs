@@ -3,17 +3,16 @@ function keuanganPutriGet_(action,requestedPeriod){
   if(action==='getDashboardKeuangan') return {success:true,...s};
 
   if(action==='getKasPondok'){
+    const period=keuanganPutriPeriod_(requestedPeriod);
     const rows=keuanganPutriRows_('KasPondok');
-    const pemasukanKas=rows.filter(r=>String(r[2]||'').toUpperCase()==='PEMASUKAN')
-      .reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
-    const pengeluaranKas=rows.filter(r=>String(r[2]||'').toUpperCase()==='PENGELUARAN')
-      .reduce((n,r)=>n+keuanganPutriNum_(r[4]),0);
+    const periodRows=rows.filter(r=>laporanPutriPeriodFromValue_(r[1])===period);
     return {
       success:true,
-      saldoKas:pemasukanKas-pengeluaranKas,
-      pemasukanKas,
-      pengeluaranKas,
-      transaksi:rows.map(r=>({
+      periodeKode:period,
+      saldoKas:s.saldoKas,
+      pemasukanKas:s.totalKasMasuk,
+      pengeluaranKas:s.totalKasKeluar,
+      transaksi:periodRows.map(r=>({
         id:r[0],tanggal:keuanganPutriDateText_(r[1]),jenis:r[2],
         keterangan:r[3],jumlah:keuanganPutriNum_(r[4]),catatan:r[5]
       }))
