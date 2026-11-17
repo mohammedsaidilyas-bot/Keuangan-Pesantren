@@ -1,4 +1,8 @@
-function keuanganPutriDb_(){ return SpreadsheetApp.openById(KEUANGAN_PUTRI_DB_ID); }
+var __KEUANGAN_PUTRI_DB_INSTANCE=null;
+function keuanganPutriDb_(){
+  if(!__KEUANGAN_PUTRI_DB_INSTANCE) __KEUANGAN_PUTRI_DB_INSTANCE=SpreadsheetApp.openById(KEUANGAN_PUTRI_DB_ID);
+  return __KEUANGAN_PUTRI_DB_INSTANCE;
+}
 
 function keuanganPutriSheet_(name){
   const sh=keuanganPutriDb_().getSheetByName(name);
