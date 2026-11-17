@@ -1,8 +1,8 @@
 function keuanganPutriGet_(action,requestedPeriod){
-  const s=keuanganPutriSummary_(requestedPeriod);
-  if(action==='getDashboardKeuangan') return {success:true,...s};
+  if(action==='getDashboardKeuangan') return {success:true,...keuanganPutriSummary_(requestedPeriod)};
 
   if(action==='getKasPondok'){
+    const s=keuanganPutriSummary_(requestedPeriod);
     const period=keuanganPutriPeriod_(requestedPeriod);
     const rows=keuanganPutriRows_('KasPondok');
     const periodRows=rows.filter(r=>laporanPutriPeriodFromValue_(r[1])===period);
@@ -29,7 +29,10 @@ function keuanganPutriGet_(action,requestedPeriod){
     };
   }
 
-  if(action==='getRingkasanKeuangan') return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
+  if(action==='getRingkasanKeuangan') {
+    const s=keuanganPutriSummary_(requestedPeriod);
+    return {success:true,...s,totalPengeluaranSPP:s.pengeluaranSPP};
+  }
 
   if(action==='getPengeluaranTerbaru'){
     const list=keuanganPutriExpenseList_().reverse().map(t=>({
@@ -43,11 +46,12 @@ function keuanganPutriGet_(action,requestedPeriod){
       transaksi:list.slice(0,200),
       pengeluaran:list.slice(0,200),
       data:list.slice(0,200),
-      totalPengeluaranSPP:s.pengeluaranSPP
+      totalPengeluaranSPP:0
     };
   }
 
   if(action==='getStatusPembayaran'){
+    const s=keuanganPutriSummary_(requestedPeriod);
     const students=keuanganPutriActiveStudents_();
     // Ambil status dari tagihan per periode, bukan periode gabungan di sheet Pembayaran.
     const paidNis=new Set(laporanPutriPaidBills_(s.periodeKode).map(x=>String(x.nis||'').replace(/\\D/g,'')));
