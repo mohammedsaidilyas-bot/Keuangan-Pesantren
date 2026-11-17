@@ -18,7 +18,7 @@ function keuanganPutriPeriodLabel_(period){
 }
 
 function laporanPutriDb_(){
-  return SpreadsheetApp.openById(KEUANGAN_PUTRI_DB_ID);
+  return keuanganPutriDb_();
 }
 
 function laporanPutriRows_(sheetName){
