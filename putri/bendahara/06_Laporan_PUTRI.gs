@@ -172,17 +172,32 @@ function keuanganPutriSummary_(requestedPeriod){
     .filter(r=>laporanPutriPeriodFromValue_(r[5])===period)
     .reduce((sum,r)=>sum+laporanPutriNum_(r[3]),0);
 
+  // Ringkasan kas historis: hanya transaksi sampai akhir bulan yang dipilih.
+  // Dengan demikian transaksi November tidak mengubah tampilan Oktober.
   const cashRows=laporanPutriRows_('KasPondok');
-  const totalKasMasuk=cashRows
+  const cashRowsUntilPeriod=cashRows.filter(r=>{
+    const rowPeriod=laporanPutriPeriodFromValue_(r[1]);
+    return rowPeriod && rowPeriod<=period;
+  });
+  const cashRowsThisPeriod=cashRowsUntilPeriod.filter(r=>laporanPutriPeriodFromValue_(r[1])===period);
+  const totalKasMasuk=cashRowsThisPeriod
     .filter(r=>String(r[2]||'').toUpperCase()==='PEMASUKAN')
     .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
-  const totalKasKeluar=cashRows
+  const totalKasKeluar=cashRowsThisPeriod
+    .filter(r=>String(r[2]||'').toUpperCase()==='PENGELUARAN')
+    .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
+  const totalKasMasukSampaiPeriode=cashRowsUntilPeriod
+    .filter(r=>String(r[2]||'').toUpperCase()==='PEMASUKAN')
+    .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
+  const totalKasKeluarSampaiPeriode=cashRowsUntilPeriod
     .filter(r=>String(r[2]||'').toUpperCase()==='PENGELUARAN')
     .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
 
   const transferRows=laporanPutriRows_('TransferSPPKeKas')
     .filter(r=>String(r[6]||'').toUpperCase()==='SELESAI');
-  const transferTotal=transferRows.reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
+  const transferSampaiPeriode=transferRows
+    .filter(r=>{const p=laporanPutriPeriodFromValue_(r[5]);return p && p<=period;})
+    .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
   const transferPeriode=transferRows
     .filter(r=>laporanPutriPeriodFromValue_(r[5])===period)
     .reduce((sum,r)=>sum+laporanPutriNum_(r[4]),0);
@@ -197,9 +212,11 @@ function keuanganPutriSummary_(requestedPeriod){
     belumBayar:Math.max(0,students.length-paidNis.size),
     totalSantri:students.length,
     sisaSPP,
-    saldoKas:totalKasMasuk-totalKasKeluar+transferTotal,
+    saldoKas:totalKasMasukSampaiPeriode-totalKasKeluarSampaiPeriode+transferSampaiPeriode,
     totalKasMasuk,
     totalKasKeluar,
-    transferSPP:transferTotal
+    transferSPP:transferPeriode,
+    totalKasMasukSampaiPeriode,
+    totalKasKeluarSampaiPeriode
   };
 }
