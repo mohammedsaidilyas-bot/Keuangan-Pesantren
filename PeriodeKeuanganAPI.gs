@@ -9,7 +9,13 @@ function PK_API_handle(e) {
   var action = String((e && e.parameter && e.parameter.action) || "");
   if (action !== "PK_getAvailableMonths" &&
       action !== "PK_getTransactionsByMonth" &&
-      action !== "PK_getArchive") return null;
+      action !== "PK_getArchive") {
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "debug",
+      actionDiterima: action,
+      parameter: (e && e.parameter) ? e.parameter : null
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
   try {
     var sheetName = String((e.parameter.sheet || "keuangan"));
     var monthKey = String(e.parameter.month || "");
