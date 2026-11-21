@@ -17,10 +17,10 @@ function PK_API_handle(e) {
     if (action === "PK_getAvailableMonths") {
       payload = {success:true, months:PK_getAvailableMonths(sheetName)};
     } else if (action === "PK_getTransactionsByMonth") {
-      if (!/^\\d{4}-\\d{2}$/.test(monthKey)) throw new Error("Parameter month harus yyyy-MM");
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) throw new Error("Parameter month harus yyyy-MM");
       payload = {success:true, month:monthKey, transactions:PK_getTransactionsByMonth(sheetName,monthKey)};
     } else {
-      if (!/^\\d{4}-\\d{2}$/.test(monthKey)) throw new Error("Parameter month harus yyyy-MM");
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) throw new Error("Parameter month harus yyyy-MM");
       payload = {success:true, archive:PK_getArchive(sheetName,monthKey)};
     }
     return ContentService.createTextOutput(JSON.stringify(payload)).setMimeType(ContentService.MimeType.JSON);
