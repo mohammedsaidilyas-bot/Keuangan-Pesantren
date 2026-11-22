@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <div class="header-period"><div class="header-period-label">📅 Periode SPP</div><div class="header-period-value" id="periodeHeader">Memuat...</div></div>
+        <div class="header-period" onclick="bukaRekapPeriode()" role="button" tabindex="0" title="Klik untuk memilih periode dan melihat rekap" style="cursor:pointer"><div class="header-period-label">📅 Periode SPP · Klik</div><div class="header-period-value" id="periodeHeader">Memuat...</div></div>
       </div>
     </div>
   </div>
@@ -1787,7 +1787,7 @@ function renderLaporanPengeluaran(){
       const months=d.months;
       document.getElementById("pkLoading").style.display="none";
       const box=document.getElementById("pkContent");box.style.display="block";
-      box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select><button onclick="PK_tampilkanArsip()" style="padding:12px 18px;background:#0f766e;color:white;border:0;border-radius:12px;font-weight:700">Tampilkan</button></div><div id="pkArchiveResult"></div>';
+      box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" onchange="PK_tampilkanArsip()" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select></div><div id="pkArchiveResult"></div>';
       if(months.length) PK_tampilkanArsip();
     }catch(e){document.getElementById("pkLoading").style.display="none";document.getElementById("pkError").textContent=e.message||String(e);}
   }
