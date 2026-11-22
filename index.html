@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <div class="header-period" onclick="bukaRekapPeriode()" role="button" tabindex="0" title="Klik untuk memilih periode dan melihat rekap" style="cursor:pointer"><div class="header-period-label">📅 Periode SPP · Klik</div><div class="header-period-value" id="periodeHeader">Memuat...</div></div>
+        <div class="header-period"><div class="header-period-label">📅 Pilih Periode Rekap</div><select id="headerPKMonth" onchange="bukaRekapPeriode(this.value)" style="font-size:16px;font-weight:900;border:0;background:transparent;color:#0f766e;max-width:160px"><option>Memuat...</option></select></div>
       </div>
     </div>
   </div>
@@ -678,6 +678,7 @@
 
 
   async function loadDashboard() {
+    if(document.getElementById("headerPKMonth")) fetch(API_URL+"?action=PK_getAvailableMonths&sheet=keuangan&_="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success&&Array.isArray(d.months)){document.getElementById("headerPKMonth").innerHTML=d.months.map(m=>"<option value=\""+m+"\">"+m+"</option>").join("");}}).catch(()=>{});
 
     try {
 
@@ -1774,7 +1775,7 @@ function renderLaporanPengeluaran(){
   document.getElementById("laporanPengeluaranIsi").innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div class="card"><div class="card-title">Total Terpilih</div><div class="card-value red">${rupiah(total)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${data.length} transaksi</div></div><div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value orange">${rupiah(totalSPP)}</div></div><div class="card"><div class="card-title">Pengeluaran Kas</div><div class="card-value blue">${rupiah(totalKas)}</div></div></div><div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:15px"><table style="width:100%;border-collapse:collapse;min-width:700px;font-size:14px"><thead><tr style="background:#fff7ed;color:#92400e"><th style="padding:12px;text-align:left">No</th><th style="padding:12px;text-align:left">Tanggal</th><th style="padding:12px;text-align:left">Keterangan</th><th style="padding:12px;text-align:left">Sumber</th><th style="padding:12px;text-align:right">Jumlah</th></tr></thead><tbody>${rows||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#64748b">Tidak ada pengeluaran yang sesuai.</td></tr>'}</tbody></table></div>`;
 }
 
-  async function bukaRekapPeriode() {
+  async function bukaRekapPeriode(selectedMonth) {
     const modal=document.createElement("div"); modal.id="modalRekapPeriode";
     modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px"><div style="background:#fff;border-radius:20px;width:100%;max-width:900px;max-height:92vh;overflow:auto;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px"><div><div style="font-size:22px;font-weight:800;color:#0f766e">📅 Rekap Periode Keuangan</div><div style="font-size:13px;color:#64748b;margin-top:4px">Pilih bulan untuk melihat arsip transaksi</div></div><button onclick="document.getElementById('modalRekapPeriode').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button></div>
@@ -1788,6 +1789,7 @@ function renderLaporanPengeluaran(){
       document.getElementById("pkLoading").style.display="none";
       const box=document.getElementById("pkContent");box.style.display="block";
       box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" onchange="PK_tampilkanArsip()" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select></div><div id="pkArchiveResult"></div>';
+      if(selectedMonth && months.includes(selectedMonth)) document.getElementById("pkMonth").value=selectedMonth;
       if(months.length) PK_tampilkanArsip();
     }catch(e){document.getElementById("pkLoading").style.display="none";document.getElementById("pkError").textContent=e.message||String(e);}
   }
