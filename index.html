@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <button type="button" onclick="window.bukaRekapPeriode()" class="header-period" style="display:block;border:0;cursor:pointer;touch-action:manipulation;position:relative;z-index:99999;pointer-events:auto;text-align:left"><div class="header-period-label">📅 Periode SPP</div><div class="header-period-value" id="periodeHeader">Memuat periode... ▾</div></button>
+        <button type="button" onclick="event.preventDefault();event.stopPropagation();window.bukaRekapPeriode()" class="header-period" style="display:block;border:0;cursor:pointer;touch-action:manipulation;position:relative;z-index:99999;pointer-events:auto;text-align:left"><div class="header-period-label">📅 Periode SPP</div><div class="header-period-value" id="periodeHeader">Memuat periode... ▾</div></button>
       </div>
     </div>
   </div>
