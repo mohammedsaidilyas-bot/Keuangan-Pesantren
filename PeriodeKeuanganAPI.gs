@@ -34,3 +34,20 @@ function PK_API_handle(e) {
     return ContentService.createTextOutput(JSON.stringify({success:false,message:String(err.message||err)})).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
+
+/** TES INTERNAL: memanggil handler langsung tanpa melalui doGet utama */
+function PK_TEST_API_INTERNAL() {
+  var e = { parameter: { action: "PK_getAvailableMonths", sheet: "keuangan" } };
+  try {
+    var result = PK_API_handle(e);
+    if (!result) return "GAGAL: PK_API_handle mengembalikan null/false";
+    var content = result.getContent();
+    Logger.log("Respons handler: " + content);
+    return content;
+  } catch (err) {
+    var message = "ERROR INTERNAL: " + String(err.message || err);
+    Logger.log(message);
+    return message;
+  }
+}
