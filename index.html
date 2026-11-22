@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <div class="header-period"><div class="header-period-label">📅 Pilih Periode Rekap</div><select id="headerPKMonth" onchange="bukaRekapPeriode(this.value)" onclick="event.stopPropagation()" style="display:block;width:100%;font-size:16px;font-weight:900;border:0;background:transparent;color:#0f766e;max-width:160px;min-height:38px;cursor:pointer;position:relative;z-index:1000;pointer-events:auto"><option>Memuat...</option></select></div>
+        <button type="button" onclick="window.bukaRekapPeriode()" class="header-period" style="display:block;border:0;cursor:pointer;touch-action:manipulation;position:relative;z-index:99999;pointer-events:auto;text-align:left"><div class="header-period-label">📅 Pilih Periode Rekap</div><div class="header-period-value">Buka Rekap Bulan ▾</div></button>
       </div>
     </div>
   </div>
@@ -678,7 +678,7 @@
 
 
   async function loadDashboard() {
-    if(document.getElementById("headerPKMonth")) fetch(API_URL+"?action=PK_getAvailableMonths&sheet=keuangan&_="+Date.now(),{cache:"no-store"}).then(r=>r.json()).then(d=>{if(d.success&&Array.isArray(d.months)){document.getElementById("headerPKMonth").innerHTML=d.months.map(m=>"<option value=\""+m+"\">"+m+"</option>").join("");}}).catch(()=>{});
+    
 
     try {
 
