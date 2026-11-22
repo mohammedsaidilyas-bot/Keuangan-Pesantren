@@ -1788,9 +1788,9 @@ function renderLaporanPengeluaran(){
       const months=d.months;
       document.getElementById("pkLoading").style.display="none";
       const box=document.getElementById("pkContent");box.style.display="block";
-      box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" onchange="PK_tampilkanArsip()" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select></div><div id="pkArchiveResult"></div>';
+      box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" onchange="window.PK_tampilkanArsip()" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select></div><div id="pkArchiveResult"></div>';
       if(selectedMonth && months.includes(selectedMonth)) document.getElementById("pkMonth").value=selectedMonth;
-      if(months.length) PK_tampilkanArsip();
+      if(months.length) window.PK_tampilkanArsip();
     }catch(e){document.getElementById("pkLoading").style.display="none";document.getElementById("pkError").textContent=e.message||String(e);}
   }
   window.PK_tampilkanArsip = async function(){
