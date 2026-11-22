@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <div class="header-period"><div class="header-period-label">📅 Pilih Periode Rekap</div><select id="headerPKMonth" onchange="bukaRekapPeriode(this.value)" style="font-size:16px;font-weight:900;border:0;background:transparent;color:#0f766e;max-width:160px"><option>Memuat...</option></select></div>
+        <div class="header-period"><div class="header-period-label">📅 Pilih Periode Rekap</div><select id="headerPKMonth" onchange="bukaRekapPeriode(this.value)" onclick="event.stopPropagation()" style="display:block;width:100%;font-size:16px;font-weight:900;border:0;background:transparent;color:#0f766e;max-width:160px;min-height:38px;cursor:pointer;position:relative;z-index:1000;pointer-events:auto"><option>Memuat...</option></select></div>
       </div>
     </div>
   </div>
