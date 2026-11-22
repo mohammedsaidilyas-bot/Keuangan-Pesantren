@@ -682,7 +682,8 @@
     try {
 
       const response = await fetch(
-        API_URL + "?action=getDashboardKeuangan"
+        API_URL + "?action=getDashboardKeuangan&_=" + Date.now(),
+        { cache: "no-store" }
       );
 
       const data = await response.json();
@@ -786,7 +787,8 @@
       errorBox.style.display = "block";
 
       errorBox.textContent =
-        "Data belum dapat dimuat. Dashboard akan kita sambungkan setelah URL Apps Script dimasukkan.";
+        "GAGAL MEMUAT DASHBOARD: " + (error && error.message ? error.message : String(error));
+      console.error("loadDashboard error:", error);
 
     }
 
