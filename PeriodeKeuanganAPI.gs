@@ -10,11 +10,8 @@ function PK_API_handle(e) {
   if (action !== "PK_getAvailableMonths" &&
       action !== "PK_getTransactionsByMonth" &&
       action !== "PK_getArchive") {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "debug",
-      actionDiterima: action,
-      parameter: (e && e.parameter) ? e.parameter : null
-    })).setMimeType(ContentService.MimeType.JSON);
+    // Aksi lain milik dashboard utama: jangan mengambil alih doGet.
+    return null;
   }
   try {
     var sheetName = String((e.parameter.sheet || "keuangan"));
