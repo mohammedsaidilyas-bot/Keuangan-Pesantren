@@ -441,7 +441,7 @@
       <div class="side-item" onclick="bukaDaftarSantri()"><span class="side-icon">📄</span><span>Data Santri</span></div>
       <div class="side-item" onclick="bukaLaporanKeuanganPDF()"><span class="side-icon">📄</span><span>Laporan Keuangan</span></div>
       <div class="side-item" onclick="bukaLaporanPengeluaran()"><span class="side-icon">📋</span><span>Laporan Pengeluaran</span></div>
-      <div class="side-item" onclick="pindahkanSisaSPPKeKas()"><span class="side-icon">◔</span><span>Rekap Periode</span></div>
+      <div class="side-item" onclick="bukaRekapPeriode()"><span class="side-icon">◔</span><span>Rekap Periode</span></div>
       <div class="side-item"><span class="side-icon">⚙️</span><span>Pengaturan</span></div>
       <div class="side-spacer"></div>
 
@@ -1774,6 +1774,34 @@ function renderLaporanPengeluaran(){
   document.getElementById("laporanPengeluaranIsi").innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div class="card"><div class="card-title">Total Terpilih</div><div class="card-value red">${rupiah(total)}</div><div style="font-size:12px;color:#64748b;margin-top:5px">${data.length} transaksi</div></div><div class="card"><div class="card-title">Pengeluaran SPP</div><div class="card-value orange">${rupiah(totalSPP)}</div></div><div class="card"><div class="card-title">Pengeluaran Kas</div><div class="card-value blue">${rupiah(totalKas)}</div></div></div><div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:15px"><table style="width:100%;border-collapse:collapse;min-width:700px;font-size:14px"><thead><tr style="background:#fff7ed;color:#92400e"><th style="padding:12px;text-align:left">No</th><th style="padding:12px;text-align:left">Tanggal</th><th style="padding:12px;text-align:left">Keterangan</th><th style="padding:12px;text-align:left">Sumber</th><th style="padding:12px;text-align:right">Jumlah</th></tr></thead><tbody>${rows||'<tr><td colspan="5" style="padding:25px;text-align:center;color:#64748b">Tidak ada pengeluaran yang sesuai.</td></tr>'}</tbody></table></div>`;
 }
 
+  async function bukaRekapPeriode() {
+    const modal=document.createElement("div"); modal.id="modalRekapPeriode";
+    modal.innerHTML=`<div style="position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:99999;display:flex;align-items:center;justify-content:center;padding:14px"><div style="background:#fff;border-radius:20px;width:100%;max-width:900px;max-height:92vh;overflow:auto;padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px"><div><div style="font-size:22px;font-weight:800;color:#0f766e">📅 Rekap Periode Keuangan</div><div style="font-size:13px;color:#64748b;margin-top:4px">Pilih bulan untuk melihat arsip transaksi</div></div><button onclick="document.getElementById('modalRekapPeriode').remove()" style="border:0;background:#f1f5f9;width:40px;height:40px;border-radius:50%;font-size:22px">×</button></div>
+      <div id="pkLoading" style="padding:20px;text-align:center;color:#64748b">Memuat daftar periode...</div><div id="pkContent" style="display:none"></div><div id="pkError" style="color:#b91c1c;margin-top:12px"></div></div></div>`;
+    document.body.appendChild(modal);
+    try{
+      const r=await fetch(API_URL+"?action=PK_getAvailableMonths&sheet=keuangan&_="+Date.now(),{cache:"no-store"});
+      const d=await r.json();
+      if(!d.success||!Array.isArray(d.months)) throw new Error(d.message||"Daftar periode tidak tersedia. API periode belum terhubung ke doGet utama.");
+      const months=d.months;
+      document.getElementById("pkLoading").style.display="none";
+      const box=document.getElementById("pkContent");box.style.display="block";
+      box.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px"><select id="pkMonth" style="flex:1;min-width:200px;padding:12px;border:1px solid #cbd5e1;border-radius:12px;background:white">'+months.map(m=>'<option value="'+m+'">'+m+'</option>').join('')+'</select><button onclick="PK_tampilkanArsip()" style="padding:12px 18px;background:#0f766e;color:white;border:0;border-radius:12px;font-weight:700">Tampilkan</button></div><div id="pkArchiveResult"></div>';
+      if(months.length) PK_tampilkanArsip();
+    }catch(e){document.getElementById("pkLoading").style.display="none";document.getElementById("pkError").textContent=e.message||String(e);}
+  }
+  async function PK_tampilkanArsip(){
+    const month=document.getElementById("pkMonth")?.value;if(!month)return;
+    const out=document.getElementById("pkArchiveResult");out.innerHTML="Memuat arsip "+month+"...";
+    try{
+      const r=await fetch(API_URL+"?action=PK_getArchive&sheet=keuangan&month="+encodeURIComponent(month)+"&_="+Date.now(),{cache:"no-store"});
+      const d=await r.json();if(!d.success)throw new Error(d.message||"Gagal membaca arsip");
+      const tx=d.archive?.transaksi||[];let totalSPP=0,totalKas=0,totalPengeluaran=0;
+      const rows=tx.map((x,i)=>{const obj=x.data||{};const get=(keys)=>{for(const k of keys)if(obj[k]!==undefined)return obj[k];return "-";};const jenis=String(get(["Jenis","jenis"]));const sumber=String(get(["Sumber","sumber"]));const jumlah=Number(get(["Jumlah","jumlah"])||0);if(jenis.toLowerCase().includes("pengeluaran")){totalPengeluaran+=jumlah;if(sumber.toUpperCase().includes("SPP"))totalSPP+=jumlah;else totalKas+=jumlah;}return '<tr><td style="padding:9px;border-top:1px solid #e2e8f0">'+(i+1)+'</td><td style="padding:9px;border-top:1px solid #e2e8f0">'+get(["Tanggal","tanggal","Date"])+'</td><td style="padding:9px;border-top:1px solid #e2e8f0">'+get(["Jenis","jenis"])+'</td><td style="padding:9px;border-top:1px solid #e2e8f0">'+get(["Keterangan","keterangan"])+'</td><td style="padding:9px;border-top:1px solid #e2e8f0">'+sumber+'</td><td style="padding:9px;border-top:1px solid #e2e8f2;text-align:right">'+rupiah(jumlah)+'</td></tr>';}).join("");
+      out.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px"><div style="background:#f0fdfa;padding:14px;border-radius:12px"><small>Transaksi</small><div style="font-size:20px;font-weight:800">'+tx.length+'</div></div><div style="background:#fff7ed;padding:14px;border-radius:12px"><small>Pengeluaran SPP</small><div style="font-size:20px;font-weight:800">'+rupiah(totalSPP)+'</div></div><div style="background:#eff6ff;padding:14px;border-radius:12px"><small>Pengeluaran Kas</small><div style="font-size:20px;font-weight:800">'+rupiah(totalKas)+'</div></div></div><div style="overflow:auto;border:1px solid #e2e8f0;border-radius:12px"><table style="width:100%;min-width:650px;border-collapse:collapse;font-size:13px"><thead><tr style="background:#f8fafc"><th style="padding:10px;text-align:left">No</th><th style="padding:10px;text-align:left">Tanggal</th><th style="padding:10px;text-align:left">Jenis</th><th style="padding:10px;text-align:left">Keterangan</th><th style="padding:10px;text-align:left">Sumber</th><th style="padding:10px;text-align:right">Jumlah</th></tr></thead><tbody>'+ (rows||'<tr><td colspan="6" style="padding:20px;text-align:center">Tidak ada transaksi pada periode ini.</td></tr>')+'</tbody></table></div>';
+    }catch(e){out.innerHTML='<div style="color:#b91c1c;padding:12px">'+(e.message||String(e))+'</div>';}
+  }
   async function pindahkanSisaSPPKeKas() {
     try {
       // Cek kondisi terbaru sebelum meminta pemindahan.
