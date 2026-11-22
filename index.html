@@ -426,7 +426,7 @@
       </div>
       <div class="header-controls">
         <button onclick="muatUlangData()" class="header-reload">↻ Muat Ulang</button>
-        <button type="button" onclick="window.bukaRekapPeriode()" class="header-period" style="display:block;border:0;cursor:pointer;touch-action:manipulation;position:relative;z-index:99999;pointer-events:auto;text-align:left"><div class="header-period-label">📅 Pilih Periode Rekap</div><div class="header-period-value">Buka Rekap Bulan ▾</div></button>
+        <button type="button" onclick="window.bukaRekapPeriode()" class="header-period" style="display:block;border:0;cursor:pointer;touch-action:manipulation;position:relative;z-index:99999;pointer-events:auto;text-align:left"><div class="header-period-label">📅 Periode SPP</div><div class="header-period-value" id="periodeHeader">Memuat periode... ▾</div></button>
       </div>
     </div>
   </div>
@@ -700,9 +700,8 @@
       window.dashboardKeuangan = data;
       document.getElementById("periode").textContent =
         data.periode || "-";
-      if(document.getElementById("periodeHeader")){
-        document.getElementById("periodeHeader").textContent = data.periode || "-";
-      }
+      const periodeHeaderEl=document.getElementById("periodeHeader");
+      if(periodeHeaderEl) periodeHeaderEl.textContent=(data.periode || "-")+" ▾";
       loadDashboardRecent();
 
       document.getElementById("sppMasuk").textContent =
